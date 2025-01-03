@@ -11,7 +11,7 @@ async function fetchUser(): Promise<User | null> {
       if (response.status === 401) {
         return null;
       }
-      throw new Error(`${response.status}: ${await response.text()}`);
+      throw new Error(await response.text());
     }
 
     return response.json();
@@ -27,8 +27,6 @@ export function useUser() {
   const { data: user, error, isLoading } = useQuery({
     queryKey: ['/api/user'],
     queryFn: fetchUser,
-    staleTime: Infinity,
-    retry: false
   });
 
   const loginMutation = useMutation({
@@ -44,8 +42,7 @@ export function useUser() {
         throw new Error(await response.text());
       }
 
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
@@ -83,8 +80,7 @@ export function useUser() {
         throw new Error(await response.text());
       }
 
-      const data = await response.json();
-      return data;
+      return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user'] });
