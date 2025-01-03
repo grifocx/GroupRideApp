@@ -15,7 +15,7 @@ export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
   const { toast } = useToast();
   const { login, register } = useUser();
-  
+
   const form = useForm<FormData>({
     defaultValues: {
       username: "",
@@ -25,19 +25,12 @@ export default function AuthPage() {
 
   const onSubmit = async (data: FormData) => {
     try {
-      const result = await (isLogin ? login(data) : register(data));
-      if (!result.ok) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: result.message,
-        });
-      }
+      await (isLogin ? login(data) : register(data));
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: "An unexpected error occurred",
+        description: error instanceof Error ? error.message : "An unexpected error occurred",
       });
     }
   };
