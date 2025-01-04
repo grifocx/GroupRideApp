@@ -3,6 +3,7 @@ import { useRides } from "@/hooks/use-rides";
 import RideCard from "@/components/RideCard";
 import { NavBar } from "@/components/NavBar";
 import RideSearch, { type RideFilters } from "@/components/RideSearch";
+import { MapComponent } from "@/components/MapComponent";
 import { Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
 
@@ -76,11 +77,29 @@ export default function HomePage() {
           <RideSearch onFilterChange={setFilters} />
         </div>
 
-        {isLoading ? (
-          <div className="flex justify-center">
-            <Loader2 className="h-8 w-8 animate-spin" />
+        {/* Interactive Map */}
+        <div className="mb-8">
+          <h2 className="text-2xl font-bold mb-4">Ride Map</h2>
+          <div className="bg-card rounded-lg p-4">
+            {isLoading ? (
+              <div className="h-[500px] flex items-center justify-center">
+                <Loader2 className="h-8 w-8 animate-spin" />
+              </div>
+            ) : (
+              <MapComponent 
+                rides={filteredRides}
+                onMarkerClick={(ride) => {
+                  // TODO: Implement ride detail view
+                  console.log('Clicked ride:', ride);
+                }}
+              />
+            )}
           </div>
-        ) : (
+        </div>
+
+        {/* Ride List */}
+        <div>
+          <h2 className="text-2xl font-bold mb-4">Available Rides</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredRides.map((ride) => (
               <RideCard key={ride.id} ride={ride} />
@@ -91,7 +110,7 @@ export default function HomePage() {
               </div>
             )}
           </div>
-        )}
+        </div>
       </main>
     </div>
   );
