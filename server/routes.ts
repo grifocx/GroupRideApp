@@ -517,17 +517,18 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/user/profile", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
-      const { displayName, zipCode, club, homeBikeShop, gender, birthdate } = req.body;
+      const { display_name, zip_code, club, home_bike_shop, gender, birthdate, email } = req.body;
 
       await db
         .update(users)
         .set({
-          displayName,
-          zipCode,
+          display_name,
+          zip_code,
           club,
-          homeBikeShop,
+          home_bike_shop,
           gender,
           birthdate: birthdate ? new Date(birthdate) : null,
+          email,
         })
         .where(eq(users.id, user.id));
 
