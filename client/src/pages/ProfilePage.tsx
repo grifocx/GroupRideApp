@@ -1,15 +1,18 @@
 import { useUser } from "@/hooks/use-user";
-import { useUserRides } from "@/hooks/use-user-rides";
+import { useUserRides } from "@/hooks/use-rides";
 import { NavBar } from "@/components/NavBar";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Loader2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
 
 const editRideSchema = z.object({
@@ -135,6 +138,56 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
 export default function ProfilePage() {
   const { user, logout } = useUser();
   const { rides, isLoading, deleteRide, updateRide } = useUserRides();
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const uploadAvatarMutation = useMutation({
+    mutationFn: async (file: File) => {
+      const formData = new FormData();
+      formData.append('avatar', file);
+
+      const response = await fetch('/api/user/avatar', {
+        method: 'POST',
+        body: formData,
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['user'] });
+      toast({
+        title: "Success",
+        description: "Avatar updated successfully"
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error.message
+      });
+    }
+  });
+
+  const handleAvatarChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "File size must be less than 5MB"
+        });
+        return;
+      }
+      uploadAvatarMutation.mutate(file);
+    }
+  };
 
   if (isLoading) {
     return (
@@ -161,9 +214,32 @@ export default function ProfilePage() {
             </Button>
           </CardHeader>
           <CardContent>
-            <div className="space-y-2">
-              <h3 className="text-lg font-medium">Username</h3>
-              <p>{user?.username}</p>
+            <div className="flex items-center gap-6">
+              <div className="relative group">
+                <Avatar className="h-24 w-24">
+                  <AvatarImage src={user?.avatarUrl} alt={user?.username} />
+                  <AvatarFallback>
+                    {user?.username?.slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <label 
+                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity"
+                  htmlFor="avatar-upload"
+                >
+                  <Upload className="h-6 w-6" />
+                </label>
+                <input
+                  type="file"
+                  id="avatar-upload"
+                  className="hidden"
+                  accept="image/*"
+                  onChange={handleAvatarChange}
+                />
+              </div>
+              <div className="space-y-2">
+                <h3 className="text-lg font-medium">Username</h3>
+                <p>{user?.username}</p>
+              </div>
             </div>
           </CardContent>
         </Card>

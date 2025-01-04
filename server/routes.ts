@@ -7,6 +7,41 @@ import { and, eq } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
+import multer from 'multer';
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
+import express from 'express';
+
+// Configure multer for handling file uploads
+const storage = multer.diskStorage({
+  destination: (_req, _file, cb) => {
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (_req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (_req, file, cb) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
+      return;
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
 
 // Helper to ensure authenticated user
 const ensureAuthenticated = (req: Express.Request): User => {
@@ -392,6 +427,51 @@ export function registerRoutes(app: Express): Server {
       console.error("Error deleting ride:", error);
       res.status(500).json({ 
         error: "Failed to delete ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Serve uploaded files
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // Upload avatar
+  app.post("/api/user/avatar", upload.single('avatar'), async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const file = req.file;
+
+      if (!file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      // Process the image with sharp
+      const processedImagePath = path.join(
+        process.cwd(),
+        'uploads',
+        `processed-${file.filename}`
+      );
+
+      await sharp(file.path)
+        .resize(200, 200)
+        .jpeg({ quality: 90 })
+        .toFile(processedImagePath);
+
+      // Delete the original file
+      fs.unlinkSync(file.path);
+
+      // Update user's avatar URL in database
+      const avatarUrl = `/uploads/processed-${file.filename}`;
+      await db
+        .update(users)
+        .set({ avatarUrl })
+        .where(eq(users.id, user.id));
+
+      res.json({ avatarUrl });
+    } catch (error) {
+      console.error("Error uploading avatar:", error);
+      res.status(500).json({ 
+        error: "Failed to upload avatar",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
