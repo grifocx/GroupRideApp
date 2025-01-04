@@ -12,7 +12,7 @@ import { z } from "zod";
 const createRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.string(),
-  distance: z.number().min(1, "Distance must be at least 1km"),
+  distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   difficulty: z.number().min(1).max(5),
   maxRiders: z.number().min(1, "Must allow at least 1 rider"),
   latitude: z.string(),
