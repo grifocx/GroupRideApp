@@ -3,9 +3,16 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Map, MapPin } from "lucide-react";
+import { Map, MapPin, Share2, Copy, ExternalLink } from "lucide-react";
+import { FaTwitter, FaFacebook, FaWhatsapp } from "react-icons/fa";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
 import type { Ride } from "@db/schema";
@@ -96,6 +103,43 @@ export default function RideCard({ ride }: RideCardProps) {
     }
   };
 
+  const handleShare = async (platform?: string) => {
+    const shareUrl = `${window.location.origin}/rides/${ride.id}`;
+    const shareText = `Join me for a ${ride.distance} mile ${ride.rideType.toLowerCase()} ride: ${ride.title}`;
+
+    if (platform) {
+      let shareLink = '';
+
+      switch (platform) {
+        case 'twitter':
+          shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'facebook':
+          shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
+          break;
+        case 'whatsapp':
+          shareLink = `https://wa.me/?text=${encodeURIComponent(`${shareText} ${shareUrl}`)}`;
+          break;
+      }
+
+      window.open(shareLink, '_blank', 'noopener,noreferrer');
+    } else {
+      try {
+        await navigator.clipboard.writeText(shareUrl);
+        toast({
+          title: "Success",
+          description: "Link copied to clipboard",
+        });
+      } catch (error) {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: "Failed to copy link",
+        });
+      }
+    }
+  };
+
   const isJoined = ride.participants.some(p => p.user.username === user?.username);
   const participantCount = ride.participants.length;
 
@@ -104,9 +148,38 @@ export default function RideCard({ ride }: RideCardProps) {
       <HoverCardTrigger asChild>
         <Card className="overflow-hidden transition-all hover:shadow-lg">
           <CardHeader className="pb-2">
-            <CardTitle className="text-xl font-bold">{ride.title}</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
+            <div className="flex justify-between items-start">
+              <div>
+                <CardTitle className="text-xl font-bold">{ride.title}</CardTitle>
+                <div className="text-sm text-muted-foreground">
+                  {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
+                </div>
+              </div>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <Button variant="ghost" size="icon">
+                    <Share2 className="h-4 w-4" />
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => handleShare('twitter')} className="cursor-pointer">
+                    <FaTwitter className="mr-2 h-4 w-4" />
+                    Share on Twitter
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('facebook')} className="cursor-pointer">
+                    <FaFacebook className="mr-2 h-4 w-4" />
+                    Share on Facebook
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare('whatsapp')} className="cursor-pointer">
+                    <FaWhatsapp className="mr-2 h-4 w-4" />
+                    Share on WhatsApp
+                  </DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => handleShare()} className="cursor-pointer">
+                    <Copy className="mr-2 h-4 w-4" />
+                    Copy Link
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </CardHeader>
           <div className="relative h-32 bg-muted">
@@ -124,7 +197,7 @@ export default function RideCard({ ride }: RideCardProps) {
                   <span>{ride.distance} miles</span>
                   <span>•</span>
                   <div className="flex items-center gap-2">
-                    <div 
+                    <div
                       className={`w-3 h-3 rounded-full ${difficultyColors[ride.difficulty as keyof typeof difficultyColors]}`}
                       title={difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}
                     />
