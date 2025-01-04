@@ -60,7 +60,10 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 
-export const insertRideSchema = createInsertSchema(rides);
+export const insertRideSchema = createInsertSchema(rides, {
+  rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
+  terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
+});
 export const selectRideSchema = createSelectSchema(rides);
 
 // Enums for ride properties
