@@ -1,6 +1,7 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
+import { z } from "zod";
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -18,6 +19,12 @@ export const rides = pgTable("rides", {
   ownerId: integer("owner_id").notNull().references(() => users.id),
   latitude: text("latitude").notNull(),
   longitude: text("longitude").notNull(),
+  // New fields
+  rideType: text("ride_type").notNull(), // 'MTB', 'ROAD', 'GRAVEL'
+  pace: real("pace").notNull(), // Average speed in km/h
+  terrain: text("terrain").notNull(), // 'FLAT', 'HILLY', 'MOUNTAIN'
+  routeUrl: text("route_url"), // Optional route map URL
+  description: text("description"), // Optional ride description
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -49,12 +56,27 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
   }),
 }));
 
+// Validation schemas
 export const insertUserSchema = createInsertSchema(users);
 export const selectUserSchema = createSelectSchema(users);
 
 export const insertRideSchema = createInsertSchema(rides);
 export const selectRideSchema = createSelectSchema(rides);
 
+// Enums for ride properties
+export const RideType = {
+  MTB: 'MTB',
+  ROAD: 'ROAD',
+  GRAVEL: 'GRAVEL',
+} as const;
+
+export const TerrainType = {
+  FLAT: 'FLAT',
+  HILLY: 'HILLY',
+  MOUNTAIN: 'MOUNTAIN',
+} as const;
+
+// Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Ride = typeof rides.$inferSelect;
