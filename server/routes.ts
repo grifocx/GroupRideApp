@@ -116,6 +116,25 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete ride
+  app.delete("/api/rides/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Not authenticated");
+    }
+
+    const rideId = parseInt(req.params.id);
+    if (isNaN(rideId)) {
+      return res.status(400).json({ error: "Invalid ride ID" });
+    }
+
+    try {
+      await db.delete(rides).where(eq(rides.id, rideId));
+      res.json({ message: "Successfully deleted ride" });
+    } catch (error) {
+      res.status(500).json({ error: "Failed to delete ride" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
