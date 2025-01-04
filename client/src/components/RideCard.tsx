@@ -228,8 +228,14 @@ export default function RideCard({ ride }: RideCardProps) {
             disabled={!isJoined && participantCount >= ride.maxRiders}
           >
             <div className="flex items-center gap-2">
-              {isJoined && <Check className="h-4 w-4" />}
-              {isJoined ? "Joined - Click to Leave" : "Join Ride"}
+              {isJoined ? (
+                <>
+                  <Check className="h-4 w-4" />
+                  Joined
+                </>
+              ) : (
+                "Join Ride"
+              )}
             </div>
           </Button>
         </div>
