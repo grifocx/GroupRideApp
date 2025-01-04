@@ -18,20 +18,20 @@ export function NavBar() {
   const NavItems = () => (
     <>
       <Link href="/">
-        <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+        <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <Home className="h-4 w-4" />
           Home
         </a>
       </Link>
       <Link href="/rides">
-        <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+        <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <Map className="h-4 w-4" />
           Rides
         </a>
       </Link>
       {user?.isAdmin && (
         <Link href="/admin">
-          <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
+          <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
             <Shield className="h-4 w-4" />
             Admin Dashboard
           </a>
@@ -45,13 +45,13 @@ export function NavBar() {
       {user ? (
         <>
           <Link href="/create">
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:w-auto md:justify-center">
               <PlusCircle className="h-4 w-4" />
               <span>Create Ride</span>
             </Button>
           </Link>
           <Link href="/profile">
-            <Button variant="ghost" size="sm" className="gap-2">
+            <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:w-auto md:justify-center">
               <User className="h-4 w-4" />
               <span>Profile</span>
             </Button>
@@ -59,8 +59,11 @@ export function NavBar() {
           <Button
             variant="ghost"
             size="sm"
-            onClick={() => logout()}
-            className="gap-2"
+            onClick={() => {
+              logout();
+              setIsOpen(false);
+            }}
+            className="gap-2 w-full justify-start md:w-auto md:justify-center"
           >
             <LogOut className="h-4 w-4" />
             <span>Logout</span>
@@ -68,7 +71,7 @@ export function NavBar() {
         </>
       ) : (
         <Link href="/auth">
-          <Button variant="ghost" size="sm" className="gap-2">
+          <Button variant="ghost" size="sm" className="gap-2 w-full justify-start md:w-auto md:justify-center" onClick={() => setIsOpen(false)}>
             <LogIn className="h-4 w-4" />
             <span>Login / Register</span>
           </Button>
@@ -103,20 +106,40 @@ export function NavBar() {
           {/* Mobile Menu Button */}
           <Sheet open={isOpen} onOpenChange={setIsOpen}>
             <SheetTrigger asChild className="md:hidden">
-              <Button variant="ghost" size="icon">
+              <Button variant="ghost" size="icon" className="relative">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">Toggle menu</span>
               </Button>
             </SheetTrigger>
-            <SheetContent side="right" className="w-[280px] sm:w-[340px]">
-              <SheetHeader>
+            <SheetContent side="right" className="w-[280px] sm:w-[340px] p-0">
+              <SheetHeader className="p-4 border-b">
                 <SheetTitle>Menu</SheetTitle>
               </SheetHeader>
-              <div className="flex flex-col gap-4 py-4">
-                <div className="flex flex-col gap-3">
-                  <NavItems />
+              <div className="flex flex-col py-2">
+                <div className="flex flex-col space-y-1 px-2">
+                  <Link href="/" onClick={() => setIsOpen(false)}>
+                    <a className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Home className="h-4 w-4" />
+                      Home
+                    </a>
+                  </Link>
+                  <Link href="/rides" onClick={() => setIsOpen(false)}>
+                    <a className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Map className="h-4 w-4" />
+                      Rides
+                    </a>
+                  </Link>
+                  {user?.isAdmin && (
+                    <Link href="/admin" onClick={() => setIsOpen(false)}>
+                      <a className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                        <Shield className="h-4 w-4" />
+                        Admin Dashboard
+                      </a>
+                    </Link>
+                  )}
                 </div>
-                <div className="flex flex-col gap-2">
+                <div className="border-t my-2" />
+                <div className="flex flex-col space-y-1 px-2">
                   <AuthButtons />
                 </div>
               </div>
