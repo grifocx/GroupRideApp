@@ -4,6 +4,7 @@ import { setupAuth } from "./auth";
 import { db } from "@db";
 import { rides, rideParticipants, insertRideSchema } from "@db/schema";
 import { eq } from "drizzle-orm";
+import * as z from 'zod';
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -33,27 +34,28 @@ export function registerRoutes(app: Express): Server {
       return res.status(401).send("Not authenticated");
     }
 
-    const result = insertRideSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ error: result.error });
+    const userId = (req.user as any).id;
+    if (!userId) {
+      return res.status(401).send("User ID not found");
     }
 
     try {
-      if (!result.success) {
-        console.error("Validation error:", result.error);
-        return res.status(400).json({ error: result.error.issues });
-      }
-      
+      const validatedData = insertRideSchema.parse({
+        ...req.body,
+        ownerId: userId
+      });
+
       const [ride] = await db
         .insert(rides)
-        .values({
-          ...result.data,
-          ownerId: req.user.id,
-        })
+        .values(validatedData)
         .returning();
+
       res.json(ride);
     } catch (error) {
-      console.error("Database error:", error);
+      console.error("Error creating ride:", error);
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ error: error.issues });
+      }
       res.status(500).json({ error: "Failed to create ride" });
     }
   });

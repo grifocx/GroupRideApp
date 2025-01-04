@@ -67,6 +67,8 @@ export const insertRideSchema = createInsertSchema(rides, {
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   difficulty: z.coerce.number().min(1).max(5),
   maxRiders: z.coerce.number().min(1),
+  dateTime: z.string().transform((str) => new Date(str)),
+  ownerId: z.number().optional(),
 });
 export const selectRideSchema = createSelectSchema(rides);
 
