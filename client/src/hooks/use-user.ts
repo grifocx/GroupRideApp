@@ -3,6 +3,11 @@ import type { InsertUser, User } from "@db/schema";
 
 const USER_QUERY_KEY = '/api/user';
 
+type LoginCredentials = {
+  username: string;
+  password: string;
+};
+
 async function fetchUser(): Promise<User | null> {
   try {
     const response = await fetch(USER_QUERY_KEY, {
@@ -11,14 +16,14 @@ async function fetchUser(): Promise<User | null> {
 
     if (!response.ok) {
       if (response.status === 401) {
-        console.log("User not authenticated"); // Debug log
+        console.log("User not authenticated");
         return null;
       }
       throw new Error(await response.text());
     }
 
     const user = await response.json();
-    console.log("Fetched user:", user); // Debug log
+    console.log("Fetched user:", user);
     return user;
   } catch (error) {
     console.error('Error fetching user:', error);
@@ -36,12 +41,12 @@ export function useUser() {
   });
 
   const loginMutation = useMutation({
-    mutationFn: async (userData: InsertUser) => {
-      console.log("Attempting login..."); // Debug log
+    mutationFn: async (credentials: LoginCredentials) => {
+      console.log("Attempting login...");
       const response = await fetch('/api/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(userData),
+        body: JSON.stringify(credentials),
         credentials: 'include',
       });
 
@@ -50,11 +55,11 @@ export function useUser() {
       }
 
       const data = await response.json();
-      console.log("Login successful:", data); // Debug log
+      console.log("Login successful:", data);
       return data;
     },
     onSuccess: () => {
-      console.log("Invalidating user query after login"); // Debug log
+      console.log("Invalidating user query after login");
       queryClient.invalidateQueries({ queryKey: [USER_QUERY_KEY] });
     },
   });
