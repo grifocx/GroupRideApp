@@ -27,8 +27,8 @@ export function MapComponent({ rides, onMarkerClick }: MapComponentProps) {
 
   useEffect(() => {
     if (!mapRef.current) {
-      // Initialize map
-      const map = L.map('map').setView([37.7749, -122.4194], 13);
+      // Initialize map centered on Washington, DC
+      const map = L.map('map').setView([38.8977, -77.0365], 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);

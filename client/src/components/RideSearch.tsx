@@ -33,7 +33,7 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
     rideType: "all",
     minDistance: 0,
     maxDistance: 100,
-    difficulty: DifficultyLevel.INTERMEDIATE,
+    difficulty: "all",
     terrain: "all",
   });
 
