@@ -2,16 +2,18 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { rides, rideParticipants, insertRideSchema, type SelectUser } from "@db/schema";
+import { rides, rideParticipants, insertRideSchema, type User } from "@db/schema";
 import { and, eq } from "drizzle-orm";
 import * as z from 'zod';
 
 // Helper to ensure authenticated user
-const ensureAuthenticated = (req: Express.Request): SelectUser => {
+const ensureAuthenticated = (req: Express.Request): User => {
   if (!req.isAuthenticated()) {
-    throw new Error("Not authenticated");
+    const error = new Error("Not authenticated");
+    error.status = 401;
+    throw error;
   }
-  return req.user as SelectUser;
+  return req.user as User;
 };
 
 export function registerRoutes(app: Express): Server {
@@ -33,7 +35,10 @@ export function registerRoutes(app: Express): Server {
       res.json(allRides);
     } catch (error) {
       console.error("Error fetching rides:", error);
-      res.status(500).json({ error: "Failed to fetch rides" });
+      res.status(500).json({ 
+        error: "Failed to fetch rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -88,6 +93,23 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ride ID" });
       }
 
+      // Check if ride exists first
+      const ride = await db.query.rides.findFirst({
+        where: eq(rides.id, rideId),
+        with: {
+          participants: true
+        }
+      });
+
+      if (!ride) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+
+      // Check if ride is full
+      if (ride.participants.length >= ride.maxRiders) {
+        return res.status(400).json({ error: "Ride is full" });
+      }
+
       const existingParticipant = await db
         .select()
         .from(rideParticipants)
@@ -115,7 +137,10 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ error: "Failed to join ride" });
+      res.status(500).json({ 
+        error: "Failed to join ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -127,6 +152,22 @@ export function registerRoutes(app: Express): Server {
       const rideId = parseInt(req.params.id);
       if (isNaN(rideId)) {
         return res.status(400).json({ error: "Invalid ride ID" });
+      }
+
+      // Check if user is actually in the ride
+      const participant = await db
+        .select()
+        .from(rideParticipants)
+        .where(
+          and(
+            eq(rideParticipants.rideId, rideId),
+            eq(rideParticipants.userId, user.id)
+          )
+        )
+        .limit(1);
+
+      if (participant.length === 0) {
+        return res.status(400).json({ error: "Not joined in this ride" });
       }
 
       await db.delete(rideParticipants)
@@ -143,7 +184,10 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ error: "Failed to leave ride" });
+      res.status(500).json({ 
+        error: "Failed to leave ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -184,7 +228,10 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ error: "Failed to delete ride" });
+      res.status(500).json({ 
+        error: "Failed to delete ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
