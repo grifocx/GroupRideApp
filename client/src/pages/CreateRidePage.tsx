@@ -18,7 +18,7 @@ const createRideSchema = z.object({
   latitude: z.string(),
   longitude: z.string(),
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
-  pace: z.number().min(1, "Pace must be at least 1 km/h"),
+  pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
 });
 
