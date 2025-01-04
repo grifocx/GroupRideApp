@@ -13,7 +13,7 @@ export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time").notNull(),
-  distance: integer("distance").notNull(), // in km
+  distance: integer("distance").notNull(), // in miles
   difficulty: integer("difficulty").notNull(), // 1-5
   maxRiders: integer("max_riders").notNull(),
   ownerId: integer("owner_id").notNull().references(() => users.id),
@@ -21,7 +21,7 @@ export const rides = pgTable("rides", {
   longitude: text("longitude").notNull(),
   // New fields
   rideType: text("ride_type").notNull(), // 'MTB', 'ROAD', 'GRAVEL'
-  pace: real("pace").notNull(), // Average speed in km/h
+  pace: real("pace").notNull(), // Average speed in mph
   terrain: text("terrain").notNull(), // 'FLAT', 'HILLY', 'MOUNTAIN'
   routeUrl: text("route_url"), // Optional route map URL
   description: text("description"), // Optional ride description

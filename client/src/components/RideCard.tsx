@@ -54,7 +54,7 @@ export default function RideCard({ ride }: RideCardProps) {
       <CardContent>
         <div className="space-y-4">
           <div className="flex justify-between">
-            <div>Distance: {ride.distance} km</div>
+            <div>Distance: {ride.distance} miles</div>
             <div>
               Difficulty:{" "}
               {Array(5)

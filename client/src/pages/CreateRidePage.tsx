@@ -112,7 +112,7 @@ export default function CreateRidePage() {
             </div>
 
             <div className="space-y-2">
-              <label>Distance (km)</label>
+              <label>Distance (miles)</label>
               <Input
                 type="number"
                 {...form.register("distance", { valueAsNumber: true })}
@@ -157,7 +157,7 @@ export default function CreateRidePage() {
             </div>
 
             <div className="space-y-2">
-              <label>Average Pace (km/h)</label>
+              <label>Average Pace (mph)</label>
               <Input
                 type="number"
                 {...form.register("pace", { valueAsNumber: true })}

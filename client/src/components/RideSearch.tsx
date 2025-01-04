@@ -102,7 +102,7 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
       </div>
 
       <div className="space-y-2">
-        <label className="text-sm font-medium">Distance Range (km)</label>
+        <label className="text-sm font-medium">Distance Range (miles)</label>
         <div className="flex items-center gap-4">
           <Input
             type="number"
