@@ -3,6 +3,7 @@ import { useRides } from "@/hooks/use-rides";
 import RideCard from "@/components/RideCard";
 import { NavBar } from "@/components/NavBar";
 import RideSearch, { type RideFilters } from "@/components/RideSearch";
+import Footer from "@/components/Footer";
 import { MapComponent } from "@/components/MapComponent";
 import CalendarView from "@/components/CalendarView";
 import { Loader2, Calendar as CalendarIcon } from "lucide-react";
