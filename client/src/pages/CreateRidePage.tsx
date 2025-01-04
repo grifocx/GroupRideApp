@@ -38,6 +38,9 @@ export default function CreateRidePage() {
       latitude: "45.5155",
       longitude: "-122.6789",
       dateTime: new Date().toISOString().slice(0, 16), // Format for datetime-local input
+      rideType: "ROAD",
+      pace: 20,
+      terrain: "FLAT"
     },
   });
 
