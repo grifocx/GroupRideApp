@@ -14,7 +14,9 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
-const registerSchema = loginSchema.extend({
+const registerSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
   email: z.string().email("Invalid email address"),
 });
 
@@ -39,11 +41,16 @@ export default function AuthPage() {
   const onSubmit = async (data: RegisterForm) => {
     try {
       setIsLoading(true);
-      const authData = isLogin ? 
-        { username: data.username, password: data.password } :
-        { username: data.username, password: data.password, email: data.email };
-
-      await (isLogin ? login(authData) : register(authData));
+      if (isLogin) {
+        // For login, only send username and password
+        await login({ 
+          username: data.username, 
+          password: data.password 
+        });
+      } else {
+        // For registration, send all fields
+        await register(data);
+      }
       toast({
         title: "Success",
         description: isLogin ? "Successfully logged in!" : "Successfully registered!",
