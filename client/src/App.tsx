@@ -33,11 +33,10 @@ function App() {
             <main className="container mx-auto px-4 py-16">
               <div className="max-w-3xl mx-auto text-center">
                 <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
-                  Welcome to DC Cycling Community
+                  Welcome to RideGroops - Find and Organize Bicycle Rides
                 </h1>
                 <p className="text-xl text-muted-foreground mb-8">
-                  Join our vibrant community of cyclists in Washington DC. Discover new routes, 
-                  meet fellow riders, and participate in exciting group rides.
+                  Join a vibrant community of cyclists to discover new routes, meet fellow riders, and participate in exciting group rides.
                 </p>
                 <AuthPage />
               </div>
