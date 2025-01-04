@@ -8,14 +8,14 @@ interface ProfileProgressProps {
 
 // Fields that contribute to profile completion
 const profileFields = [
-  'display_name',
+  'avatarUrl',
   'email',
+  'display_name',
   'zip_code',
   'club',
   'home_bike_shop',
   'gender',
-  'birthdate',
-  'avatar_url'
+  'birthdate'
 ] as const;
 
 export function ProfileProgress({ user }: ProfileProgressProps) {
@@ -49,7 +49,7 @@ export function ProfileProgress({ user }: ProfileProgressProps) {
             {profileFields.map(field => !user[field] && (
               <li key={field} className="flex items-center gap-2">
                 <span className="w-2 h-2 rounded-full bg-primary/20" />
-                {field.split('_').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ')}
+                {field.split(/(?=[A-Z])/).join(' ').toLowerCase()}
               </li>
             ))}
           </ul>

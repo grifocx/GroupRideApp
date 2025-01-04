@@ -206,7 +206,6 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <NavBar />
-
       <main className="container mx-auto px-4 py-8">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -229,7 +228,7 @@ export default function ProfilePage() {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.avatar_url} alt={user?.username} />
+                    <AvatarImage src={user?.avatarUrl} alt={user?.username} />
                     <AvatarFallback>
                       {user?.username?.slice(0, 2).toUpperCase()}
                     </AvatarFallback>
@@ -262,9 +261,53 @@ export default function ProfilePage() {
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
+                <div className="grid gap-4">
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Username</h3>
+                    <p className="mt-1">{user?.username}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Display Name</h3>
+                    <p className="mt-1">{user?.display_name || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
+                    <p className="mt-1">{user?.email || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Zip Code</h3>
+                    <p className="mt-1">{user?.zip_code || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Club</h3>
+                    <p className="mt-1">{user?.club || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Home Bike Shop</h3>
+                    <p className="mt-1">{user?.home_bike_shop || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Gender</h3>
+                    <p className="mt-1">{user?.gender || "Not set"}</p>
+                  </div>
+
+                  <div>
+                    <h3 className="text-sm font-medium text-muted-foreground">Birthdate</h3>
+                    <p className="mt-1">
+                      {user?.birthdate ? format(new Date(user.birthdate), 'MMMM d, yyyy') : "Not set"}
+                    </p>
+                  </div>
+                </div>
+
                 <Dialog>
                   <DialogTrigger asChild>
-                    <Button variant="outline" className="mb-4">Edit Profile</Button>
+                    <Button variant="outline" className="w-full">Edit Profile</Button>
                   </DialogTrigger>
                   <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
@@ -285,16 +328,17 @@ export default function ProfilePage() {
                           home_bike_shop: formData.get('home_bike_shop'),
                           gender: formData.get('gender'),
                           birthdate: formData.get('birthdate'),
+                          email: formData.get('email'),
                         }),
                         credentials: 'include'
                       });
 
                       if (response.ok) {
+                        queryClient.invalidateQueries({ queryKey: ['user'] });
                         toast({
                           title: "Success",
                           description: "Profile updated successfully"
                         });
-                        queryClient.invalidateQueries({ queryKey: ['user'] });
                       } else {
                         toast({
                           variant: "destructive",
@@ -306,6 +350,10 @@ export default function ProfilePage() {
                       <div className="space-y-2">
                         <label>Display Name</label>
                         <Input name="display_name" defaultValue={user?.display_name || ''} />
+                      </div>
+                      <div className="space-y-2">
+                        <label>Email</label>
+                        <Input name="email" type="email" defaultValue={user?.email || ''} />
                       </div>
                       <div className="space-y-2">
                         <label>Zip Code</label>
