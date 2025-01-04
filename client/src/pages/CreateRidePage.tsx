@@ -4,8 +4,6 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { NavBar } from "@/components/NavBar";
-import { RoutePlanner } from "@/components/RoutePlanner";
 import type { InsertRide } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -20,8 +18,6 @@ const createRideSchema = z.object({
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
-  routeUrl: z.string().optional(),
-  description: z.string().optional(),
 });
 
 type CreateRideForm = z.infer<typeof createRideSchema>;
@@ -41,29 +37,9 @@ export default function CreateRidePage() {
       dateTime: new Date().toISOString().slice(0, 16),
       rideType: "ROAD",
       pace: 20,
-      terrain: "FLAT",
+      terrain: "FLAT"
     },
   });
-
-  const handleRouteChange = (route: {
-    distance: number;
-    elevationGain: number;
-    difficulty: string;
-    coordinates: [number, number][];
-  }) => {
-    // Update form with route data
-    form.setValue('distance', Math.round(route.distance * 0.621371)); // Convert km to miles
-    form.setValue('difficulty', route.difficulty);
-
-    // Set terrain based on elevation gain
-    if (route.elevationGain < 100) {
-      form.setValue('terrain', 'FLAT');
-    } else if (route.elevationGain < 500) {
-      form.setValue('terrain', 'HILLY');
-    } else {
-      form.setValue('terrain', 'MOUNTAIN');
-    }
-  };
 
   const onSubmit = async (data: CreateRideForm) => {
     try {
@@ -102,123 +78,119 @@ export default function CreateRidePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar />
-      <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader>
-            <CardTitle>Create New Ride</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-              <div className="space-y-6">
-                <div>
-                  <h3 className="text-lg font-semibold mb-4">Plan Route</h3>
-                  <p className="text-sm text-muted-foreground mb-4">
-                    Click on the map to add waypoints and create your route. The elevation profile and difficulty will be calculated automatically.
-                  </p>
-                  <RoutePlanner onRouteChange={handleRouteChange} />
-                </div>
-              </div>
-
-              <div>
-                <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                  <div className="space-y-2">
-                    <label>Title</label>
-                    <Input
-                      placeholder="Ride Title"
-                      {...form.register("title")}
-                    />
-                    {form.formState.errors.title && (
-                      <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Meeting Location</label>
-                    <Input
-                      placeholder="Enter the starting point address"
-                      {...form.register("address")}
-                    />
-                    {form.formState.errors.address && (
-                      <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>
-                    )}
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Date and Time</label>
-                    <Input
-                      type="datetime-local"
-                      {...form.register("dateTime")}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Distance (miles)</label>
-                    <Input
-                      type="number"
-                      {...form.register("distance", { valueAsNumber: true })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Difficulty</label>
-                    <select className="w-full p-2 border rounded" {...form.register("difficulty")}>
-                      <option value="E">E - Easy</option>
-                      <option value="D">D - Moderate</option>
-                      <option value="C">C - Hard</option>
-                      <option value="B">B - Challenging</option>
-                      <option value="A">A - Very Hard</option>
-                      <option value="AA">AA - Extreme</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Max Riders</label>
-                    <Input
-                      type="number"
-                      {...form.register("maxRiders", { valueAsNumber: true })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Ride Type</label>
-                    <select className="w-full p-2 border rounded" {...form.register("rideType")}>
-                      <option value="MTB">Mountain Bike</option>
-                      <option value="ROAD">Road</option>
-                      <option value="GRAVEL">Gravel</option>
-                    </select>
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Average Pace (mph)</label>
-                    <Input
-                      type="number"
-                      {...form.register("pace", { valueAsNumber: true })}
-                    />
-                  </div>
-
-                  <div className="space-y-2">
-                    <label>Terrain</label>
-                    <select className="w-full p-2 border rounded" {...form.register("terrain")}>
-                      <option value="FLAT">Flat</option>
-                      <option value="HILLY">Hilly</option>
-                      <option value="MOUNTAIN">Mountain</option>
-                    </select>
-                  </div>
-
-                  <div className="flex gap-4">
-                    <Button type="submit">Create Ride</Button>
-                    <Button type="button" variant="outline" onClick={() => setLocation("/")}>
-                      Cancel
-                    </Button>
-                  </div>
-                </form>
-              </div>
+    <div className="min-h-screen bg-background flex items-center justify-center">
+      <Card className="w-[600px] mx-4">
+        <CardHeader>
+          <CardTitle>Create New Ride</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            <div className="space-y-2">
+              <label>Title</label>
+              <Input
+                placeholder="Ride Title"
+                {...form.register("title")}
+              />
+              {form.formState.errors.title && (
+                <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>
+              )}
             </div>
-          </CardContent>
-        </Card>
-      </main>
+
+            <div className="space-y-2">
+              <label>Meeting Location</label>
+              <Input
+                placeholder="Enter the starting point address"
+                {...form.register("address")}
+              />
+              {form.formState.errors.address && (
+                <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Date and Time</label>
+              <Input
+                type="datetime-local"
+                {...form.register("dateTime")}
+              />
+              {form.formState.errors.dateTime && (
+                <p className="text-sm text-destructive">{form.formState.errors.dateTime.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Distance (miles)</label>
+              <Input
+                type="number"
+                {...form.register("distance", { valueAsNumber: true })}
+              />
+              {form.formState.errors.distance && (
+                <p className="text-sm text-destructive">{form.formState.errors.distance.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Difficulty</label>
+              <select className="w-full p-2 border rounded" {...form.register("difficulty")}>
+                <option value="E">E - Easy</option>
+                <option value="D">D - Moderate</option>
+                <option value="C">C - Hard</option>
+                <option value="B">B - Challenging</option>
+                <option value="A">A - Very Hard</option>
+                <option value="AA">AA - Extreme</option>
+              </select>
+              {form.formState.errors.difficulty && (
+                <p className="text-sm text-destructive">{form.formState.errors.difficulty.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Max Riders</label>
+              <Input
+                type="number"
+                {...form.register("maxRiders", { valueAsNumber: true })}
+              />
+              {form.formState.errors.maxRiders && (
+                <p className="text-sm text-destructive">{form.formState.errors.maxRiders.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Ride Type</label>
+              <select className="w-full p-2 border rounded" {...form.register("rideType")}>
+                <option value="MTB">Mountain Bike</option>
+                <option value="ROAD">Road</option>
+                <option value="GRAVEL">Gravel</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label>Average Pace (mph)</label>
+              <Input
+                type="number"
+                {...form.register("pace", { valueAsNumber: true })}
+                defaultValue={20}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label>Terrain</label>
+              <select className="w-full p-2 border rounded" {...form.register("terrain")}>
+                <option value="FLAT">Flat</option>
+                <option value="HILLY">Hilly</option>
+                <option value="MOUNTAIN">Mountain</option>
+              </select>
+            </div>
+
+            <div className="flex gap-4">
+              <Button type="submit">Create Ride</Button>
+              <Button type="button" variant="outline" onClick={() => setLocation("/")}>
+                Cancel
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
     </div>
   );
 }
