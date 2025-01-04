@@ -17,6 +17,9 @@ const createRideSchema = z.object({
   maxRiders: z.number().min(1, "Must allow at least 1 rider"),
   latitude: z.string(),
   longitude: z.string(),
+  rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
+  pace: z.number().min(1, "Pace must be at least 1 km/h"),
+  terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
 });
 
 type CreateRideForm = z.infer<typeof createRideSchema>;
@@ -138,6 +141,33 @@ export default function CreateRidePage() {
               {form.formState.errors.maxRiders && (
                 <p className="text-sm text-destructive">{form.formState.errors.maxRiders.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Ride Type</label>
+              <select className="w-full p-2 border rounded" {...form.register("rideType")}>
+                <option value="MTB">Mountain Bike</option>
+                <option value="ROAD">Road</option>
+                <option value="GRAVEL">Gravel</option>
+              </select>
+            </div>
+
+            <div className="space-y-2">
+              <label>Average Pace (km/h)</label>
+              <Input
+                type="number"
+                {...form.register("pace", { valueAsNumber: true })}
+                defaultValue={20}
+              />
+            </div>
+
+            <div className="space-y-2">
+              <label>Terrain</label>
+              <select className="w-full p-2 border rounded" {...form.register("terrain")}>
+                <option value="FLAT">Flat</option>
+                <option value="HILLY">Hilly</option>
+                <option value="MOUNTAIN">Mountain</option>
+              </select>
             </div>
 
             <div className="flex gap-4">
