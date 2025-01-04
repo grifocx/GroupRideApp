@@ -316,34 +316,49 @@ export default function ProfilePage() {
                     <form onSubmit={async (e) => {
                       e.preventDefault();
                       const formData = new FormData(e.currentTarget);
-                      const response = await fetch('/api/user/profile', {
-                        method: 'PUT',
-                        headers: {
-                          'Content-Type': 'application/json',
-                        },
-                        body: JSON.stringify({
-                          display_name: formData.get('display_name'),
-                          zip_code: formData.get('zip_code'),
-                          club: formData.get('club'),
-                          home_bike_shop: formData.get('home_bike_shop'),
-                          gender: formData.get('gender'),
-                          birthdate: formData.get('birthdate'),
-                          email: formData.get('email'),
-                        }),
-                        credentials: 'include'
-                      });
 
-                      if (response.ok) {
+                      const payload = {
+                        display_name: formData.get('display_name'),
+                        zip_code: formData.get('zip_code'),
+                        club: formData.get('club'),
+                        home_bike_shop: formData.get('home_bike_shop'),
+                        gender: formData.get('gender'),
+                        birthdate: formData.get('birthdate'),
+                        email: formData.get('email'),
+                      };
+
+                      console.log('Submitting profile update:', payload);
+
+                      try {
+                        const response = await fetch('/api/user/profile', {
+                          method: 'PUT',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify(payload),
+                          credentials: 'include'
+                        });
+
+                        if (!response.ok) {
+                          throw new Error(await response.text());
+                        }
+
+                        const updatedUser = await response.json();
+                        console.log('Profile update response:', updatedUser);
+
+                        // Invalidate the user query to refetch the latest data
                         queryClient.invalidateQueries({ queryKey: ['user'] });
+
                         toast({
                           title: "Success",
                           description: "Profile updated successfully"
                         });
-                      } else {
+                      } catch (error) {
+                        console.error('Profile update error:', error);
                         toast({
                           variant: "destructive",
                           title: "Error",
-                          description: "Failed to update profile"
+                          description: error instanceof Error ? error.message : "Failed to update profile"
                         });
                       }
                     }} className="space-y-4">

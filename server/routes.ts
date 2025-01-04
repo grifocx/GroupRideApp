@@ -517,9 +517,22 @@ export function registerRoutes(app: Express): Server {
   app.put("/api/user/profile", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
+      console.log('Profile update request body:', req.body);
+
       const { display_name, zip_code, club, home_bike_shop, gender, birthdate, email } = req.body;
 
-      await db
+      // Log the values we're going to update
+      console.log('Updating user profile with values:', {
+        display_name,
+        zip_code,
+        club,
+        home_bike_shop,
+        gender,
+        birthdate,
+        email
+      });
+
+      const [updatedUser] = await db
         .update(users)
         .set({
           display_name,
@@ -530,9 +543,13 @@ export function registerRoutes(app: Express): Server {
           birthdate: birthdate ? new Date(birthdate) : null,
           email,
         })
-        .where(eq(users.id, user.id));
+        .where(eq(users.id, user.id))
+        .returning();
 
-      res.json({ message: "Profile updated successfully" });
+      console.log('Updated user:', updatedUser);
+
+      // Return the updated user data
+      res.json(updatedUser);
     } catch (error) {
       console.error("Error updating profile:", error);
       res.status(500).json({ 
