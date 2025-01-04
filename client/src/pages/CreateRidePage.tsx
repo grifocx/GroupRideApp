@@ -128,9 +128,9 @@ export default function CreateRidePage() {
                 <option value="E">E - Easy</option>
                 <option value="D">D - Moderate</option>
                 <option value="C">C - Hard</option>
-                <option value="B">B - Hard</option>
-                <option value="A">A - Hard</option>
-                <option value="AA">AA - Hard</option>
+                <option value="B">B - Challenging</option>
+                <option value="A">A - Very Hard</option>
+                <option value="AA">AA - Extreme</option>
               </select>
               {form.formState.errors.difficulty && (
                 <p className="text-sm text-destructive">{form.formState.errors.difficulty.message}</p>
