@@ -58,9 +58,11 @@ export default function CreateRidePage() {
         credentials: "include",
       });
 
+      const responseData = await response.json();
+      console.log('Create ride response:', response.status, responseData);
+
       if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || error.error || "Failed to create ride");
+        throw new Error(responseData.message || responseData.error || "Failed to create ride");
       }
 
       toast({
