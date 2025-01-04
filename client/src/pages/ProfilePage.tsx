@@ -317,6 +317,14 @@ export default function ProfilePage() {
                       e.preventDefault();
                       const formData = new FormData(e.currentTarget);
 
+                      // Get the close function from the Dialog context
+                      const closeDialog = () => {
+                        const closeButton = document.querySelector('[aria-label="Close"]');
+                        if (closeButton instanceof HTMLButtonElement) {
+                          closeButton.click();
+                        }
+                      };
+
                       const payload = {
                         display_name: formData.get('display_name'),
                         zip_code: formData.get('zip_code'),
@@ -326,8 +334,6 @@ export default function ProfilePage() {
                         birthdate: formData.get('birthdate'),
                         email: formData.get('email'),
                       };
-
-                      console.log('Submitting profile update:', payload);
 
                       try {
                         const response = await fetch('/api/user/profile', {
@@ -343,16 +349,19 @@ export default function ProfilePage() {
                           throw new Error(await response.text());
                         }
 
-                        const updatedUser = await response.json();
-                        console.log('Profile update response:', updatedUser);
+                        // Wait for the update to complete
+                        await response.json();
 
-                        // Invalidate the user query to refetch the latest data
-                        queryClient.invalidateQueries({ queryKey: ['user'] });
+                        // Invalidate and wait for the query to refetch
+                        await queryClient.invalidateQueries({ queryKey: ['user'] });
 
                         toast({
                           title: "Success",
                           description: "Profile updated successfully"
                         });
+
+                        // Close the dialog after successful update
+                        closeDialog();
                       } catch (error) {
                         console.error('Profile update error:', error);
                         toast({

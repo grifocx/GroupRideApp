@@ -22,7 +22,10 @@ export function ProfileProgress({ user }: ProfileProgressProps) {
   if (!user) return null;
 
   // Calculate completion percentage
-  const completedFields = profileFields.filter(field => Boolean(user[field]));
+  const completedFields = profileFields.filter(field => {
+    const value = user[field as keyof User];
+    return value !== null && value !== undefined && value !== '';
+  });
   const completionPercentage = Math.round((completedFields.length / profileFields.length) * 100);
 
   return (
@@ -46,12 +49,18 @@ export function ProfileProgress({ user }: ProfileProgressProps) {
         >
           Complete your profile to get the most out of RideGroops:
           <ul className="mt-2 space-y-1">
-            {profileFields.map(field => !user[field] && (
-              <li key={field} className="flex items-center gap-2">
-                <span className="w-2 h-2 rounded-full bg-primary/20" />
-                {field.split(/(?=[A-Z])/).join(' ').toLowerCase()}
-              </li>
-            ))}
+            {profileFields.map(field => {
+              const value = user[field as keyof User];
+              if (!value) {
+                return (
+                  <li key={field} className="flex items-center gap-2">
+                    <span className="w-2 h-2 rounded-full bg-primary/20" />
+                    {field.split(/(?=[A-Z])/).join(' ').toLowerCase()}
+                  </li>
+                );
+              }
+              return null;
+            })}
           </ul>
         </motion.div>
       )}
