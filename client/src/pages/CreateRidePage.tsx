@@ -123,14 +123,15 @@ export default function CreateRidePage() {
             </div>
 
             <div className="space-y-2">
-              <label>Difficulty (1-5)</label>
-              <Slider
-                defaultValue={[form.getValues("difficulty")]}
-                min={1}
-                max={5}
-                step={1}
-                onValueChange={([value]) => form.setValue("difficulty", value)}
-              />
+              <label>Difficulty</label>
+              <select className="w-full p-2 border rounded" {...form.register("difficulty")}>
+                <option value="E">E - Easy</option>
+                <option value="D">D - Moderate</option>
+                <option value="C">C - Hard</option>
+                <option value="B">B - Hard</option>
+                <option value="A">A - Hard</option>
+                <option value="AA">AA - Hard</option>
+              </select>
               {form.formState.errors.difficulty && (
                 <p className="text-sm text-destructive">{form.formState.errors.difficulty.message}</p>
               )}

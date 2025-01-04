@@ -56,17 +56,7 @@ export default function RideCard({ ride }: RideCardProps) {
           <div className="flex justify-between">
             <div>Distance: {ride.distance} miles</div>
             <div>
-              Difficulty:{" "}
-              {Array(5)
-                .fill("●")
-                .map((dot, i) => (
-                  <span
-                    key={i}
-                    className={i < ride.difficulty ? "text-primary" : "text-muted"}
-                  >
-                    {dot}
-                  </span>
-                ))}
+              Difficulty: <span className="text-primary font-bold">{ride.difficulty}</span>
             </div>
           </div>
 

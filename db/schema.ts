@@ -14,7 +14,7 @@ export const rides = pgTable("rides", {
   title: text("title").notNull(),
   dateTime: timestamp("date_time").notNull(),
   distance: integer("distance").notNull(), // in miles
-  difficulty: integer("difficulty").notNull(), // 1-5
+  difficulty: text("difficulty").notNull(), // E, D, C, B, A, AA
   maxRiders: integer("max_riders").notNull(),
   ownerId: integer("owner_id").notNull().references(() => users.id),
   latitude: text("latitude").notNull(),
@@ -65,7 +65,7 @@ export const insertRideSchema = createInsertSchema(rides, {
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
-  difficulty: z.coerce.number().min(1).max(5),
+  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
   maxRiders: z.coerce.number().min(1),
   dateTime: z.string().transform((str) => new Date(str)),
   ownerId: z.number().optional(),
