@@ -217,7 +217,7 @@ export default function ProfilePage() {
             <div className="flex items-center gap-6">
               <div className="relative group">
                 <Avatar className="h-24 w-24">
-                  <AvatarImage src={user?.avatarUrl} alt={user?.username} />
+                  <AvatarImage src={user?.avatar_url} alt={user?.username} />
                   <AvatarFallback>
                     {user?.username?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
@@ -254,16 +254,16 @@ export default function ProfilePage() {
                           'Content-Type': 'application/json',
                         },
                         body: JSON.stringify({
-                          displayName: formData.get('displayName'),
-                          zipCode: formData.get('zipCode'),
+                          display_name: formData.get('display_name'),
+                          zip_code: formData.get('zip_code'),
                           club: formData.get('club'),
-                          homeBikeShop: formData.get('homeBikeShop'),
+                          home_bike_shop: formData.get('home_bike_shop'),
                           gender: formData.get('gender'),
                           birthdate: formData.get('birthdate'),
                         }),
                         credentials: 'include'
                       });
-                      
+
                       if (response.ok) {
                         toast({
                           title: "Success",
@@ -280,11 +280,11 @@ export default function ProfilePage() {
                     }} className="space-y-4">
                       <div className="space-y-2">
                         <label>Display Name</label>
-                        <Input name="displayName" defaultValue={user?.displayName || ''} />
+                        <Input name="display_name" defaultValue={user?.display_name || ''} />
                       </div>
                       <div className="space-y-2">
                         <label>Zip Code</label>
-                        <Input name="zipCode" defaultValue={user?.zipCode || ''} />
+                        <Input name="zip_code" defaultValue={user?.zip_code || ''} />
                       </div>
                       <div className="space-y-2">
                         <label>Club</label>
@@ -292,7 +292,7 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <label>Home Bike Shop</label>
-                        <Input name="homeBikeShop" defaultValue={user?.homeBikeShop || ''} />
+                        <Input name="home_bike_shop" defaultValue={user?.home_bike_shop || ''} />
                       </div>
                       <div className="space-y-2">
                         <label>Gender</label>
@@ -324,39 +324,39 @@ export default function ProfilePage() {
 
                 <h3 className="text-lg font-medium">Username</h3>
                 <p>{user?.username}</p>
-                
-                {user?.displayName && (
+
+                {user?.display_name && (
                   <>
                     <h3 className="text-lg font-medium">Display Name</h3>
-                    <p>{user.displayName}</p>
+                    <p>{user.display_name}</p>
                   </>
                 )}
-                
+
                 {user?.email && (
                   <>
                     <h3 className="text-lg font-medium">Email</h3>
                     <p>{user.email}</p>
                   </>
                 )}
-                
+
                 {user?.club && (
                   <>
                     <h3 className="text-lg font-medium">Club</h3>
                     <p>{user.club}</p>
                   </>
                 )}
-                
-                {user?.homeBikeShop && (
+
+                {user?.home_bike_shop && (
                   <>
                     <h3 className="text-lg font-medium">Home Bike Shop</h3>
-                    <p>{user.homeBikeShop}</p>
+                    <p>{user.home_bike_shop}</p>
                   </>
                 )}
-                
-                {user?.zipCode && (
+
+                {user?.zip_code && (
                   <>
                     <h3 className="text-lg font-medium">Zip Code</h3>
-                    <p>{user.zipCode}</p>
+                    <p>{user.zip_code}</p>
                   </>
                 )}
               </div>
