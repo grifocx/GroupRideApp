@@ -4,7 +4,8 @@ import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import CreateRidePage from "./pages/CreateRidePage";
 import ProfilePage from "./pages/ProfilePage";
-import AdminPage from "./pages/AdminPage"; // Added import
+import CalendarPage from "./pages/CalendarPage";
+import AdminPage from "./pages/AdminPage";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -30,7 +31,8 @@ function App() {
         <Route path="/rides" component={HomePage} />
         <Route path="/create" component={CreateRidePage} />
         <Route path="/profile" component={ProfilePage} />
-        {user.isAdmin && <Route path="/admin" component={AdminPage} />} {/* Conditional admin route */}
+        <Route path="/calendar" component={CalendarPage} />
+        {user.isAdmin && <Route path="/admin" component={AdminPage} />}
         <Route>
           {/* 404 Not Found */}
           <div className="flex items-center justify-center min-h-screen p-4">
