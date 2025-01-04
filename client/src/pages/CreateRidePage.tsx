@@ -18,6 +18,8 @@ const createRideSchema = z.object({
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
+  route_url: z.string().url().optional(),
+  description: z.string().optional(),
 });
 
 type CreateRideForm = z.infer<typeof createRideSchema>;
@@ -37,7 +39,9 @@ export default function CreateRidePage() {
       dateTime: new Date().toISOString().slice(0, 16),
       rideType: "ROAD",
       pace: 20,
-      terrain: "FLAT"
+      terrain: "FLAT",
+      route_url: "",
+      description: ""
     },
   });
 
@@ -108,6 +112,27 @@ export default function CreateRidePage() {
               {form.formState.errors.address && (
                 <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>
               )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Route URL (optional)</label>
+              <Input
+                type="url"
+                placeholder="https://www.strava.com/routes/..."
+                {...form.register("route_url")}
+              />
+              {form.formState.errors.route_url && (
+                <p className="text-sm text-destructive">{form.formState.errors.route_url.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Description (optional)</label>
+              <textarea
+                className="w-full p-2 border rounded min-h-[100px]"
+                placeholder="Add any additional details about the ride..."
+                {...form.register("description")}
+              />
             </div>
 
             <div className="space-y-2">

@@ -182,9 +182,9 @@ export default function RidePage() {
                     {ride.route_url && (
                       <div className="flex items-center gap-2">
                         <Link2 className="h-4 w-4 text-primary" />
-                        <a 
-                          href={ride.route_url} 
-                          target="_blank" 
+                        <a
+                          href={ride.route_url}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="text-primary hover:underline inline-flex items-center gap-2"
                         >
@@ -231,7 +231,6 @@ export default function RidePage() {
                     <div className="text-sm font-medium">Organized by</div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <Avatar className="h-6 w-6">
-                        <AvatarImage src={user?.avatarUrl} />
                         <AvatarFallback>
                           {ride.owner.username[0].toUpperCase()}
                         </AvatarFallback>
