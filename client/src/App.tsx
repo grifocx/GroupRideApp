@@ -24,11 +24,25 @@ function App() {
     );
   }
 
+  // Show a welcoming landing page for non-authenticated users
   if (!user) {
     return (
       <AnimatePresence mode="wait">
         <PageTransition>
-          <AuthPage />
+          <div className="min-h-screen bg-background">
+            <main className="container mx-auto px-4 py-16">
+              <div className="max-w-3xl mx-auto text-center">
+                <h1 className="text-4xl font-bold tracking-tight sm:text-6xl mb-6">
+                  Welcome to DC Cycling Community
+                </h1>
+                <p className="text-xl text-muted-foreground mb-8">
+                  Join our vibrant community of cyclists in Washington DC. Discover new routes, 
+                  meet fellow riders, and participate in exciting group rides.
+                </p>
+                <AuthPage />
+              </div>
+            </main>
+          </div>
         </PageTransition>
       </AnimatePresence>
     );
