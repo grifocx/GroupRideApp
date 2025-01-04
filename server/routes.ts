@@ -42,7 +42,7 @@ export function registerRoutes(app: Express): Server {
     try {
       const user = ensureAuthenticated(req);
 
-      // Convert numeric string fields to numbers
+      // Convert numeric string fields to numbers and ensure difficulty is a valid string
       const body = {
         ...req.body,
         difficulty: String(req.body.difficulty).toUpperCase(), // Ensure difficulty is a string and uppercase
