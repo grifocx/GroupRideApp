@@ -95,15 +95,15 @@ export function setupAuth(app: Express) {
         .select({
           id: users.id,
           username: users.username,
-          isAdmin: users.isAdmin,
-          displayName: users.display_name,
-          zipCode: users.zip_code,
+          is_admin: users.isAdmin,
+          display_name: users.display_name,
+          zip_code: users.zip_code,
           club: users.club,
-          homeBikeShop: users.home_bike_shop,
+          home_bike_shop: users.home_bike_shop,
           gender: users.gender,
           birthdate: users.birthdate,
           email: users.email,
-          avatarUrl: users.avatarUrl,
+          avatar_url: users.avatarUrl,
         })
         .from(users)
         .where(eq(users.id, id))
