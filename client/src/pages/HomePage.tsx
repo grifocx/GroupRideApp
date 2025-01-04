@@ -81,9 +81,9 @@ export default function HomePage() {
       {/* Welcome Banner - More compact */}
       <section className="bg-primary text-primary-foreground py-6">
         <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl font-bold mb-2">Welcome to CycleGroup</h1>
+          <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
           <p className="text-lg max-w-2xl mx-auto">
-            Connect with fellow cyclists, join group rides, and explore new trails together.
+            Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
           </p>
         </div>
       </section>

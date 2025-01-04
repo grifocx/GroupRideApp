@@ -85,7 +85,7 @@ export function NavBar() {
             <Link href="/">
               <a className="flex items-center space-x-2">
                 <Map className="h-6 w-6" />
-                <span className="font-bold inline-block">CycleGroup</span>
+                <span className="font-bold inline-block">RideGroops</span>
               </a>
             </Link>
 
