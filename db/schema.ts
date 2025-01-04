@@ -14,7 +14,7 @@ export const rides = pgTable("rides", {
   title: text("title").notNull(),
   dateTime: timestamp("date_time").notNull(),
   distance: integer("distance").notNull(), // in miles
-  difficulty: text("difficulty").notNull(), // E, D, C, B, A, AA
+  difficulty: text("difficulty").notNull().default('C'), // E, D, C, B, A, AA
   maxRiders: integer("max_riders").notNull(),
   ownerId: integer("owner_id").notNull().references(() => users.id),
   latitude: text("latitude").notNull(),
