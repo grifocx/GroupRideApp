@@ -128,9 +128,13 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      // First delete all ride participants
+      await db.delete(rideParticipants).where(eq(rideParticipants.rideId, rideId));
+      // Then delete the ride
       await db.delete(rides).where(eq(rides.id, rideId));
       res.json({ message: "Successfully deleted ride" });
     } catch (error) {
+      console.error("Error deleting ride:", error);
       res.status(500).json({ error: "Failed to delete ride" });
     }
   });
