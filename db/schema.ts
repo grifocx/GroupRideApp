@@ -9,9 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
   avatarUrl: text("avatar_url"),
-  email: text("email").unique().notNull(),
-  verificationToken: text("verification_token"),
-  isVerified: boolean("is_verified").notNull().default(false),
+  email: text("email"),
 });
 
 export const rides = pgTable("rides", {
@@ -57,11 +55,9 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
 }));
 
 export const insertUserSchema = createInsertSchema(users, {
-  email: z.string().email("Invalid email address"),
+  email: z.string().email().optional(),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
-  verificationToken: z.string().optional(),
-  isVerified: z.boolean().optional(),
 });
 export const selectUserSchema = createSelectSchema(users);
 

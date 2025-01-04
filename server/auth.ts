@@ -5,11 +5,9 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, insertUserSchema, type User as SelectUser } from "@db/schema";
+import { users, insertUserSchema, type User } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
-import { setupEmailTransporter, generateVerificationToken, sendVerificationEmail } from "./email";
-import { z } from "zod";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -30,34 +28,24 @@ const crypto = {
   },
 };
 
-// Separate schema for login validation
-const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-// extend express user object with our schema
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends User { }
   }
 }
 
-export async function setupAuth(app: Express) {
-  // Setup email transporter
-  await setupEmailTransporter();
-
+export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
   const sessionSettings: session.SessionOptions = {
     secret: process.env.REPL_ID || "cycling-group-secret",
-    resave: false,
-    saveUninitialized: false,
+    resave: true,
+    saveUninitialized: true,
     cookie: {
       maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
     },
     store: new MemoryStore({
-      checkPeriod: 86400000, // prune expired entries every 24h
+      checkPeriod: 86400000,
     }),
   };
 
@@ -86,16 +74,10 @@ export async function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username." });
         }
-
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
-
-        if (!user.isVerified) {
-          return done(null, false, { message: "Please verify your email before logging in." });
-        }
-
         return done(null, user);
       } catch (err) {
         return done(err);
@@ -103,14 +85,18 @@ export async function setupAuth(app: Express) {
     })
   );
 
-  passport.serializeUser((user, done) => {
+  passport.serializeUser((user: Express.User, done) => {
     done(null, user.id);
   });
 
   passport.deserializeUser(async (id: number, done) => {
     try {
       const [user] = await db
-        .select()
+        .select({
+          id: users.id,
+          username: users.username,
+          isAdmin: users.isAdmin,
+        })
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
@@ -129,9 +115,8 @@ export async function setupAuth(app: Express) {
           .json({ error: result.error.issues.map(i => i.message).join(", ") });
       }
 
-      const { username, password, email } = result.data;
+      const { username, password } = result.data;
 
-      // Check if user already exists
       const [existingUser] = await db
         .select()
         .from(users)
@@ -142,44 +127,28 @@ export async function setupAuth(app: Express) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
-      // Check if email is already registered
-      const [existingEmail] = await db
-        .select()
-        .from(users)
-        .where(eq(users.email, email))
-        .limit(1);
-
-      if (existingEmail) {
-        return res.status(400).json({ error: "Email already registered" });
-      }
-
-      // Generate verification token
-      const verificationToken = generateVerificationToken();
       const hashedPassword = await crypto.hash(password);
 
-      // Create the new user
       const [newUser] = await db
         .insert(users)
         .values({
           username,
           password: hashedPassword,
-          email,
-          verificationToken,
-          isVerified: false,
         })
-        .returning();
+        .returning({
+          id: users.id,
+          username: users.username,
+          isAdmin: users.isAdmin,
+        });
 
-      // Send verification email
-      await sendVerificationEmail(email, verificationToken);
-
-      return res.json({
-        message: "Registration successful. Please check your email to verify your account.",
-        user: {
-          id: newUser.id,
-          username: newUser.username,
-          email: newUser.email,
-          isVerified: newUser.isVerified,
-        },
+      req.login(newUser, (err) => {
+        if (err) {
+          return next(err);
+        }
+        return res.json({
+          message: "Registration successful",
+          user: newUser,
+        });
       });
     } catch (error) {
       next(error);
@@ -187,15 +156,6 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    // Use the simplified login schema for validation
-    const result = loginSchema.safeParse(req.body);
-    if (!result.success) {
-      return res.status(400).json({ 
-        error: "Validation error", 
-        message: result.error.issues.map(i => i.message).join(", ") 
-      });
-    }
-
     passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
       if (err) {
         return next(err);
@@ -215,50 +175,11 @@ export async function setupAuth(app: Express) {
           user: {
             id: user.id,
             username: user.username,
-            email: user.email,
-            isVerified: user.isVerified,
+            isAdmin: user.isAdmin,
           },
         });
       });
     })(req, res, next);
-  });
-
-  app.get("/api/verify-email", async (req, res) => {
-    const { token } = req.query;
-
-    if (!token || typeof token !== 'string') {
-      return res.status(400).json({ error: "Invalid verification token" });
-    }
-
-    try {
-      const [user] = await db
-        .select()
-        .from(users)
-        .where(eq(users.verificationToken, token))
-        .limit(1);
-
-      if (!user) {
-        return res.status(400).json({ error: "Invalid verification token" });
-      }
-
-      if (user.isVerified) {
-        return res.json({ message: "Email already verified" });
-      }
-
-      // Update user verification status
-      await db
-        .update(users)
-        .set({
-          isVerified: true,
-          verificationToken: null,
-        })
-        .where(eq(users.id, user.id));
-
-      return res.json({ message: "Email verification successful" });
-    } catch (error) {
-      console.error("Verification error:", error);
-      return res.status(500).json({ error: "Failed to verify email" });
-    }
   });
 
   app.post("/api/logout", (req, res) => {
@@ -278,9 +199,7 @@ export async function setupAuth(app: Express) {
     return res.json({
       id: user.id,
       username: user.username,
-      email: user.email,
       isAdmin: user.isAdmin,
-      isVerified: user.isVerified,
     });
   });
 }
