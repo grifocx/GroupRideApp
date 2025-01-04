@@ -6,20 +6,11 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { z } from "zod";
 
-const loginSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(1, "Password is required"),
-});
-
-const registerSchema = loginSchema.extend({
-  email: z.string().email("Invalid email address"),
-});
-
-type LoginForm = z.infer<typeof loginSchema>;
-type RegisterForm = z.infer<typeof registerSchema>;
+type FormData = {
+  username: string;
+  password: string;
+};
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -27,23 +18,17 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { login, register } = useUser();
 
-  const form = useForm<RegisterForm>({
-    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
+  const form = useForm<FormData>({
     defaultValues: {
       username: "",
       password: "",
-      email: "",
     },
   });
 
-  const onSubmit = async (data: RegisterForm) => {
+  const onSubmit = async (data: FormData) => {
     try {
       setIsLoading(true);
-      const authData = isLogin ? 
-        { username: data.username, password: data.password } :
-        { username: data.username, password: data.password, email: data.email };
-
-      await (isLogin ? login(authData) : register(authData));
+      await (isLogin ? login(data) : register(data));
       toast({
         title: "Success",
         description: isLogin ? "Successfully logged in!" : "Successfully registered!",
@@ -71,35 +56,20 @@ export default function AuthPage() {
             <div className="space-y-2">
               <Input
                 placeholder="Username"
-                {...form.register("username")}
+                {...form.register("username", { required: true })}
                 disabled={isLoading}
               />
               {form.formState.errors.username && (
-                <p className="text-sm text-destructive">{form.formState.errors.username.message}</p>
+                <p className="text-sm text-red-500">Username is required</p>
               )}
-
-              {!isLogin && (
-                <>
-                  <Input
-                    type="email"
-                    placeholder="Email"
-                    {...form.register("email")}
-                    disabled={isLoading}
-                  />
-                  {form.formState.errors.email && (
-                    <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
-                  )}
-                </>
-              )}
-
               <Input
                 type="password"
                 placeholder="Password"
-                {...form.register("password")}
+                {...form.register("password", { required: true })}
                 disabled={isLoading}
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
+                <p className="text-sm text-red-500">Password is required</p>
               )}
             </div>
 
