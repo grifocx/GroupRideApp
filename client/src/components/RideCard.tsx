@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Map, MapPin, Copy } from "lucide-react";
+import { Map, MapPin, Copy, Check } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
@@ -10,6 +10,7 @@ import type { Ride } from "@db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { useQueryClient } from "@tanstack/react-query";
+import { cn } from "@/lib/utils";
 
 type RideCardProps = {
   ride: Ride & {
@@ -116,13 +117,6 @@ export default function RideCard({ ride }: RideCardProps) {
         case 'facebook':
           shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
           break;
-        case 'instagram':
-          navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-          toast({
-            title: "Link Copied",
-            description: "Share this on your Instagram story or post",
-          });
-          return;
       }
 
       window.open(shareLink, '_blank', 'noopener,noreferrer');
@@ -147,7 +141,10 @@ export default function RideCard({ ride }: RideCardProps) {
   const participantCount = ride.participants.length;
 
   return (
-    <Card className="overflow-hidden transition-all hover:shadow-lg">
+    <Card className={cn(
+      "overflow-hidden transition-all hover:shadow-lg",
+      isJoined && "ring-2 ring-primary/50"
+    )}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
           <div>
@@ -226,11 +223,14 @@ export default function RideCard({ ride }: RideCardProps) {
 
           <Button
             className="w-full"
-            variant={isJoined ? "secondary" : "default"}
+            variant={isJoined ? "default" : "outline"}
             onClick={handleJoinToggle}
             disabled={!isJoined && participantCount >= ride.maxRiders}
           >
-            {isJoined ? "Leave Ride" : "Join Ride"}
+            <div className="flex items-center gap-2">
+              {isJoined && <Check className="h-4 w-4" />}
+              {isJoined ? "Joined - Click to Leave" : "Join Ride"}
+            </div>
           </Button>
         </div>
       </CardContent>
