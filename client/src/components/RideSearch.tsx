@@ -31,7 +31,7 @@ const difficultyLevels = [
   { value: DifficultyLevel.INTERMEDIATE, label: 'Intermediate (C)' },
   { value: DifficultyLevel.ADVANCED, label: 'Advanced (B)' },
   { value: DifficultyLevel.EXPERT, label: 'Expert (A)' },
-  { value: DifficultyLevel.PROFESSIONAL, label: 'Professional (AA)' }
+  { value: DifficultyLevel.EXTREME, label: 'Extreme (AA)' }
 ];
 
 export default function RideSearch({ onFilterChange }: RideSearchProps) {

@@ -68,7 +68,7 @@ export const DifficultyLevel = {
   INTERMEDIATE: 'C',
   ADVANCED: 'B',
   EXPERT: 'A',
-  PROFESSIONAL: 'AA'
+  EXTREME: 'AA'
 } as const;
 
 export const insertRideSchema = createInsertSchema(rides, {

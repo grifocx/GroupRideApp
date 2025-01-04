@@ -35,7 +35,7 @@ const difficultyLabels = {
   'C': 'Intermediate',
   'B': 'Advanced',
   'A': 'Expert',
-  'AA': 'Professional'
+  'AA': 'Extreme'
 } as const;
 
 export default function RideCard({ ride }: RideCardProps) {
