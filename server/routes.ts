@@ -406,10 +406,22 @@ export function registerRoutes(app: Express): Server {
           id: users.id,
           username: users.username,
           isAdmin: users.isAdmin,
-          rides: rides
         })
-        .from(users)
-        .leftJoin(rides, eq(rides.ownerId, users.id));
+        .from(users);
+
+      // Get rides count separately to avoid duplicates
+      const userRides = await db
+        .select({
+          ownerId: rides.ownerId,
+          count: sql<number>`count(*)::int`
+        })
+        .from(rides)
+        .groupBy(rides.ownerId);
+
+      const usersWithRideCount = allUsers.map(user => ({
+        ...user,
+        rides: userRides.find(r => r.ownerId === user.id)?.count || 0
+      }));
 
       // Remove password hashes from response
       const safeUsers = allUsers.map(user => {

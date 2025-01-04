@@ -299,6 +299,7 @@ export default function AdminPage() {
                   <table className="min-w-full divide-y">
                     <thead className="bg-muted">
                       <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Username</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Admin</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Rides Created</th>
@@ -308,6 +309,7 @@ export default function AdminPage() {
                     <tbody className="divide-y">
                       {users?.map((user) => (
                         <tr key={user.id}>
+                          <td className="px-4 py-3">{user.id}</td>
                           <td className="px-4 py-3">{user.username}</td>
                           <td className="px-4 py-3">{user.isAdmin ? 'Yes' : 'No'}</td>
                           <td className="px-4 py-3">{user.rides.length}</td>
@@ -332,6 +334,7 @@ export default function AdminPage() {
                   <table className="min-w-full divide-y">
                     <thead className="bg-muted">
                       <tr>
+                        <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Title</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Created By</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Date</th>
@@ -343,6 +346,7 @@ export default function AdminPage() {
                     <tbody className="divide-y">
                       {rides?.map((ride) => (
                         <tr key={ride.id}>
+                          <td className="px-4 py-3">{ride.id}</td>
                           <td className="px-4 py-3">{ride.title}</td>
                           <td className="px-4 py-3">{ride.owner.username}</td>
                           <td className="px-4 py-3">
