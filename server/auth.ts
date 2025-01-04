@@ -96,6 +96,14 @@ export function setupAuth(app: Express) {
           id: users.id,
           username: users.username,
           isAdmin: users.isAdmin,
+          displayName: users.displayName,
+          zipCode: users.zipCode,
+          club: users.club,
+          homeBikeShop: users.homeBikeShop,
+          gender: users.gender,
+          birthdate: users.birthdate,
+          email: users.email,
+          avatarUrl: users.avatarUrl,
         })
         .from(users)
         .where(eq(users.id, id))
