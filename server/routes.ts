@@ -56,6 +56,69 @@ const ensureAuthenticated = (req: Express.Request): User => {
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
 
+  // Create new ride
+  app.post("/api/rides", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+
+      // Validate the input data
+      const result = insertRideSchema.safeParse({
+        ...req.body,
+        ownerId: user.id
+      });
+
+      if (!result.success) {
+        return res.status(400).json({ 
+          error: "Validation error", 
+          details: result.error.issues.map(i => i.message)
+        });
+      }
+
+      // Get coordinates for the address
+      const coordinates = await geocodeAddress(result.data.address);
+      if (!coordinates) {
+        return res.status(400).json({ 
+          error: "Invalid address",
+          details: "Could not find coordinates for the provided address"
+        });
+      }
+
+      // Create the ride
+      const [newRide] = await db.insert(rides)
+        .values({
+          ...result.data,
+          latitude: coordinates.lat,
+          longitude: coordinates.lon,
+          ownerId: user.id
+        })
+        .returning();
+
+      // Return the created ride with owner information
+      const rideWithOwner = await db.query.rides.findFirst({
+        where: eq(rides.id, newRide.id),
+        with: {
+          owner: true,
+          participants: {
+            with: {
+              user: true
+            }
+          }
+        }
+      });
+
+      res.status(201).json(rideWithOwner);
+    } catch (error) {
+      console.error("Error creating ride:", error);
+      if (error instanceof Error && error.message === "Not authenticated") {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      res.status(500).json({ 
+        error: "Failed to create ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get all rides
   app.get("/api/rides", async (_req, res) => {
     try {
