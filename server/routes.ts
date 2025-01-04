@@ -79,13 +79,16 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Get user's rides
-  app.get("/api/rides/user", async (req, res) => {
+  // Get single ride
+  app.get("/api/rides/:id", async (req, res) => {
     try {
-      const user = ensureAuthenticated(req);
+      const rideId = parseInt(req.params.id);
+      if (isNaN(rideId)) {
+        return res.status(400).json({ error: "Invalid ride ID" });
+      }
 
-      const userRides = await db.query.rides.findMany({
-        where: eq(rides.ownerId, user.id),
+      const ride = await db.query.rides.findFirst({
+        where: eq(rides.id, rideId),
         with: {
           owner: true,
           participants: {
@@ -96,14 +99,15 @@ export function registerRoutes(app: Express): Server {
         }
       });
 
-      res.json(userRides);
-    } catch (error) {
-      console.error("Error fetching user rides:", error);
-      if (error instanceof Error && error.message === "Not authenticated") {
-        return res.status(401).json({ error: "Not authenticated" });
+      if (!ride) {
+        return res.status(404).json({ error: "Ride not found" });
       }
+
+      res.json(ride);
+    } catch (error) {
+      console.error("Error fetching ride:", error);
       res.status(500).json({ 
-        error: "Failed to fetch user rides",
+        error: "Failed to fetch ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
