@@ -39,6 +39,11 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
+      if (!result.success) {
+        console.error("Validation error:", result.error);
+        return res.status(400).json({ error: result.error.issues });
+      }
+      
       const [ride] = await db
         .insert(rides)
         .values({
@@ -48,6 +53,7 @@ export function registerRoutes(app: Express): Server {
         .returning();
       res.json(ride);
     } catch (error) {
+      console.error("Database error:", error);
       res.status(500).json({ error: "Failed to create ride" });
     }
   });
