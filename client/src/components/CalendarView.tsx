@@ -35,10 +35,10 @@ export default function CalendarView({ rides, compact = false, ridesByDate: prop
   // Get dates that have rides
   const datesWithRides = Object.keys(ridesByDate).map(date => new Date(date));
 
-  // Get rides for selected date
+  // Get rides for selected date or all rides if no date selected
   const selectedRides = selectedDate 
     ? ridesByDate[format(selectedDate, 'yyyy-MM-dd')] || []
-    : [];
+    : rides.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
 
   if (compact) {
     return (
@@ -111,7 +111,7 @@ export default function CalendarView({ rides, compact = false, ridesByDate: prop
               {selectedDate ? (
                 <>Rides on {format(selectedDate, 'MMMM d, yyyy')}</>
               ) : (
-                'Select a date to view rides'
+                'All Upcoming Rides'
               )}
             </h3>
             {selectedDate && (
@@ -134,7 +134,7 @@ export default function CalendarView({ rides, compact = false, ridesByDate: prop
                 <div className="text-center text-muted-foreground py-8">
                   {selectedDate 
                     ? 'No rides scheduled for this date' 
-                    : 'Select a date to view scheduled rides'}
+                    : 'No upcoming rides scheduled'}
                 </div>
               )}
             </div>
