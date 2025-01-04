@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
 import { rides, rideParticipants, users, insertRideSchema, type User } from "@db/schema";
-import { and, eq } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
@@ -424,12 +424,7 @@ export function registerRoutes(app: Express): Server {
       }));
 
       // Remove password hashes from response
-      const safeUsers = allUsers.map(user => {
-        const { password, ...safeUser } = user;
-        return safeUser;
-      });
-
-      res.json(safeUsers);
+      res.json(usersWithRideCount);
     } catch (error) {
       console.error("Error fetching users:", error);
       res.status(500).json({ 
