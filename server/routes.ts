@@ -42,16 +42,23 @@ export function registerRoutes(app: Express): Server {
     try {
       const user = ensureAuthenticated(req);
 
-      const validatedData = insertRideSchema.parse({
+      // Convert numeric string fields to numbers
+      const body = {
         ...req.body,
+        difficulty: Number(req.body.difficulty),
+        distance: Number(req.body.distance),
+        maxRiders: Number(req.body.maxRiders),
+        pace: Number(req.body.pace),
         ownerId: user.id
-      });
+      };
 
-      const newRide = await db.insert(rides)
+      const validatedData = insertRideSchema.parse(body);
+
+      const [newRide] = await db.insert(rides)
         .values(validatedData)
         .returning();
 
-      res.json(newRide[0]);
+      res.json(newRide);
     } catch (error) {
       console.error("Error creating ride:", error);
       if (error instanceof z.ZodError) {
@@ -63,7 +70,10 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ error: "Failed to create ride" });
+      res.status(500).json({ 
+        error: "Failed to create ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
