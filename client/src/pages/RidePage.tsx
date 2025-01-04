@@ -13,6 +13,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import type { Ride } from "@db/schema";
 import "leaflet/dist/leaflet.css";
+import { motion } from "framer-motion";
 
 const difficultyColors = {
   'E': 'bg-green-500',
@@ -128,9 +129,19 @@ export default function RidePage() {
   return (
     <div className="min-h-screen bg-background">
       <NavBar />
-      <main className="container mx-auto px-4 py-8">
+      <motion.main
+        className="container mx-auto px-4 py-8"
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ duration: 0.3 }}
+      >
         <div className="grid gap-6 lg:grid-cols-3">
-          <div className="lg:col-span-2 space-y-6">
+          <motion.div
+            className="lg:col-span-2 space-y-6"
+            initial={{ x: -20 }}
+            animate={{ x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <Card>
               <CardHeader>
                 <CardTitle className="text-2xl">{ride.title}</CardTitle>
@@ -177,18 +188,29 @@ export default function RidePage() {
             </Card>
 
             {ride.description && (
-              <Card>
-                <CardHeader>
-                  <CardTitle>Description</CardTitle>
-                </CardHeader>
-                <CardContent>
-                  <p className="whitespace-pre-wrap">{ride.description}</p>
-                </CardContent>
-              </Card>
+              <motion.div
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.2 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Description</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    <p className="whitespace-pre-wrap">{ride.description}</p>
+                  </CardContent>
+                </Card>
+              </motion.div>
             )}
-          </div>
+          </motion.div>
 
-          <div className="space-y-6">
+          <motion.div
+            className="space-y-6"
+            initial={{ x: 20 }}
+            animate={{ x: 0 }}
+            transition={{ delay: 0.1 }}
+          >
             <Card>
               <CardHeader>
                 <CardTitle>Ride Details</CardTitle>
@@ -234,9 +256,9 @@ export default function RidePage() {
                 </div>
               </CardContent>
             </Card>
-          </div>
+          </motion.div>
         </div>
-      </main>
+      </motion.main>
     </div>
   );
 }

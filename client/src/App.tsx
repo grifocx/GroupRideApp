@@ -1,4 +1,4 @@
-import { Switch, Route } from "wouter";
+import { Switch, Route, useLocation } from "wouter";
 import { Loader2 } from "lucide-react";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
@@ -9,9 +9,12 @@ import AdminPage from "./pages/AdminPage";
 import RidePage from "./pages/RidePage";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
+import { AnimatePresence } from "framer-motion";
+import { PageTransition } from "./components/PageTransition";
 
 function App() {
   const { user, isLoading } = useUser();
+  const [location] = useLocation();
 
   if (isLoading) {
     return (
@@ -22,28 +25,68 @@ function App() {
   }
 
   if (!user) {
-    return <AuthPage />;
+    return (
+      <AnimatePresence mode="wait">
+        <PageTransition>
+          <AuthPage />
+        </PageTransition>
+      </AnimatePresence>
+    );
   }
 
   return (
     <ErrorBoundary>
-      <Switch>
-        <Route path="/" component={HomePage} />
-        <Route path="/rides" component={HomePage} />
-        <Route path="/rides/:id" component={RidePage} />
-        <Route path="/create" component={CreateRidePage} />
-        <Route path="/profile" component={ProfilePage} />
-        <Route path="/calendar" component={CalendarPage} />
-        {user.isAdmin && <Route path="/admin" component={AdminPage} />}
-        <Route>
-          <div className="flex items-center justify-center min-h-screen p-4">
-            <div className="text-center">
-              <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
-              <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
-            </div>
-          </div>
-        </Route>
-      </Switch>
+      <AnimatePresence mode="wait">
+        <Switch location={location} key={location}>
+          <Route path="/">
+            <PageTransition>
+              <HomePage />
+            </PageTransition>
+          </Route>
+          <Route path="/rides">
+            <PageTransition>
+              <HomePage />
+            </PageTransition>
+          </Route>
+          <Route path="/rides/:id">
+            <PageTransition>
+              <RidePage />
+            </PageTransition>
+          </Route>
+          <Route path="/create">
+            <PageTransition>
+              <CreateRidePage />
+            </PageTransition>
+          </Route>
+          <Route path="/profile">
+            <PageTransition>
+              <ProfilePage />
+            </PageTransition>
+          </Route>
+          <Route path="/calendar">
+            <PageTransition>
+              <CalendarPage />
+            </PageTransition>
+          </Route>
+          {user.isAdmin && (
+            <Route path="/admin">
+              <PageTransition>
+                <AdminPage />
+              </PageTransition>
+            </Route>
+          )}
+          <Route>
+            <PageTransition>
+              <div className="flex items-center justify-center min-h-screen p-4">
+                <div className="text-center">
+                  <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+                  <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+                </div>
+              </div>
+            </PageTransition>
+          </Route>
+        </Switch>
+      </AnimatePresence>
     </ErrorBoundary>
   );
 }
