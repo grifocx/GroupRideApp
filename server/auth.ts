@@ -30,7 +30,19 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends User { }
+    interface User {
+      id: number;
+      username: string;
+      isAdmin: boolean;
+      display_name?: string | null;
+      zip_code?: string | null;
+      club?: string | null;
+      home_bike_shop?: string | null;
+      gender?: string | null;
+      birthdate?: Date | null;
+      email?: string | null;
+      avatarUrl?: string | null;
+    }
   }
 }
 
@@ -41,7 +53,7 @@ export function setupAuth(app: Express) {
     resave: true,
     saveUninitialized: true,
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000, // 24 hours
+      maxAge: 24 * 60 * 60 * 1000,
       httpOnly: true,
     },
     store: new MemoryStore({
@@ -85,7 +97,7 @@ export function setupAuth(app: Express) {
     })
   );
 
-  passport.serializeUser((user: Express.User, done) => {
+  passport.serializeUser((user, done) => {
     done(null, user.id);
   });
 
@@ -95,7 +107,7 @@ export function setupAuth(app: Express) {
         .select({
           id: users.id,
           username: users.username,
-          is_admin: users.isAdmin,
+          isAdmin: users.isAdmin,
           display_name: users.display_name,
           zip_code: users.zip_code,
           club: users.club,
@@ -103,7 +115,7 @@ export function setupAuth(app: Express) {
           gender: users.gender,
           birthdate: users.birthdate,
           email: users.email,
-          avatar_url: users.avatarUrl,
+          avatarUrl: users.avatarUrl,
         })
         .from(users)
         .where(eq(users.id, id))
@@ -208,6 +220,14 @@ export function setupAuth(app: Express) {
       id: user.id,
       username: user.username,
       isAdmin: user.isAdmin,
+      display_name: user.display_name,
+      zip_code: user.zip_code,
+      club: user.club,
+      home_bike_shop: user.home_bike_shop,
+      gender: user.gender,
+      birthdate: user.birthdate,
+      email: user.email,
+      avatarUrl: user.avatarUrl,
     });
   });
 }
