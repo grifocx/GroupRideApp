@@ -13,7 +13,7 @@ const createRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.string(),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
-  difficulty: z.number().min(1).max(5),
+  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
   maxRiders: z.number().min(1, "Must allow at least 1 rider"),
   latitude: z.string(),
   longitude: z.string(),
@@ -33,7 +33,7 @@ export default function CreateRidePage() {
     defaultValues: {
       title: "",
       distance: 25,
-      difficulty: 3,
+      difficulty: "C",
       maxRiders: 20,
       latitude: "45.5155",
       longitude: "-122.6789",
