@@ -12,6 +12,7 @@ import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
 import express from 'express';
+import { generateVerificationToken, sendVerificationEmail } from './email'; // Import necessary functions
 
 // Configure multer for handling file uploads
 const storage = multer.diskStorage({
@@ -72,7 +73,7 @@ export function registerRoutes(app: Express): Server {
       res.json(allRides);
     } catch (error) {
       console.error("Error fetching rides:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch rides",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -102,7 +103,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch user rides",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -140,7 +141,7 @@ export function registerRoutes(app: Express): Server {
       if (validatedData.address) {
         coordinates = await geocodeAddress(validatedData.address);
         if (!coordinates) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             error: "Invalid address",
             details: "Could not find coordinates for the provided address"
           });
@@ -164,15 +165,15 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error updating ride:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          error: "Validation error", 
+        return res.status(400).json({
+          error: "Validation error",
           details: error.issues.map(i => i.message)
         });
       }
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -233,7 +234,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to join ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -280,7 +281,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to leave ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -324,7 +325,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to delete ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -349,7 +350,7 @@ export function registerRoutes(app: Express): Server {
       res.json(safeUsers);
     } catch (error) {
       console.error("Error fetching users:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch users",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -378,7 +379,7 @@ export function registerRoutes(app: Express): Server {
       res.json({ message: "User and associated data deleted successfully" });
     } catch (error) {
       console.error("Error deleting user:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to delete user",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -400,7 +401,7 @@ export function registerRoutes(app: Express): Server {
       res.json(allRides);
     } catch (error) {
       console.error("Error fetching rides:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch rides",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -425,7 +426,7 @@ export function registerRoutes(app: Express): Server {
       res.json({ message: "Ride deleted successfully" });
     } catch (error) {
       console.error("Error deleting ride:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to delete ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -470,12 +471,67 @@ export function registerRoutes(app: Express): Server {
       res.json({ avatarUrl });
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to upload avatar",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }
   });
+
+  // Add this new route after the other routes but before returning httpServer
+  app.post("/api/resend-verification", async (req, res) => {
+    try {
+      const { username } = req.body;
+
+      if (!username) {
+        return res.status(400).json({ error: "Username is required" });
+      }
+
+      // Find the user
+      const [user] = await db
+        .select()
+        .from(users)
+        .where(eq(users.username, username))
+        .limit(1);
+
+      if (!user) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      if (user.isVerified) {
+        return res.status(400).json({ error: "User is already verified" });
+      }
+
+      // Generate new verification token
+      const verificationToken = generateVerificationToken();
+
+      // Update user with new verification token
+      await db
+        .update(users)
+        .set({
+          verificationToken,
+          isVerified: false,
+        })
+        .where(eq(users.id, user.id));
+
+      // Send verification email
+      await sendVerificationEmail(user.email, verificationToken);
+
+      res.json({
+        message: "Verification email sent successfully",
+        previewUrl: process.env.NODE_ENV !== 'production' ?
+          `${process.env.APP_URL || 'http://localhost:5000'}/verify-email?token=${verificationToken}` :
+          undefined
+      });
+    } catch (error) {
+      console.error("Error sending verification email:", error);
+      res.status(500).json({
+        error: "Failed to send verification email",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
 
   const httpServer = createServer(app);
   return httpServer;

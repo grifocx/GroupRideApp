@@ -9,6 +9,7 @@ import { users, insertUserSchema, type User as SelectUser } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
 import { setupEmailTransporter, generateVerificationToken, sendVerificationEmail } from "./email";
+import { z } from "zod";
 
 const scryptAsync = promisify(scrypt);
 const crypto = {
@@ -28,6 +29,12 @@ const crypto = {
     return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
   },
 };
+
+// Separate schema for login validation
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
 
 // extend express user object with our schema
 declare global {
@@ -180,6 +187,15 @@ export async function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
+    // Use the simplified login schema for validation
+    const result = loginSchema.safeParse(req.body);
+    if (!result.success) {
+      return res.status(400).json({ 
+        error: "Validation error", 
+        message: result.error.issues.map(i => i.message).join(", ") 
+      });
+    }
+
     passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
       if (err) {
         return next(err);
