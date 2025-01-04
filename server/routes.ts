@@ -43,46 +43,90 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Create new ride
-  app.post("/api/rides", async (req, res) => {
+  // Get user's rides
+  app.get("/api/rides/user", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
 
-      // Convert numeric string fields to numbers and ensure difficulty is a valid string
-      const body = {
-        ...req.body,
-        difficulty: String(req.body.difficulty).toUpperCase(), // Ensure difficulty is a string and uppercase
-        distance: Number(req.body.distance),
-        maxRiders: Number(req.body.maxRiders),
-        pace: Number(req.body.pace),
-        ownerId: user.id
-      };
+      const userRides = await db.query.rides.findMany({
+        where: eq(rides.ownerId, user.id),
+        with: {
+          owner: true,
+          participants: {
+            with: {
+              user: true
+            }
+          }
+        }
+      });
 
-      console.log("Attempting to validate ride data:", body);
-      const validatedData = insertRideSchema.parse(body);
+      res.json(userRides);
+    } catch (error) {
+      console.error("Error fetching user rides:", error);
+      if (error instanceof Error && error.message === "Not authenticated") {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      res.status(500).json({ 
+        error: "Failed to fetch user rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
 
-      // Geocode the address
-      const coordinates = await geocodeAddress(validatedData.address);
-      if (!coordinates) {
-        return res.status(400).json({ 
-          error: "Invalid address",
-          details: "Could not find coordinates for the provided address"
-        });
+  // Update ride
+  app.put("/api/rides/:id", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+
+      const rideId = parseInt(req.params.id);
+      if (isNaN(rideId)) {
+        return res.status(400).json({ error: "Invalid ride ID" });
       }
 
-      // Create the ride with geocoded coordinates
-      const [newRide] = await db
-        .insert(rides)
-        .values({
+      // Verify ride ownership
+      const ride = await db.query.rides.findFirst({
+        where: eq(rides.id, rideId),
+      });
+
+      if (!ride) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+
+      if (ride.ownerId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to update this ride" });
+      }
+
+      // Validate update data
+      const validatedData = insertRideSchema.partial().parse(req.body);
+
+      // If address is being updated, geocode it
+      let coordinates = null;
+      if (validatedData.address) {
+        coordinates = await geocodeAddress(validatedData.address);
+        if (!coordinates) {
+          return res.status(400).json({ 
+            error: "Invalid address",
+            details: "Could not find coordinates for the provided address"
+          });
+        }
+      }
+
+      // Update the ride
+      const [updatedRide] = await db
+        .update(rides)
+        .set({
           ...validatedData,
-          latitude: coordinates.lat,
-          longitude: coordinates.lon
+          ...(coordinates && {
+            latitude: coordinates.lat,
+            longitude: coordinates.lon
+          })
         })
+        .where(eq(rides.id, rideId))
         .returning();
 
-      res.json(newRide);
+      res.json(updatedRide);
     } catch (error) {
-      console.error("Error creating ride:", error);
+      console.error("Error updating ride:", error);
       if (error instanceof z.ZodError) {
         return res.status(400).json({ 
           error: "Validation error", 
@@ -93,7 +137,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ error: "Not authenticated" });
       }
       res.status(500).json({ 
-        error: "Failed to create ride",
+        error: "Failed to update ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
     }

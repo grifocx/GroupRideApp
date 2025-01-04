@@ -3,6 +3,7 @@ import { Loader2 } from "lucide-react";
 import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import CreateRidePage from "./pages/CreateRidePage";
+import ProfilePage from "./pages/ProfilePage";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -27,7 +28,7 @@ function App() {
         <Route path="/" component={HomePage} />
         <Route path="/rides" component={HomePage} />
         <Route path="/create" component={CreateRidePage} />
-        <Route path="/profile" component={() => <div>Profile Page (Coming Soon)</div>} />
+        <Route path="/profile" component={ProfilePage} />
         <Route>
           {/* 404 Not Found */}
           <div className="flex items-center justify-center min-h-screen p-4">
