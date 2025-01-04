@@ -1,11 +1,9 @@
+
 import { format } from "date-fns";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Map, MapPin, Copy, Check } from "lucide-react";
-import { FaTwitter, FaFacebook } from "react-icons/fa";
-import { useEffect, useRef } from "react";
-import L from "leaflet";
+import { MapPin, Heart, Share2, Info } from "lucide-react";
 import type { Ride } from "@db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
@@ -19,61 +17,27 @@ type RideCardProps = {
   };
 };
 
-const difficultyColors = {
-  'E': 'bg-green-500',
-  'D': 'bg-lime-500',
-  'C': 'bg-yellow-500',
-  'B': 'bg-orange-500',
-  'A': 'bg-red-500',
-  'AA': 'bg-purple-500'
-} as const;
-
-const difficultyLabels = {
-  'E': 'Beginner',
-  'D': 'Novice',
-  'C': 'Intermediate',
-  'B': 'Advanced',
-  'A': 'Expert',
-  'AA': 'Professional'
-} as const;
+const DifficultyDots = ({ level }: { level: string }) => {
+  const dots = ['E', 'D', 'C', 'B', 'A'].indexOf(level) + 1;
+  return (
+    <div className="flex gap-1">
+      {[...Array(5)].map((_, i) => (
+        <div 
+          key={i} 
+          className={cn(
+            "w-3 h-3 rounded-full",
+            i < dots ? "bg-green-500" : "bg-gray-200"
+          )}
+        />
+      ))}
+    </div>
+  );
+};
 
 export default function RideCard({ ride }: RideCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
   const queryClient = useQueryClient();
-  const mapRef = useRef<HTMLDivElement>(null);
-  const mapInstanceRef = useRef<L.Map | null>(null);
-
-  useEffect(() => {
-    if (mapRef.current && !mapInstanceRef.current) {
-      const lat = parseFloat(ride.latitude);
-      const lng = parseFloat(ride.longitude);
-
-      if (!isNaN(lat) && !isNaN(lng)) {
-        const map = L.map(mapRef.current, {
-          zoomControl: false,
-          dragging: false,
-          scrollWheelZoom: false,
-          touchZoom: false,
-          doubleClickZoom: false
-        }).setView([lat, lng], 13);
-
-        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '© OpenStreetMap contributors'
-        }).addTo(map);
-
-        L.marker([lat, lng]).addTo(map);
-        mapInstanceRef.current = map;
-      }
-    }
-
-    return () => {
-      if (mapInstanceRef.current) {
-        mapInstanceRef.current.remove();
-        mapInstanceRef.current = null;
-      }
-    };
-  }, [ride.latitude, ride.longitude]);
 
   const handleJoinToggle = async () => {
     try {
@@ -86,10 +50,7 @@ export default function RideCard({ ride }: RideCardProps) {
       if (!response.ok) {
         throw new Error(await response.text());
       }
-
-      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ['/api/rides'] });
-
       toast({
         title: "Success",
         description: isJoined ? "Left the ride" : "Successfully joined the ride",
@@ -103,143 +64,92 @@ export default function RideCard({ ride }: RideCardProps) {
     }
   };
 
-  const handleShare = async (platform?: string) => {
-    const shareUrl = `${window.location.origin}/rides/${ride.id}`;
-    const shareText = `Join me for a ${ride.distance} mile ${ride.rideType.toLowerCase()} ride: ${ride.title}`;
-
-    if (platform) {
-      let shareLink = '';
-
-      switch (platform) {
-        case 'twitter':
-          shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-          break;
-        case 'facebook':
-          shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-          break;
-      }
-
-      window.open(shareLink, '_blank', 'noopener,noreferrer');
-    } else {
-      try {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        toast({
-          title: "Success",
-          description: "Link copied to clipboard",
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to copy link",
-        });
-      }
-    }
-  };
-
   const isJoined = ride.participants.some(p => p.user.username === user?.username);
   const participantCount = ride.participants.length;
 
   return (
-    <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-lg",
-      isJoined && "ring-2 ring-primary/50"
-    )}>
-      <CardHeader className="pb-2">
-        <div className="flex justify-between items-start">
-          <div>
-            <CardTitle className="text-xl font-bold">{ride.title}</CardTitle>
-            <div className="text-sm text-muted-foreground">
-              {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
-            </div>
-          </div>
-          <div className="flex gap-2 z-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare('twitter')}
-              title="Share on Twitter"
-            >
-              <FaTwitter className="h-4 w-4" />
+    <Card className="overflow-hidden">
+      <CardContent className="p-6">
+        <div className="flex justify-between items-start mb-4">
+          <h2 className="text-2xl font-bold text-primary">{ride.title}</h2>
+          <div className="flex gap-2">
+            <Button variant="ghost" size="icon">
+              <Heart className="h-6 w-6" />
             </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare('facebook')}
-              title="Share on Facebook"
-            >
-              <FaFacebook className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare()}
-              title="Copy Link"
-            >
-              <Copy className="h-4 w-4" />
+            <Button variant="ghost" size="icon">
+              <Share2 className="h-6 w-6" />
             </Button>
           </div>
         </div>
-      </CardHeader>
-      <div className="relative h-32 bg-muted">
-        <div ref={mapRef} className="h-full w-full" />
-        {(!ride.latitude || !ride.longitude) && (
-          <div className="absolute inset-0 flex items-center justify-center bg-muted">
-            <MapPin className="h-8 w-8 text-muted-foreground" />
+
+        <div className="flex items-center gap-2 mb-6 text-gray-600">
+          <div className="flex items-center">
+            <div className="text-xl">{format(new Date(ride.dateTime), "E, MMM d • h:mm a")}</div>
           </div>
-        )}
-      </div>
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span>{ride.distance} miles</span>
-              <span>•</span>
-              <div className="flex items-center gap-2">
-                <div
-                  className={`w-3 h-3 rounded-full ${difficultyColors[ride.difficulty as keyof typeof difficultyColors]}`}
-                  title={difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}
-                />
-                <span>{difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}</span>
+        </div>
+
+        <div className="grid grid-cols-2 gap-6 mb-6">
+          <div className="bg-gray-100 aspect-square rounded-lg flex items-center justify-center">
+            <MapPin className="h-8 w-8 text-red-500" />
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <div className="text-gray-600">Distance:</div>
+              <div className="text-xl font-semibold">{ride.distance} km</div>
+            </div>
+
+            <div>
+              <div className="text-gray-600">Difficulty:</div>
+              <div className="flex items-center gap-3">
+                <DifficultyDots level={ride.difficulty} />
+                <span className="text-gray-600">({difficultyLabels[ride.difficulty]})</span>
               </div>
             </div>
-          </div>
 
-          <div className="flex justify-between items-center">
-            <div className="flex items-center gap-2">
-              <Avatar className="h-6 w-6">
-                <AvatarFallback>
-                  {ride.owner.username[0].toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-              <span className="text-sm text-muted-foreground">
-                {ride.owner.username}
-              </span>
-            </div>
-            <div className="text-sm text-muted-foreground">
-              {participantCount} / {ride.maxRiders} riders
+            <div>
+              <div className="text-gray-600">Riders:</div>
+              <div className="text-xl font-semibold">{participantCount} / {ride.maxRiders}</div>
             </div>
           </div>
+        </div>
 
-          <Button
-            className="w-full"
-            variant={isJoined ? "default" : "outline"}
-            onClick={handleJoinToggle}
-            disabled={!isJoined && participantCount >= ride.maxRiders}
-          >
-            <div className="flex items-center gap-2">
-              {isJoined ? (
-                <>
-                  <Check className="h-4 w-4" />
-                  Joined
-                </>
-              ) : (
-                "Join Ride"
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Avatar className="h-10 w-10">
+              <AvatarFallback>{ride.owner.username[0].toUpperCase()}</AvatarFallback>
+            </Avatar>
+            <div className="text-gray-600">by {ride.owner.username}</div>
+          </div>
+
+          <div className="flex gap-2">
+            <Button variant="ghost" className="text-blue-500">
+              <Info className="h-4 w-4 mr-2" />
+              Show Details
+            </Button>
+            <Button 
+              variant={isJoined ? "default" : "default"}
+              className={cn(
+                "px-8 rounded-full",
+                isJoined ? "bg-primary" : "bg-green-500 hover:bg-green-600"
               )}
-            </div>
-          </Button>
+              onClick={handleJoinToggle}
+              disabled={!isJoined && participantCount >= ride.maxRiders}
+            >
+              {isJoined ? "Joined" : "Join"}
+            </Button>
+          </div>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+const difficultyLabels = {
+  'E': 'Beginner',
+  'D': 'Novice',
+  'C': 'Intermediate',
+  'B': 'Advanced',
+  'A': 'Expert',
+  'AA': 'Professional'
+} as const;
