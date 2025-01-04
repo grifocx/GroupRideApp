@@ -17,6 +17,7 @@ export const rides = pgTable("rides", {
   difficulty: varchar("difficulty", { length: 2 }).notNull(),
   maxRiders: integer("max_riders").notNull(),
   ownerId: integer("owner_id").notNull().references(() => users.id),
+  address: text("address").notNull(),
   latitude: text("latitude").notNull(),
   longitude: text("longitude").notNull(),
   rideType: text("ride_type").notNull(),
@@ -73,6 +74,9 @@ export const insertRideSchema = createInsertSchema(rides, {
   maxRiders: z.coerce.number().min(1),
   dateTime: z.string().transform((str) => new Date(str)),
   ownerId: z.number().optional(),
+  address: z.string().min(1, "Address is required"),
+  latitude: z.string().optional(),
+  longitude: z.string().optional(),
 });
 
 export const selectRideSchema = createSelectSchema(rides);

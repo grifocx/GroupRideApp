@@ -5,6 +5,7 @@ import { db } from "@db";
 import { rides, rideParticipants, insertRideSchema, type User } from "@db/schema";
 import { and, eq } from "drizzle-orm";
 import * as z from 'zod';
+import { geocodeAddress } from "./geocoding";
 
 // Helper to ensure authenticated user
 const ensureAuthenticated = (req: Express.Request): User => {
@@ -60,8 +61,23 @@ export function registerRoutes(app: Express): Server {
       console.log("Attempting to validate ride data:", body);
       const validatedData = insertRideSchema.parse(body);
 
-      const [newRide] = await db.insert(rides)
-        .values(validatedData)
+      // Geocode the address
+      const coordinates = await geocodeAddress(validatedData.address);
+      if (!coordinates) {
+        return res.status(400).json({ 
+          error: "Invalid address",
+          details: "Could not find coordinates for the provided address"
+        });
+      }
+
+      // Create the ride with geocoded coordinates
+      const [newRide] = await db
+        .insert(rides)
+        .values({
+          ...validatedData,
+          latitude: coordinates.lat,
+          longitude: coordinates.lon
+        })
         .returning();
 
       res.json(newRide);
