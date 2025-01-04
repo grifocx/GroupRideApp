@@ -65,7 +65,7 @@ export const insertRideSchema = createInsertSchema(rides, {
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
-  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
+  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']).transform(val => val.toString()),
   maxRiders: z.coerce.number().min(1),
   dateTime: z.string().transform((str) => new Date(str)),
   ownerId: z.number().optional(),
