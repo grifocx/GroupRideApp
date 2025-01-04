@@ -401,11 +401,15 @@ export function registerRoutes(app: Express): Server {
   // Admin Routes
   app.get("/api/admin/users", ensureAdmin, async (_req, res) => {
     try {
-      const allUsers = await db.query.users.findMany({
-        with: {
-          rides: true,
-        }
-      });
+      const allUsers = await db
+        .select({
+          id: users.id,
+          username: users.username,
+          isAdmin: users.isAdmin,
+          rides: rides
+        })
+        .from(users)
+        .leftJoin(rides, eq(rides.ownerId, users.id));
 
       // Remove password hashes from response
       const safeUsers = allUsers.map(user => {
