@@ -12,6 +12,7 @@ import L from "leaflet";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import type { Ride } from "@db/schema";
+import "leaflet/dist/leaflet.css";
 
 const difficultyColors = {
   'E': 'bg-green-500',
@@ -52,6 +53,12 @@ export default function RidePage() {
       const lng = parseFloat(ride.longitude);
 
       if (!isNaN(lat) && !isNaN(lng)) {
+        // Clean up any existing map instance
+        if (mapInstanceRef.current) {
+          mapInstanceRef.current.remove();
+          mapInstanceRef.current = null;
+        }
+
         const map = L.map(mapRef.current).setView([lat, lng], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -69,7 +76,7 @@ export default function RidePage() {
         mapInstanceRef.current = null;
       }
     };
-  }, [ride]);
+  }, [ride, mapRef.current]);
 
   const handleJoinToggle = async () => {
     if (!ride) return;
@@ -157,7 +164,7 @@ export default function RidePage() {
                     </div>
                   </div>
 
-                  <div className="h-[400px] bg-muted rounded-lg overflow-hidden">
+                  <div className="relative h-[400px] bg-muted rounded-lg overflow-hidden">
                     <div ref={mapRef} className="h-full w-full" />
                   </div>
 
