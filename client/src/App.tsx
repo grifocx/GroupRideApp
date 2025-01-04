@@ -4,11 +4,10 @@ import AuthPage from "./pages/AuthPage";
 import HomePage from "./pages/HomePage";
 import CreateRidePage from "./pages/CreateRidePage";
 import { useUser } from "./hooks/use-user";
+import { ErrorBoundary } from "./components/ErrorBoundary";
 
 function App() {
   const { user, isLoading } = useUser();
-
-  console.log("App render - User state:", { user, isLoading }); // Debug log
 
   if (isLoading) {
     return (
@@ -19,16 +18,16 @@ function App() {
   }
 
   if (!user) {
-    console.log("No user, showing AuthPage"); // Debug log
     return <AuthPage />;
   }
 
-  console.log("User authenticated, showing routes"); // Debug log
   return (
-    <Switch>
-      <Route path="/" component={HomePage} />
-      <Route path="/create" component={CreateRidePage} />
-    </Switch>
+    <ErrorBoundary>
+      <Switch>
+        <Route path="/" component={HomePage} />
+        <Route path="/create" component={CreateRidePage} />
+      </Switch>
+    </ErrorBoundary>
   );
 }
 
