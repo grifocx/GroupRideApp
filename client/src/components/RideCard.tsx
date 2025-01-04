@@ -5,6 +5,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Map, MapPin, Copy, Check } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
+import { useLocation } from "wouter";
 import L from "leaflet";
 import type { Ride } from "@db/schema";
 import { useToast } from "@/hooks/use-toast";
@@ -40,6 +41,7 @@ const difficultyLabels = {
 export default function RideCard({ ride }: RideCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
+  const [, setLocation] = useLocation();
   const queryClient = useQueryClient();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
@@ -87,9 +89,7 @@ export default function RideCard({ ride }: RideCardProps) {
         throw new Error(await response.text());
       }
 
-      // Invalidate queries to refresh the data
       queryClient.invalidateQueries({ queryKey: ['/api/rides'] });
-
       toast({
         title: "Success",
         description: isJoined ? "Left the ride" : "Successfully joined the ride",
@@ -147,7 +147,10 @@ export default function RideCard({ ride }: RideCardProps) {
     )}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div>
+          <div 
+            className="cursor-pointer hover:text-primary transition-colors"
+            onClick={() => setLocation(`/rides/${ride.id}`)}
+          >
             <CardTitle className="text-xl font-bold">{ride.title}</CardTitle>
             <div className="text-sm text-muted-foreground">
               {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}

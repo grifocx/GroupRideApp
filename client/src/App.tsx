@@ -6,6 +6,7 @@ import CreateRidePage from "./pages/CreateRidePage";
 import ProfilePage from "./pages/ProfilePage";
 import CalendarPage from "./pages/CalendarPage";
 import AdminPage from "./pages/AdminPage";
+import RidePage from "./pages/RidePage";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 
@@ -29,12 +30,12 @@ function App() {
       <Switch>
         <Route path="/" component={HomePage} />
         <Route path="/rides" component={HomePage} />
+        <Route path="/rides/:id" component={RidePage} />
         <Route path="/create" component={CreateRidePage} />
         <Route path="/profile" component={ProfilePage} />
         <Route path="/calendar" component={CalendarPage} />
         {user.isAdmin && <Route path="/admin" component={AdminPage} />}
         <Route>
-          {/* 404 Not Found */}
           <div className="flex items-center justify-center min-h-screen p-4">
             <div className="text-center">
               <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
