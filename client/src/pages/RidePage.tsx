@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain, Link2 } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useRef } from "react";
 import L from "leaflet";
@@ -71,7 +71,7 @@ export default function RidePage() {
         mapInstanceRef.current = null;
       }
     };
-  }, [ride, mapRef.current]);
+  }, [ride?.latitude, ride?.longitude]);
 
   const handleJoinToggle = async () => {
     if (!ride) return;
@@ -173,23 +173,26 @@ export default function RidePage() {
                     <div ref={mapRef} className="h-full w-full" />
                   </div>
 
-                  <div className="flex items-center gap-2">
-                    <MapPin className="h-4 w-4 text-muted-foreground" />
-                    <span>{ride.address}</span>
-                  </div>
-
-                  {ride.route_url && (
+                  <div className="flex flex-col gap-4">
                     <div className="flex items-center gap-2">
-                      <a 
-                        href={ride.route_url} 
-                        target="_blank" 
-                        rel="noopener noreferrer"
-                        className="text-primary hover:underline inline-flex items-center gap-2"
-                      >
-                        View Route Details
-                      </a>
+                      <MapPin className="h-4 w-4 text-muted-foreground" />
+                      <span>{ride.address}</span>
                     </div>
-                  )}
+
+                    {ride.route_url && (
+                      <div className="flex items-center gap-2">
+                        <Link2 className="h-4 w-4 text-primary" />
+                        <a 
+                          href={ride.route_url} 
+                          target="_blank" 
+                          rel="noopener noreferrer"
+                          className="text-primary hover:underline inline-flex items-center gap-2"
+                        >
+                          View Route Details
+                        </a>
+                      </div>
+                    )}
+                  </div>
                 </div>
               </CardContent>
             </Card>
@@ -228,6 +231,7 @@ export default function RidePage() {
                     <div className="text-sm font-medium">Organized by</div>
                     <div className="mt-1.5 flex items-center gap-2">
                       <Avatar className="h-6 w-6">
+                        <AvatarImage src={user?.avatarUrl} />
                         <AvatarFallback>
                           {ride.owner.username[0].toUpperCase()}
                         </AvatarFallback>
