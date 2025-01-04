@@ -5,7 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2 } from "lucide-react";
+import { Loader2, User, KeyRound } from "lucide-react";
+import { motion, AnimatePresence } from "framer-motion";
 
 type FormData = {
   username: string;
@@ -46,55 +47,126 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-background flex items-center justify-center">
-      <Card className="w-[400px] mx-4">
-        <CardHeader>
-          <CardTitle>{isLogin ? "Login" : "Register"}</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <div className="space-y-2">
-              <Input
-                placeholder="Username"
-                {...form.register("username", { required: true })}
-                disabled={isLoading}
-              />
-              {form.formState.errors.username && (
-                <p className="text-sm text-red-500">Username is required</p>
-              )}
-              <Input
-                type="password"
-                placeholder="Password"
-                {...form.register("password", { required: true })}
-                disabled={isLoading}
-              />
-              {form.formState.errors.password && (
-                <p className="text-sm text-red-500">Password is required</p>
-              )}
-            </div>
+    <div className="min-h-screen bg-background flex items-center justify-center relative overflow-hidden">
+      {/* Decorative background pattern */}
+      <div className="absolute inset-0 -z-10">
+        <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px]" />
+        <div className="absolute inset-0 bg-gradient-to-br from-primary/5 via-transparent to-primary/5" />
+      </div>
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? (
-                <Loader2 className="h-4 w-4 animate-spin" />
-              ) : (
-                isLogin ? "Login" : "Register"
-              )}
-            </Button>
-            <Button
-              type="button"
-              variant="link"
-              className="w-full"
-              onClick={() => {
-                setIsLogin(!isLogin);
-                form.reset();
-              }}
-              disabled={isLoading}
+      <motion.div
+        initial={{ scale: 0.9, opacity: 0 }}
+        animate={{ scale: 1, opacity: 1 }}
+        transition={{ type: "spring", duration: 0.5 }}
+      >
+        <Card className="w-[400px] mx-4 overflow-hidden">
+          <CardHeader className="space-y-1">
+            <motion.div
+              initial={{ y: -20 }}
+              animate={{ y: 0 }}
+              transition={{ delay: 0.1 }}
             >
-              {isLogin ? "Need an account?" : "Already have an account?"}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+              <CardTitle className="text-2xl font-bold text-center">
+                {isLogin ? "Welcome back!" : "Create an account"}
+              </CardTitle>
+              <p className="text-sm text-muted-foreground text-center">
+                {isLogin
+                  ? "Enter your credentials to access your account"
+                  : "Enter your details to create your account"}
+              </p>
+            </motion.div>
+          </CardHeader>
+          <CardContent>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.2 }}
+                className="space-y-2"
+              >
+                <div className="relative">
+                  <User className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    placeholder="Username"
+                    {...form.register("username", { required: true })}
+                    disabled={isLoading}
+                    className="pl-10"
+                  />
+                </div>
+                {form.formState.errors.username && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-destructive"
+                  >
+                    Username is required
+                  </motion.p>
+                )}
+              </motion.div>
+
+              <motion.div
+                initial={{ x: -20, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ delay: 0.3 }}
+                className="space-y-2"
+              >
+                <div className="relative">
+                  <KeyRound className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                  <Input
+                    type="password"
+                    placeholder="Password"
+                    {...form.register("password", { required: true })}
+                    disabled={isLoading}
+                    className="pl-10"
+                  />
+                </div>
+                {form.formState.errors.password && (
+                  <motion.p
+                    initial={{ opacity: 0 }}
+                    animate={{ opacity: 1 }}
+                    className="text-sm text-destructive"
+                  >
+                    Password is required
+                  </motion.p>
+                )}
+              </motion.div>
+
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.4 }}
+              >
+                <Button type="submit" className="w-full" disabled={isLoading}>
+                  {isLoading ? (
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                  ) : (
+                    isLogin ? "Sign In" : "Create Account"
+                  )}
+                </Button>
+              </motion.div>
+
+              <motion.div
+                initial={{ y: 20, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ delay: 0.5 }}
+              >
+                <Button
+                  type="button"
+                  variant="ghost"
+                  className="w-full"
+                  onClick={() => {
+                    setIsLogin(!isLogin);
+                    form.reset();
+                  }}
+                  disabled={isLoading}
+                >
+                  {isLogin ? "Need an account?" : "Already have an account?"}
+                </Button>
+              </motion.div>
+            </form>
+          </CardContent>
+        </Card>
+      </motion.div>
     </div>
   );
 }
