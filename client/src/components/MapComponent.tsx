@@ -20,6 +20,9 @@ interface MapComponentProps {
   onMarkerClick?: (ride: Ride) => void;
 }
 
+// Washington DC coordinates
+const DC_COORDS = [38.8977, -77.0365];
+
 export function MapComponent({ rides, onMarkerClick }: MapComponentProps) {
   const mapRef = useRef<L.Map | null>(null);
   const markerClusterRef = useRef<any>(null);
@@ -28,7 +31,7 @@ export function MapComponent({ rides, onMarkerClick }: MapComponentProps) {
   useEffect(() => {
     if (!mapRef.current) {
       // Initialize map centered on Washington, DC
-      const map = L.map('map').setView([38.8977, -77.0365], 12);
+      const map = L.map('map').setView(DC_COORDS, 12);
       L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
         attribution: '© OpenStreetMap contributors'
       }).addTo(map);
@@ -97,5 +100,5 @@ export function MapComponent({ rides, onMarkerClick }: MapComponentProps) {
     };
   }, [rides, onMarkerClick]);
 
-  return <div id="map" className="w-full h-[500px] rounded-lg" />;
+  return <div id="map" className="w-full h-[400px] rounded-lg" />;
 }

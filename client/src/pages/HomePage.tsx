@@ -77,46 +77,47 @@ export default function HomePage() {
           <RideSearch onFilterChange={setFilters} />
         </div>
 
-        {/* Interactive Map */}
-        <div className="mb-8">
-          <h2 className="text-2xl font-bold mb-4">Ride Map</h2>
-          <div className="bg-card rounded-lg p-4">
-            {isLoading ? (
-              <div className="h-[500px] flex items-center justify-center">
-                <Loader2 className="h-8 w-8 animate-spin" />
-              </div>
-            ) : (
-              <MapComponent 
-                rides={filteredRides}
-                onMarkerClick={(ride) => {
-                  // TODO: Implement ride detail view
-                  console.log('Clicked ride:', ride);
-                }}
-              />
-            )}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Interactive Map */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Ride Map</h2>
+            <div className="bg-card rounded-lg p-4 sticky top-4">
+              {isLoading ? (
+                <div className="h-[400px] flex items-center justify-center">
+                  <Loader2 className="h-8 w-8 animate-spin" />
+                </div>
+              ) : (
+                <MapComponent 
+                  rides={filteredRides}
+                  onMarkerClick={(ride) => {
+                    console.log('Clicked ride:', ride);
+                  }}
+                />
+              )}
+            </div>
           </div>
-        </div>
 
-        {/* Ride List */}
-        <div>
-          <h2 className="text-2xl font-bold mb-4">Available Rides</h2>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="h-[400px] bg-muted animate-pulse rounded-lg" />
-              ))
-            ) : (
-              <>
-                {filteredRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))}
-                {filteredRides.length === 0 && (
-                  <div className="col-span-full text-center text-muted-foreground py-8">
-                    No rides found matching your criteria
-                  </div>
-                )}
-              </>
-            )}
+          {/* Ride List */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Available Rides</h2>
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-6">
+              {isLoading ? (
+                Array.from({ length: 4 }).map((_, i) => (
+                  <div key={i} className="h-[400px] bg-muted animate-pulse rounded-lg" />
+                ))
+              ) : (
+                <>
+                  {filteredRides.map((ride) => (
+                    <RideCard key={ride.id} ride={ride} />
+                  ))}
+                  {filteredRides.length === 0 && (
+                    <div className="col-span-full text-center text-muted-foreground py-8">
+                      No rides found matching your criteria
+                    </div>
+                  )}
+                </>
+              )}
+            </div>
           </div>
         </div>
       </main>
