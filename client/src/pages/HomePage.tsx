@@ -12,6 +12,27 @@ import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
 
+// New Footer component
+const Footer = () => {
+  return (
+    <footer className="bg-gray-100 py-4 text-center">
+      <p>&copy; 2023 RideGroops  - Find and Organize Bicycle Rides</p>
+    </footer>
+  );
+};
+
+// New Layout component
+const Layout = ({ children }: { children: React.ReactNode }) => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <NavBar />
+      <main>{children}</main>
+      <Footer />
+    </div>
+  );
+};
+
+
 export default function HomePage() {
   const { rides, isLoading } = useRides();
   const [, setLocation] = useLocation();
@@ -75,9 +96,7 @@ export default function HomePage() {
   }, [filteredRides]);
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar />
-
+    <Layout>
       {/* Welcome Banner - More compact */}
       <section className="bg-primary text-primary-foreground py-6">
         <div className="container mx-auto px-4 text-center">
@@ -154,6 +173,6 @@ export default function HomePage() {
           </div>
         )}
       </main>
-    </div>
+    </Layout>
   );
 }
