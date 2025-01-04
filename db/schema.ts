@@ -7,6 +7,7 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
   password: text("password").notNull(),
+  isAdmin: boolean("is_admin").notNull().default(false),
 });
 
 export const rides = pgTable("rides", {

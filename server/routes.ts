@@ -2,10 +2,11 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { setupAuth } from "./auth";
 import { db } from "@db";
-import { rides, rideParticipants, insertRideSchema, type User } from "@db/schema";
+import { rides, rideParticipants, users, insertRideSchema, type User } from "@db/schema";
 import { and, eq } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
+import { ensureAdmin } from "./middleware";
 
 // Helper to ensure authenticated user
 const ensureAuthenticated = (req: Express.Request): User => {
@@ -288,6 +289,107 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
+      res.status(500).json({ 
+        error: "Failed to delete ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Admin Routes
+  app.get("/api/admin/users", ensureAdmin, async (_req, res) => {
+    try {
+      const allUsers = await db.query.users.findMany({
+        with: {
+          rides: true,
+        }
+      });
+
+      // Remove password hashes from response
+      const safeUsers = allUsers.map(user => {
+        const { password, ...safeUser } = user;
+        return safeUser;
+      });
+
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Error fetching users:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch users",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.delete("/api/admin/users/:id", ensureAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // First delete all ride participants
+      await db.delete(rideParticipants)
+        .where(eq(rideParticipants.userId, userId));
+
+      // Then delete all rides created by the user
+      await db.delete(rides)
+        .where(eq(rides.ownerId, userId));
+
+      // Finally delete the user
+      await db.delete(users)
+        .where(eq(users.id, userId));
+
+      res.json({ message: "User and associated data deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({ 
+        error: "Failed to delete user",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.get("/api/admin/rides", ensureAdmin, async (_req, res) => {
+    try {
+      const allRides = await db.query.rides.findMany({
+        with: {
+          owner: true,
+          participants: {
+            with: {
+              user: true
+            }
+          }
+        }
+      });
+      res.json(allRides);
+    } catch (error) {
+      console.error("Error fetching rides:", error);
+      res.status(500).json({ 
+        error: "Failed to fetch rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.delete("/api/admin/rides/:id", ensureAdmin, async (req, res) => {
+    try {
+      const rideId = parseInt(req.params.id);
+      if (isNaN(rideId)) {
+        return res.status(400).json({ error: "Invalid ride ID" });
+      }
+
+      // First delete all ride participants
+      await db.delete(rideParticipants)
+        .where(eq(rideParticipants.rideId, rideId));
+
+      // Then delete the ride
+      await db.delete(rides)
+        .where(eq(rides.id, rideId));
+
+      res.json({ message: "Ride deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting ride:", error);
       res.status(500).json({ 
         error: "Failed to delete ride",
         details: error instanceof Error ? error.message : 'Unknown error'

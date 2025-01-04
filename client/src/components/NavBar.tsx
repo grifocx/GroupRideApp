@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { Link } from "wouter";
-import { LogIn, LogOut, User, PlusCircle, Home, Map } from "lucide-react";
+import { LogIn, LogOut, User, PlusCircle, Home, Map, Shield } from "lucide-react";
 
 export function NavBar() {
   const { user, logout } = useUser();
@@ -30,6 +30,14 @@ export function NavBar() {
                   Rides
                 </a>
               </Link>
+              {user?.isAdmin && (
+                <Link href="/admin">
+                  <a className="flex items-center gap-2 text-sm font-medium">
+                    <Shield className="h-4 w-4" />
+                    Admin
+                  </a>
+                </Link>
+              )}
             </div>
           </div>
 
