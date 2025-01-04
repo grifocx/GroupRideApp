@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { useState } from "react";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -46,7 +45,7 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
   return (
     <Dialog>
       <DialogTrigger asChild>
-        <Button variant="outline" size="icon">
+        <Button variant="ghost" size="icon">
           <Pencil className="h-4 w-4" />
         </Button>
       </DialogTrigger>
@@ -134,7 +133,7 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
 }
 
 export default function ProfilePage() {
-  const { user } = useUser();
+  const { user, logout } = useUser();
   const { rides, isLoading, deleteRide, updateRide } = useUserRides();
 
   if (isLoading) {
@@ -152,11 +151,14 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-background">
       <NavBar />
-      
+
       <main className="container mx-auto px-4 py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Your Profile</CardTitle>
+            <Button variant="outline" onClick={() => logout()}>
+              Logout
+            </Button>
           </CardHeader>
           <CardContent>
             <div className="space-y-2">
