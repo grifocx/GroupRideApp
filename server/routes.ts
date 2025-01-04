@@ -513,6 +513,34 @@ export function registerRoutes(app: Express): Server {
   // Serve uploaded files
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // Update user profile
+  app.put("/api/user/profile", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const { displayName, zipCode, club, homeBikeShop, gender, birthdate } = req.body;
+
+      await db
+        .update(users)
+        .set({
+          displayName,
+          zipCode,
+          club,
+          homeBikeShop,
+          gender,
+          birthdate: birthdate ? new Date(birthdate) : null,
+        })
+        .where(eq(users.id, user.id));
+
+      res.json({ message: "Profile updated successfully" });
+    } catch (error) {
+      console.error("Error updating profile:", error);
+      res.status(500).json({ 
+        error: "Failed to update profile",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Upload avatar
   app.post("/api/user/avatar", upload.single('avatar'), async (req, res) => {
     try {

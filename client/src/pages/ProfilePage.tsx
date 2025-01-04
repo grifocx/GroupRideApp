@@ -236,13 +236,127 @@ export default function ProfilePage() {
                   onChange={handleAvatarChange}
                 />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-4">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button variant="outline" className="mb-4">Edit Profile</Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                      <DialogTitle>Edit Profile</DialogTitle>
+                    </DialogHeader>
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const formData = new FormData(e.currentTarget);
+                      const response = await fetch('/api/user/profile', {
+                        method: 'PUT',
+                        headers: {
+                          'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({
+                          displayName: formData.get('displayName'),
+                          zipCode: formData.get('zipCode'),
+                          club: formData.get('club'),
+                          homeBikeShop: formData.get('homeBikeShop'),
+                          gender: formData.get('gender'),
+                          birthdate: formData.get('birthdate'),
+                        }),
+                        credentials: 'include'
+                      });
+                      
+                      if (response.ok) {
+                        toast({
+                          title: "Success",
+                          description: "Profile updated successfully"
+                        });
+                        queryClient.invalidateQueries({ queryKey: ['user'] });
+                      } else {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: "Failed to update profile"
+                        });
+                      }
+                    }} className="space-y-4">
+                      <div className="space-y-2">
+                        <label>Display Name</label>
+                        <Input name="displayName" defaultValue={user?.displayName || ''} />
+                      </div>
+                      <div className="space-y-2">
+                        <label>Zip Code</label>
+                        <Input name="zipCode" defaultValue={user?.zipCode || ''} />
+                      </div>
+                      <div className="space-y-2">
+                        <label>Club</label>
+                        <Input name="club" defaultValue={user?.club || ''} />
+                      </div>
+                      <div className="space-y-2">
+                        <label>Home Bike Shop</label>
+                        <Input name="homeBikeShop" defaultValue={user?.homeBikeShop || ''} />
+                      </div>
+                      <div className="space-y-2">
+                        <label>Gender</label>
+                        <select name="gender" className="w-full p-2 border rounded" defaultValue={user?.gender || ''}>
+                          <option value="">Prefer not to say</option>
+                          <option value="M">Male</option>
+                          <option value="F">Female</option>
+                          <option value="NB">Non-Binary</option>
+                          <option value="O">Other</option>
+                        </select>
+                      </div>
+                      <div className="space-y-2">
+                        <label>Birthdate</label>
+                        <Input 
+                          type="date" 
+                          name="birthdate" 
+                          defaultValue={user?.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : ''} 
+                        />
+                      </div>
+                      <div className="flex justify-end gap-2">
+                        <DialogTrigger asChild>
+                          <Button type="button" variant="outline">Cancel</Button>
+                        </DialogTrigger>
+                        <Button type="submit">Save Changes</Button>
+                      </div>
+                    </form>
+                  </DialogContent>
+                </Dialog>
+
                 <h3 className="text-lg font-medium">Username</h3>
                 <p>{user?.username}</p>
+                
+                {user?.displayName && (
+                  <>
+                    <h3 className="text-lg font-medium">Display Name</h3>
+                    <p>{user.displayName}</p>
+                  </>
+                )}
+                
                 {user?.email && (
                   <>
-                    <h3 className="text-lg font-medium mt-4">Email</h3>
+                    <h3 className="text-lg font-medium">Email</h3>
                     <p>{user.email}</p>
+                  </>
+                )}
+                
+                {user?.club && (
+                  <>
+                    <h3 className="text-lg font-medium">Club</h3>
+                    <p>{user.club}</p>
+                  </>
+                )}
+                
+                {user?.homeBikeShop && (
+                  <>
+                    <h3 className="text-lg font-medium">Home Bike Shop</h3>
+                    <p>{user.homeBikeShop}</p>
+                  </>
+                )}
+                
+                {user?.zipCode && (
+                  <>
+                    <h3 className="text-lg font-medium">Zip Code</h3>
+                    <p>{user.zipCode}</p>
                   </>
                 )}
               </div>

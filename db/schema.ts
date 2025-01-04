@@ -10,6 +10,12 @@ export const users = pgTable("users", {
   isAdmin: boolean("is_admin").notNull().default(false),
   avatarUrl: text("avatar_url"),
   email: text("email"),
+  displayName: text("display_name"),
+  zipCode: text("zip_code"),
+  club: text("club"),
+  homeBikeShop: text("home_bike_shop"),
+  gender: text("gender"),
+  birthdate: timestamp("birthdate"),
 });
 
 export const rides = pgTable("rides", {
