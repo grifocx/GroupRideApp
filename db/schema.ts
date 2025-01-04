@@ -32,6 +32,7 @@ export const rides = pgTable("rides", {
   rideType: text("ride_type").notNull(),
   pace: real("pace").notNull(),
   terrain: text("terrain").notNull(),
+  route_url: text("route_url"),
   description: text("description"),
 });
 
@@ -89,6 +90,8 @@ export const insertRideSchema = createInsertSchema(rides, {
   address: z.string().min(1, "Address is required"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
+  route_url: z.string().url().optional(),
+  description: z.string().optional(),
 });
 
 export const selectRideSchema = createSelectSchema(rides);

@@ -54,12 +54,6 @@ export default function RidePage() {
       const lng = parseFloat(ride.longitude);
 
       if (!isNaN(lat) && !isNaN(lng)) {
-        // Clean up any existing map instance
-        if (mapInstanceRef.current) {
-          mapInstanceRef.current.remove();
-          mapInstanceRef.current = null;
-        }
-
         const map = L.map(mapRef.current).setView([lat, lng], 13);
 
         L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
@@ -183,6 +177,19 @@ export default function RidePage() {
                     <MapPin className="h-4 w-4 text-muted-foreground" />
                     <span>{ride.address}</span>
                   </div>
+
+                  {ride.route_url && (
+                    <div className="flex items-center gap-2">
+                      <a 
+                        href={ride.route_url} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-primary hover:underline inline-flex items-center gap-2"
+                      >
+                        View Route Details
+                      </a>
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>
