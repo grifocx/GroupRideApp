@@ -2,7 +2,6 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { HoverCard, HoverCardContent, HoverCardTrigger } from "@/components/ui/hover-card";
 import { Map, MapPin, Copy } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
@@ -10,7 +9,7 @@ import L from "leaflet";
 import type { Ride } from "@db/schema";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-
+import { useQueryClient } from "@tanstack/react-query";
 
 type RideCardProps = {
   ride: Ride & {
@@ -40,6 +39,7 @@ const difficultyLabels = {
 export default function RideCard({ ride }: RideCardProps) {
   const { toast } = useToast();
   const { user } = useUser();
+  const queryClient = useQueryClient();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
 
@@ -74,9 +74,10 @@ export default function RideCard({ ride }: RideCardProps) {
     };
   }, [ride.latitude, ride.longitude]);
 
-  const handleJoin = async () => {
+  const handleJoinToggle = async () => {
     try {
-      const response = await fetch(`/api/rides/${ride.id}/join`, {
+      const endpoint = `/api/rides/${ride.id}/${isJoined ? 'unjoin' : 'join'}`;
+      const response = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
       });
@@ -85,15 +86,18 @@ export default function RideCard({ ride }: RideCardProps) {
         throw new Error(await response.text());
       }
 
+      // Invalidate queries to refresh the data
+      queryClient.invalidateQueries({ queryKey: ['/api/rides'] });
+
       toast({
         title: "Success",
-        description: "Successfully joined the ride",
+        description: isJoined ? "Left the ride" : "Successfully joined the ride",
       });
     } catch (error) {
       toast({
         variant: "destructive",
         title: "Error",
-        description: error instanceof Error ? error.message : "Failed to join ride",
+        description: error instanceof Error ? error.message : `Failed to ${isJoined ? 'leave' : 'join'} ride`,
       });
     }
   };
@@ -172,14 +176,6 @@ export default function RideCard({ ride }: RideCardProps) {
             <Button
               variant="ghost"
               size="icon"
-              onClick={() => handleShare('instagram')}
-              title="Share on Instagram"
-            >
-              <img src="/instagram.svg" alt="Instagram" className="h-4 w-4"/>
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
               onClick={() => handleShare()}
               title="Copy Link"
             >
@@ -231,10 +227,10 @@ export default function RideCard({ ride }: RideCardProps) {
           <Button
             className="w-full"
             variant={isJoined ? "secondary" : "default"}
-            onClick={handleJoin}
-            disabled={isJoined || participantCount >= ride.maxRiders}
+            onClick={handleJoinToggle}
+            disabled={!isJoined && participantCount >= ride.maxRiders}
           >
-            {isJoined ? "Joined" : "Join Ride"}
+            {isJoined ? "Leave Ride" : "Join Ride"}
           </Button>
         </div>
       </CardContent>
