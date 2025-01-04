@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
 import { useToast } from "@/hooks/use-toast";
 import type { InsertRide } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
@@ -15,8 +14,7 @@ const createRideSchema = z.object({
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
   maxRiders: z.number().min(1, "Must allow at least 1 rider"),
-  latitude: z.string(),
-  longitude: z.string(),
+  address: z.string().min(1, "Address is required"),
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
@@ -35,9 +33,8 @@ export default function CreateRidePage() {
       distance: 25,
       difficulty: "C",
       maxRiders: 20,
-      latitude: "45.5155",
-      longitude: "-122.6789",
-      dateTime: new Date().toISOString().slice(0, 16), // Format for datetime-local input
+      address: "",
+      dateTime: new Date().toISOString().slice(0, 16),
       rideType: "ROAD",
       pace: 20,
       terrain: "FLAT"
@@ -46,7 +43,7 @@ export default function CreateRidePage() {
 
   const onSubmit = async (data: CreateRideForm) => {
     try {
-      const formattedData: InsertRide = {
+      const formattedData: Partial<InsertRide> = {
         ...data,
         distance: Number(data.distance),
         maxRiders: Number(data.maxRiders),
@@ -63,7 +60,7 @@ export default function CreateRidePage() {
 
       if (!response.ok) {
         const error = await response.json();
-        throw new Error(error.message || "Failed to create ride");
+        throw new Error(error.message || error.error || "Failed to create ride");
       }
 
       toast({
@@ -96,6 +93,17 @@ export default function CreateRidePage() {
               />
               {form.formState.errors.title && (
                 <p className="text-sm text-destructive">{form.formState.errors.title.message}</p>
+              )}
+            </div>
+
+            <div className="space-y-2">
+              <label>Meeting Location</label>
+              <Input
+                placeholder="Enter the starting point address"
+                {...form.register("address")}
+              />
+              {form.formState.errors.address && (
+                <p className="text-sm text-destructive">{form.formState.errors.address.message}</p>
               )}
             </div>
 
