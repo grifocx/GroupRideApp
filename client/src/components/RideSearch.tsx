@@ -2,8 +2,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { format } from "date-fns";
 import { useState } from "react";
 import { RideType, TerrainType, DifficultyLevel } from "@db/schema";
+import { CalendarIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 export type RideFilters = {
   search: string;
@@ -12,6 +17,8 @@ export type RideFilters = {
   maxDistance: number;
   difficulty: string;
   terrain: string;
+  startDate: Date | null;
+  endDate: Date | null;
 };
 
 type RideSearchProps = {
@@ -35,6 +42,8 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
     maxDistance: 100,
     difficulty: "all",
     terrain: "all",
+    startDate: null,
+    endDate: null,
   });
 
   const handleFilterChange = (updates: Partial<RideFilters>) => {
@@ -116,24 +125,77 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
         </div>
       </div>
 
-      <div className="space-y-2">
-        <label className="text-sm font-medium">Distance Range (miles)</label>
-        <div className="flex items-center gap-4">
-          <Input
-            type="number"
-            min={0}
-            value={filters.minDistance}
-            onChange={(e) => handleFilterChange({ minDistance: Number(e.target.value) })}
-            className="w-24"
-          />
-          <span>to</span>
-          <Input
-            type="number"
-            min={0}
-            value={filters.maxDistance}
-            onChange={(e) => handleFilterChange({ maxDistance: Number(e.target.value) })}
-            className="w-24"
-          />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Distance Range (miles)</label>
+          <div className="flex items-center gap-4">
+            <Input
+              type="number"
+              min={0}
+              value={filters.minDistance}
+              onChange={(e) => handleFilterChange({ minDistance: Number(e.target.value) })}
+              className="w-24"
+            />
+            <span>to</span>
+            <Input
+              type="number"
+              min={0}
+              value={filters.maxDistance}
+              onChange={(e) => handleFilterChange({ maxDistance: Number(e.target.value) })}
+              className="w-24"
+            />
+          </div>
+        </div>
+
+        <div className="space-y-2">
+          <label className="text-sm font-medium">Date Range</label>
+          <div className="flex gap-4">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal w-full",
+                    !filters.startDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filters.startDate ? format(filters.startDate, "PPP") : "Start date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={filters.startDate ?? undefined}
+                  onSelect={(date) => handleFilterChange({ startDate: date })}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    "justify-start text-left font-normal w-full",
+                    !filters.endDate && "text-muted-foreground"
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {filters.endDate ? format(filters.endDate, "PPP") : "End date"}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0">
+                <Calendar
+                  mode="single"
+                  selected={filters.endDate ?? undefined}
+                  onSelect={(date) => handleFilterChange({ endDate: date })}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
         </div>
       </div>
     </div>

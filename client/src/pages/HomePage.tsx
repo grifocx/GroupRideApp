@@ -4,11 +4,16 @@ import RideCard from "@/components/RideCard";
 import { NavBar } from "@/components/NavBar";
 import RideSearch, { type RideFilters } from "@/components/RideSearch";
 import { MapComponent } from "@/components/MapComponent";
-import { Loader2 } from "lucide-react";
+import CalendarView from "@/components/CalendarView";
+import { Loader2, Calendar as CalendarIcon, List } from "lucide-react";
 import { useState, useMemo } from "react";
+import { Button } from "@/components/ui/button";
+
+type ViewMode = 'list' | 'calendar';
 
 export default function HomePage() {
   const { rides, isLoading } = useRides();
+  const [viewMode, setViewMode] = useState<ViewMode>('list');
   const [filters, setFilters] = useState<RideFilters>({
     search: "",
     rideType: "all",
@@ -16,6 +21,8 @@ export default function HomePage() {
     maxDistance: 100,
     difficulty: "all",
     terrain: "all",
+    startDate: null,
+    endDate: null,
   });
 
   const filteredRides = useMemo(() => {
@@ -48,6 +55,15 @@ export default function HomePage() {
         return false;
       }
 
+      // Date filtering
+      const rideDate = new Date(ride.dateTime);
+      if (filters.startDate && rideDate < filters.startDate) {
+        return false;
+      }
+      if (filters.endDate && rideDate > filters.endDate) {
+        return false;
+      }
+
       return true;
     });
   }, [rides, filters]);
@@ -68,53 +84,65 @@ export default function HomePage() {
       </section>
 
       <main className="container mx-auto px-4 py-6 md:py-8">
-        <div className="mb-6 md:mb-8">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
           <RideSearch onFilterChange={setFilters} />
+          <div className="inline-flex rounded-md border shadow-sm">
+            <Button
+              variant={viewMode === 'list' ? 'default' : 'outline'}
+              onClick={() => setViewMode('list')}
+              className={`flex items-center gap-2 rounded-r-none ${viewMode === 'list' ? '' : 'border-r'}`}
+            >
+              <List className="h-4 w-4" />
+              List
+            </Button>
+            <Button
+              variant={viewMode === 'calendar' ? 'default' : 'outline'}
+              onClick={() => setViewMode('calendar')}
+              className="flex items-center gap-2 rounded-l-none"
+            >
+              <CalendarIcon className="h-4 w-4" />
+              Calendar
+            </Button>
+          </div>
         </div>
 
-        <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8">
-          {/* Interactive Map - Full width on mobile */}
-          <div className="order-2 lg:order-1">
-            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Ride Map</h2>
-            <div className="bg-card rounded-lg p-4 lg:sticky lg:top-4">
-              {isLoading ? (
-                <div className="h-[300px] md:h-[400px] flex items-center justify-center">
-                  <Loader2 className="h-8 w-8 animate-spin" />
-                </div>
-              ) : (
+        {isLoading ? (
+          <div className="flex items-center justify-center min-h-[400px]">
+            <Loader2 className="h-8 w-8 animate-spin" />
+          </div>
+        ) : viewMode === 'calendar' ? (
+          <CalendarView rides={filteredRides} />
+        ) : (
+          <div className="flex flex-col lg:grid lg:grid-cols-2 gap-6 md:gap-8">
+            {/* Interactive Map - Full width on mobile */}
+            <div className="order-2 lg:order-1">
+              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Ride Map</h2>
+              <div className="bg-card rounded-lg p-4 lg:sticky lg:top-4">
                 <MapComponent 
                   rides={filteredRides}
                   onMarkerClick={(ride) => {
                     console.log('Clicked ride:', ride);
                   }}
                 />
-              )}
+              </div>
             </div>
-          </div>
 
-          {/* Ride List - Full width on mobile */}
-          <div className="order-1 lg:order-2">
-            <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Available Rides</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
-              {isLoading ? (
-                Array.from({ length: 4 }).map((_, i) => (
-                  <div key={i} className="h-[300px] md:h-[400px] bg-muted animate-pulse rounded-lg" />
-                ))
-              ) : (
-                <>
-                  {filteredRides.map((ride) => (
-                    <RideCard key={ride.id} ride={ride} />
-                  ))}
-                  {filteredRides.length === 0 && (
-                    <div className="col-span-full text-center text-muted-foreground py-8">
-                      No rides found matching your criteria
-                    </div>
-                  )}
-                </>
-              )}
+            {/* Ride List - Full width on mobile */}
+            <div className="order-1 lg:order-2">
+              <h2 className="text-xl md:text-2xl font-bold mb-3 md:mb-4">Available Rides</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-1 xl:grid-cols-2 gap-4 md:gap-6">
+                {filteredRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} />
+                ))}
+                {filteredRides.length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground py-8">
+                    No rides found matching your criteria
+                  </div>
+                )}
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </main>
     </div>
   );
