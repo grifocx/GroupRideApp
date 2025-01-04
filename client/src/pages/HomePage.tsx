@@ -14,7 +14,7 @@ export default function HomePage() {
     rideType: "all",
     minDistance: 0,
     maxDistance: 100,
-    difficulty: "C",
+    difficulty: "all",
     terrain: "all",
   });
 
@@ -100,14 +100,22 @@ export default function HomePage() {
         {/* Ride List */}
         <div>
           <h2 className="text-2xl font-bold mb-4">Available Rides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredRides.map((ride) => (
-              <RideCard key={ride.id} ride={ride} />
-            ))}
-            {filteredRides.length === 0 && (
-              <div className="col-span-full text-center text-muted-foreground py-8">
-                No rides found matching your criteria
-              </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {isLoading ? (
+              Array.from({ length: 6 }).map((_, i) => (
+                <div key={i} className="h-[400px] bg-muted animate-pulse rounded-lg" />
+              ))
+            ) : (
+              <>
+                {filteredRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} />
+                ))}
+                {filteredRides.length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground py-8">
+                    No rides found matching your criteria
+                  </div>
+                )}
+              </>
             )}
           </div>
         </div>
