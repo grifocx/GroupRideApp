@@ -69,6 +69,7 @@ export default function CreateRidePage() {
       });
       setLocation("/");
     } catch (error) {
+      console.error('Create ride error:', error);
       toast({
         variant: "destructive",
         title: "Error",
