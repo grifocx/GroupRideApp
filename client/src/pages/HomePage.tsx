@@ -24,7 +24,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   );
 };
 
-
 export default function HomePage() {
   const { rides, isLoading } = useRides();
   const [, setLocation] = useLocation();
@@ -109,11 +108,28 @@ export default function HomePage() {
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-8">
+            {/* Rides Section */}
+            <div>
+              <h2 className="text-xl font-bold mb-4">Available Rides</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} />
+                ))}
+                {filteredRides.length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground py-8">
+                    No rides found matching your criteria
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Map and Calendar Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Map Section */}
               <Card>
                 <CardContent className="p-4">
+                  <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
                   <div className="h-[400px]">
                     <MapComponent 
                       rides={filteredRides}
@@ -125,7 +141,7 @@ export default function HomePage() {
                 </CardContent>
               </Card>
 
-              {/* Mini Calendar Section */}
+              {/* Calendar Section */}
               <Card>
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
@@ -146,21 +162,6 @@ export default function HomePage() {
                   />
                 </CardContent>
               </Card>
-            </div>
-
-            {/* Rides Section */}
-            <div>
-              <h2 className="text-xl font-bold mb-4">Available Rides</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))}
-                {filteredRides.length === 0 && (
-                  <div className="col-span-full text-center text-muted-foreground py-8">
-                    No rides found matching your criteria
-                  </div>
-                )}
-              </div>
             </div>
           </div>
         )}
