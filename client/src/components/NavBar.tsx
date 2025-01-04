@@ -19,22 +19,22 @@ export function NavBar() {
             </Link>
             <div className="flex gap-6">
               <Link href="/">
-                <a className="flex items-center gap-2 text-sm font-medium">
+                <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                   <Home className="h-4 w-4" />
                   Home
                 </a>
               </Link>
               <Link href="/rides">
-                <a className="flex items-center gap-2 text-sm font-medium">
+                <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                   <Map className="h-4 w-4" />
                   Rides
                 </a>
               </Link>
               {user?.isAdmin && (
                 <Link href="/admin">
-                  <a className="flex items-center gap-2 text-sm font-medium">
+                  <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground">
                     <Shield className="h-4 w-4" />
-                    Admin
+                    Admin Dashboard
                   </a>
                 </Link>
               )}

@@ -5,7 +5,7 @@ import session from "express-session";
 import createMemoryStore from "memorystore";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, type SelectUser } from "@db/schema";
+import { users, insertUserSchema, type User } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
 
@@ -30,7 +30,7 @@ const crypto = {
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends User { }
   }
 }
 
@@ -92,7 +92,11 @@ export function setupAuth(app: Express) {
   passport.deserializeUser(async (id: number, done) => {
     try {
       const [user] = await db
-        .select()
+        .select({
+          id: users.id,
+          username: users.username,
+          isAdmin: users.isAdmin,
+        })
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
@@ -131,7 +135,11 @@ export function setupAuth(app: Express) {
           username,
           password: hashedPassword,
         })
-        .returning();
+        .returning({
+          id: users.id,
+          username: users.username,
+          isAdmin: users.isAdmin,
+        });
 
       req.login(newUser, (err) => {
         if (err) {
@@ -139,7 +147,7 @@ export function setupAuth(app: Express) {
         }
         return res.json({
           message: "Registration successful",
-          user: { id: newUser.id, username: newUser.username },
+          user: newUser,
         });
       });
     } catch (error) {
@@ -164,7 +172,11 @@ export function setupAuth(app: Express) {
 
         return res.json({
           message: "Login successful",
-          user: { id: user.id, username: user.username },
+          user: {
+            id: user.id,
+            username: user.username,
+            isAdmin: user.isAdmin,
+          },
         });
       });
     })(req, res, next);
@@ -184,6 +196,10 @@ export function setupAuth(app: Express) {
       return res.status(401).json({ error: "Not logged in" });
     }
     const user = req.user as Express.User;
-    return res.json({ id: user.id, username: user.username });
+    return res.json({
+      id: user.id,
+      username: user.username,
+      isAdmin: user.isAdmin,
+    });
   });
 }
