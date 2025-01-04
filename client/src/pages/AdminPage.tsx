@@ -32,6 +32,8 @@ type Ride = {
   terrain: string;
   owner: { username: string };
   participants: Array<{ user: { username: string } }>;
+  route_url?: string;
+  description?: string;
 };
 
 const editRideSchema = z.object({
@@ -44,6 +46,8 @@ const editRideSchema = z.object({
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
+  route_url: z.string().url().optional().or(z.literal('')),
+  description: z.string().optional(),
 });
 
 type EditRideForm = z.infer<typeof editRideSchema>;
@@ -61,6 +65,8 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
       rideType: ride.rideType as EditRideForm['rideType'],
       pace: ride.pace,
       terrain: ride.terrain as EditRideForm['terrain'],
+      route_url: ride.route_url || '',
+      description: ride.description || '',
     },
   });
 
@@ -140,6 +146,26 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
               <option value="HILLY">Hilly</option>
               <option value="MOUNTAIN">Mountain</option>
             </select>
+          </div>
+          <div className="space-y-2">
+            <label>Route URL (optional)</label>
+            <Input
+              type="url"
+              placeholder="https://www.strava.com/routes/..."
+              {...form.register("route_url")}
+            />
+            {form.formState.errors.route_url && (
+              <p className="text-sm text-destructive">{form.formState.errors.route_url.message}</p>
+            )}
+          </div>
+
+          <div className="space-y-2">
+            <label>Description (optional)</label>
+            <textarea
+              className="w-full p-2 border rounded min-h-[100px]"
+              placeholder="Add any additional details about the ride..."
+              {...form.register("description")}
+            />
           </div>
 
           <div className="flex justify-end gap-2">

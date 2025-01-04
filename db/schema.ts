@@ -90,8 +90,8 @@ export const insertRideSchema = createInsertSchema(rides, {
   address: z.string().min(1, "Address is required"),
   latitude: z.string().optional(),
   longitude: z.string().optional(),
-  route_url: z.string().url().optional(),
-  description: z.string().optional(),
+  route_url: z.string().url().nullish().or(z.literal('')),
+  description: z.string().nullish().or(z.literal('')),
 });
 
 export const selectRideSchema = createSelectSchema(rides);
