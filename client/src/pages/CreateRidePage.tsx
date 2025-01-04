@@ -49,7 +49,6 @@ export default function CreateRidePage() {
       const formattedData: InsertRide = {
         ...data,
         distance: Number(data.distance),
-        difficulty: Number(data.difficulty),
         maxRiders: Number(data.maxRiders),
         pace: Number(data.pace),
         dateTime: new Date(data.dateTime).toISOString(),
