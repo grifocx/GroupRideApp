@@ -18,7 +18,7 @@ const createRideSchema = z.object({
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
-  route_url: z.string().url().optional(),
+  route_url: z.string().url().optional().or(z.literal('')),
   description: z.string().optional(),
 });
 
@@ -54,6 +54,14 @@ export default function CreateRidePage() {
         pace: Number(data.pace),
         dateTime: new Date(data.dateTime).toISOString(),
       };
+
+      // Clean up empty strings for optional fields
+      if (!formattedData.route_url) {
+        formattedData.route_url = null;
+      }
+      if (!formattedData.description) {
+        formattedData.description = null;
+      }
 
       const response = await fetch("/api/rides", {
         method: "POST",
