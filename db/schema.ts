@@ -23,7 +23,6 @@ export const rides = pgTable("rides", {
   rideType: text("ride_type").notNull(),
   pace: real("pace").notNull(),
   terrain: text("terrain").notNull(),
-  routeUrl: text("route_url"),
   description: text("description"),
 });
 

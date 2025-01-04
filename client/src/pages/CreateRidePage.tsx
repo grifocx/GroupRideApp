@@ -169,7 +169,6 @@ export default function CreateRidePage() {
               <Input
                 type="number"
                 {...form.register("pace", { valueAsNumber: true })}
-                defaultValue={20}
               />
             </div>
 
