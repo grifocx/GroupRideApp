@@ -222,7 +222,7 @@ export default function ProfilePage() {
                     {user?.username?.slice(0, 2).toUpperCase()}
                   </AvatarFallback>
                 </Avatar>
-                <label 
+                <label
                   className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity"
                   htmlFor="avatar-upload"
                 >
@@ -239,6 +239,12 @@ export default function ProfilePage() {
               <div className="space-y-2">
                 <h3 className="text-lg font-medium">Username</h3>
                 <p>{user?.username}</p>
+                {user?.email && (
+                  <>
+                    <h3 className="text-lg font-medium mt-4">Email</h3>
+                    <p>{user.email}</p>
+                  </>
+                )}
               </div>
             </div>
           </CardContent>

@@ -9,6 +9,7 @@ export const users = pgTable("users", {
   password: text("password").notNull(),
   isAdmin: boolean("is_admin").notNull().default(false),
   avatarUrl: text("avatar_url"),
+  email: text("email"),
 });
 
 export const rides = pgTable("rides", {
@@ -53,7 +54,11 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
   }),
 }));
 
-export const insertUserSchema = createInsertSchema(users);
+export const insertUserSchema = createInsertSchema(users, {
+  email: z.string().email().optional(),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+});
 export const selectUserSchema = createSelectSchema(users);
 
 // Define the difficulty levels as a const enum

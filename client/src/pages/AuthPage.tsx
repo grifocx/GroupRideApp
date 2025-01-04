@@ -6,11 +6,20 @@ import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2 } from "lucide-react";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 
-type FormData = {
-  username: string;
-  password: string;
-};
+const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+const registerSchema = loginSchema.extend({
+  email: z.string().email("Invalid email address"),
+});
+
+type LoginForm = z.infer<typeof loginSchema>;
+type RegisterForm = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const [isLogin, setIsLogin] = useState(true);
@@ -18,17 +27,23 @@ export default function AuthPage() {
   const { toast } = useToast();
   const { login, register } = useUser();
 
-  const form = useForm<FormData>({
+  const form = useForm<RegisterForm>({
+    resolver: zodResolver(isLogin ? loginSchema : registerSchema),
     defaultValues: {
       username: "",
       password: "",
+      email: "",
     },
   });
 
-  const onSubmit = async (data: FormData) => {
+  const onSubmit = async (data: RegisterForm) => {
     try {
       setIsLoading(true);
-      await (isLogin ? login(data) : register(data));
+      const authData = isLogin ? 
+        { username: data.username, password: data.password } :
+        { username: data.username, password: data.password, email: data.email };
+
+      await (isLogin ? login(authData) : register(authData));
       toast({
         title: "Success",
         description: isLogin ? "Successfully logged in!" : "Successfully registered!",
@@ -56,22 +71,38 @@ export default function AuthPage() {
             <div className="space-y-2">
               <Input
                 placeholder="Username"
-                {...form.register("username", { required: true })}
+                {...form.register("username")}
                 disabled={isLoading}
               />
               {form.formState.errors.username && (
-                <p className="text-sm text-red-500">Username is required</p>
+                <p className="text-sm text-destructive">{form.formState.errors.username.message}</p>
               )}
+
+              {!isLogin && (
+                <>
+                  <Input
+                    type="email"
+                    placeholder="Email"
+                    {...form.register("email")}
+                    disabled={isLoading}
+                  />
+                  {form.formState.errors.email && (
+                    <p className="text-sm text-destructive">{form.formState.errors.email.message}</p>
+                  )}
+                </>
+              )}
+
               <Input
                 type="password"
                 placeholder="Password"
-                {...form.register("password", { required: true })}
+                {...form.register("password")}
                 disabled={isLoading}
               />
               {form.formState.errors.password && (
-                <p className="text-sm text-red-500">Password is required</p>
+                <p className="text-sm text-destructive">{form.formState.errors.password.message}</p>
               )}
             </div>
+
             <Button type="submit" className="w-full" disabled={isLoading}>
               {isLoading ? (
                 <Loader2 className="h-4 w-4 animate-spin" />
@@ -83,7 +114,10 @@ export default function AuthPage() {
               type="button"
               variant="link"
               className="w-full"
-              onClick={() => setIsLogin(!isLogin)}
+              onClick={() => {
+                setIsLogin(!isLogin);
+                form.reset();
+              }}
               disabled={isLoading}
             >
               {isLogin ? "Need an account?" : "Already have an account?"}
