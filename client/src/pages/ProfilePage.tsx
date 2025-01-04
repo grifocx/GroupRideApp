@@ -14,6 +14,8 @@ import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
+import { ProfileProgress } from "@/components/ProfileProgress";
+import { motion } from "framer-motion";
 
 const editRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -206,36 +208,59 @@ export default function ProfilePage() {
       <NavBar />
 
       <main className="container mx-auto px-4 py-8">
-        <Card>
-          <CardHeader className="flex flex-row items-center justify-between">
-            <CardTitle>Your Profile</CardTitle>
-            <Button variant="outline" onClick={() => logout()}>
-              Logout
-            </Button>
-          </CardHeader>
-          <CardContent>
-            <div className="flex items-center gap-6">
-              <div className="relative group">
-                <Avatar className="h-24 w-24">
-                  <AvatarImage src={user?.avatar_url} alt={user?.username} />
-                  <AvatarFallback>
-                    {user?.username?.slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <label
-                  className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity"
-                  htmlFor="avatar-upload"
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          className="grid gap-6 md:grid-cols-2"
+        >
+          <Card>
+            <CardHeader className="flex flex-row items-center justify-between">
+              <CardTitle>Profile Overview</CardTitle>
+              <Button variant="outline" onClick={() => logout()}>
+                Logout
+              </Button>
+            </CardHeader>
+            <CardContent>
+              <div className="flex items-center gap-6">
+                <motion.div
+                  className="relative group"
+                  whileHover={{ scale: 1.05 }}
+                  transition={{ type: "spring", stiffness: 300 }}
                 >
-                  <Upload className="h-6 w-6" />
-                </label>
-                <input
-                  type="file"
-                  id="avatar-upload"
-                  className="hidden"
-                  accept="image/*"
-                  onChange={handleAvatarChange}
-                />
+                  <Avatar className="h-24 w-24">
+                    <AvatarImage src={user?.avatar_url} alt={user?.username} />
+                    <AvatarFallback>
+                      {user?.username?.slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <label
+                    className="absolute inset-0 flex items-center justify-center bg-black/50 text-white opacity-0 group-hover:opacity-100 rounded-full cursor-pointer transition-opacity"
+                    htmlFor="avatar-upload"
+                  >
+                    <Upload className="h-6 w-6" />
+                  </label>
+                  <input
+                    type="file"
+                    id="avatar-upload"
+                    className="hidden"
+                    accept="image/*"
+                    onChange={handleAvatarChange}
+                  />
+                </motion.div>
+                <div className="space-y-4 flex-grow">
+                  <h2 className="text-2xl font-bold">{user?.display_name || user?.username}</h2>
+                  <ProfileProgress user={user} />
+                </div>
               </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>Profile Details</CardTitle>
+            </CardHeader>
+            <CardContent>
               <div className="space-y-4">
                 <Dialog>
                   <DialogTrigger asChild>
@@ -306,10 +331,10 @@ export default function ProfilePage() {
                       </div>
                       <div className="space-y-2">
                         <label>Birthdate</label>
-                        <Input 
-                          type="date" 
-                          name="birthdate" 
-                          defaultValue={user?.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : ''} 
+                        <Input
+                          type="date"
+                          name="birthdate"
+                          defaultValue={user?.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : ''}
                         />
                       </div>
                       <div className="flex justify-end gap-2">
@@ -321,50 +346,17 @@ export default function ProfilePage() {
                     </form>
                   </DialogContent>
                 </Dialog>
-
-                <h3 className="text-lg font-medium">Username</h3>
-                <p>{user?.username}</p>
-
-                {user?.display_name && (
-                  <>
-                    <h3 className="text-lg font-medium">Display Name</h3>
-                    <p>{user.display_name}</p>
-                  </>
-                )}
-
-                {user?.email && (
-                  <>
-                    <h3 className="text-lg font-medium">Email</h3>
-                    <p>{user.email}</p>
-                  </>
-                )}
-
-                {user?.club && (
-                  <>
-                    <h3 className="text-lg font-medium">Club</h3>
-                    <p>{user.club}</p>
-                  </>
-                )}
-
-                {user?.home_bike_shop && (
-                  <>
-                    <h3 className="text-lg font-medium">Home Bike Shop</h3>
-                    <p>{user.home_bike_shop}</p>
-                  </>
-                )}
-
-                {user?.zip_code && (
-                  <>
-                    <h3 className="text-lg font-medium">Zip Code</h3>
-                    <p>{user.zip_code}</p>
-                  </>
-                )}
               </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
 
-        <div className="mt-8">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          className="mt-8"
+        >
           <h2 className="text-2xl font-bold mb-4">Your Rides</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {rides?.map((ride) => (
@@ -408,7 +400,7 @@ export default function ProfilePage() {
               </div>
             )}
           </div>
-        </div>
+        </motion.div>
       </main>
     </div>
   );
