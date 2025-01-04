@@ -3,14 +3,14 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Slider } from "@/components/ui/slider";
 import { useState } from "react";
-import { RideType, TerrainType } from "@db/schema";
+import { RideType, TerrainType, DifficultyLevel } from "@db/schema";
 
 export type RideFilters = {
   search: string;
   rideType: string;
   minDistance: number;
   maxDistance: number;
-  difficulty: number;
+  difficulty: string;
   terrain: string;
 };
 
@@ -18,13 +18,22 @@ type RideSearchProps = {
   onFilterChange: (filters: RideFilters) => void;
 };
 
+const difficultyLevels = [
+  { value: DifficultyLevel.BEGINNER, label: 'Beginner (E)' },
+  { value: DifficultyLevel.NOVICE, label: 'Novice (D)' },
+  { value: DifficultyLevel.INTERMEDIATE, label: 'Intermediate (C)' },
+  { value: DifficultyLevel.ADVANCED, label: 'Advanced (B)' },
+  { value: DifficultyLevel.EXPERT, label: 'Expert (A)' },
+  { value: DifficultyLevel.PROFESSIONAL, label: 'Professional (AA)' }
+];
+
 export default function RideSearch({ onFilterChange }: RideSearchProps) {
   const [filters, setFilters] = useState<RideFilters>({
     search: "",
     rideType: "all",
     minDistance: 0,
     maxDistance: 100,
-    difficulty: 1,
+    difficulty: DifficultyLevel.INTERMEDIATE,
     terrain: "all",
   });
 
@@ -88,16 +97,22 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
 
         <div className="space-y-2">
           <label className="text-sm font-medium">Difficulty</label>
-          <Slider
-            min={1}
-            max={5}
-            step={1}
-            value={[filters.difficulty]}
-            onValueChange={([value]) => handleFilterChange({ difficulty: value })}
-          />
-          <div className="text-sm text-muted-foreground text-center">
-            Level {filters.difficulty}
-          </div>
+          <Select
+            value={filters.difficulty}
+            onValueChange={(value) => handleFilterChange({ difficulty: value })}
+          >
+            <SelectTrigger>
+              <SelectValue placeholder="Select difficulty" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">All Levels</SelectItem>
+              {difficultyLevels.map(({ value, label }) => (
+                <SelectItem key={value} value={value}>
+                  {label}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
         </div>
       </div>
 

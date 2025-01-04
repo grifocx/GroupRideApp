@@ -45,13 +45,14 @@ export function registerRoutes(app: Express): Server {
       // Convert numeric string fields to numbers
       const body = {
         ...req.body,
-        difficulty: Number(req.body.difficulty),
+        difficulty: String(req.body.difficulty).toUpperCase(), // Ensure difficulty is a string and uppercase
         distance: Number(req.body.distance),
         maxRiders: Number(req.body.maxRiders),
         pace: Number(req.body.pace),
         ownerId: user.id
       };
 
+      console.log("Attempting to validate ride data:", body);
       const validatedData = insertRideSchema.parse(body);
 
       const [newRide] = await db.insert(rides)
