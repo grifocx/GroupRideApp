@@ -1,22 +1,19 @@
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { useRides } from "@/hooks/use-rides";
 import RideCard from "@/components/RideCard";
+import { NavBar } from "@/components/NavBar";
 import RideSearch, { type RideFilters } from "@/components/RideSearch";
 import { Loader2 } from "lucide-react";
 import { useState, useMemo } from "react";
-import type { Ride } from "@db/schema";
 
 export default function HomePage() {
-  const { logout } = useUser();
   const { rides, isLoading } = useRides();
   const [filters, setFilters] = useState<RideFilters>({
     search: "",
     rideType: "all",
     minDistance: 0,
     maxDistance: 100,
-    difficulty: 1,
+    difficulty: "C",
     terrain: "all",
   });
 
@@ -46,7 +43,7 @@ export default function HomePage() {
       }
 
       // Difficulty
-      if (ride.difficulty < filters.difficulty) {
+      if (filters.difficulty !== "all" && ride.difficulty !== filters.difficulty) {
         return false;
       }
 
@@ -61,19 +58,18 @@ export default function HomePage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="border-b">
-        <div className="container mx-auto px-4 py-4 flex justify-between items-center">
-          <h1 className="text-2xl font-bold">Cycling Groups</h1>
-          <div className="flex gap-4">
-            <Link href="/create">
-              <Button>Create Ride</Button>
-            </Link>
-            <Button variant="outline" onClick={() => logout()}>
-              Logout
-            </Button>
-          </div>
+      <NavBar />
+
+      {/* Welcome Banner */}
+      <section className="bg-primary text-primary-foreground py-16">
+        <div className="container mx-auto px-4 text-center">
+          <h1 className="text-4xl font-bold mb-4">Welcome to CycleGroup</h1>
+          <p className="text-lg max-w-2xl mx-auto">
+            Connect with fellow cyclists, join group rides, and explore new trails together. 
+            Find your perfect riding group based on your style and experience level.
+          </p>
         </div>
-      </header>
+      </section>
 
       <main className="container mx-auto px-4 py-8">
         <div className="mb-8">

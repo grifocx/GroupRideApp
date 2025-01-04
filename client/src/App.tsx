@@ -25,7 +25,18 @@ function App() {
     <ErrorBoundary>
       <Switch>
         <Route path="/" component={HomePage} />
+        <Route path="/rides" component={HomePage} />
         <Route path="/create" component={CreateRidePage} />
+        <Route path="/profile" component={() => <div>Profile Page (Coming Soon)</div>} />
+        <Route>
+          {/* 404 Not Found */}
+          <div className="flex items-center justify-center min-h-screen p-4">
+            <div className="text-center">
+              <h1 className="text-4xl font-bold mb-4">404 - Page Not Found</h1>
+              <p className="text-muted-foreground">The page you're looking for doesn't exist.</p>
+            </div>
+          </div>
+        </Route>
       </Switch>
     </ErrorBoundary>
   );
