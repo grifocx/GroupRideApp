@@ -6,6 +6,7 @@ import { format } from "date-fns";
 import type { Ride } from "@db/schema";
 import RideCard from "./RideCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Badge } from "@/components/ui/badge";
 
 type RideWithRelations = Ride & {
   owner: { username: string };
@@ -14,13 +15,15 @@ type RideWithRelations = Ride & {
 
 type CalendarViewProps = {
   rides: RideWithRelations[];
+  compact?: boolean;
+  ridesByDate?: Record<string, RideWithRelations[]>;
 };
 
-export default function CalendarView({ rides }: CalendarViewProps) {
+export default function CalendarView({ rides, compact = false, ridesByDate: propRidesByDate }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
 
-  // Group rides by date
-  const ridesByDate = rides.reduce((acc, ride) => {
+  // Group rides by date if not provided
+  const ridesByDate = propRidesByDate || rides.reduce((acc, ride) => {
     const date = format(new Date(ride.dateTime), 'yyyy-MM-dd');
     if (!acc[date]) {
       acc[date] = [];
@@ -36,6 +39,49 @@ export default function CalendarView({ rides }: CalendarViewProps) {
   const selectedRides = selectedDate 
     ? ridesByDate[format(selectedDate, 'yyyy-MM-dd')] || []
     : [];
+
+  if (compact) {
+    return (
+      <div>
+        <Calendar
+          mode="single"
+          selected={selectedDate}
+          onSelect={setSelectedDate}
+          modifiers={{ hasRide: datesWithRides }}
+          modifiersStyles={{
+            hasRide: {
+              fontWeight: 'bold',
+              backgroundColor: 'hsl(var(--primary))',
+              color: 'hsl(var(--primary-foreground))'
+            }
+          }}
+          className="rounded-md border w-full"
+        />
+        {selectedDate && selectedRides.length > 0 && (
+          <div className="mt-4">
+            <h3 className="text-sm font-medium mb-2">
+              Rides on {format(selectedDate, 'MMMM d')}
+            </h3>
+            <ScrollArea className="h-32">
+              <div className="space-y-2">
+                {selectedRides.map((ride) => (
+                  <div key={ride.id} className="flex items-center justify-between p-2 bg-muted rounded-lg">
+                    <div>
+                      <div className="font-medium">{ride.title}</div>
+                      <div className="text-sm text-muted-foreground">
+                        {format(new Date(ride.dateTime), 'h:mm a')}
+                      </div>
+                    </div>
+                    <Badge>{ride.difficulty}</Badge>
+                  </div>
+                ))}
+              </div>
+            </ScrollArea>
+          </div>
+        )}
+      </div>
+    );
+  }
 
   return (
     <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
