@@ -5,12 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
-import { Loader2, User, KeyRound } from "lucide-react";
+import { Loader2, User, KeyRound, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 
 type FormData = {
   username: string;
   password: string;
+  email?: string;
 };
 
 export default function AuthPage() {
@@ -103,6 +104,41 @@ export default function AuthPage() {
                   </motion.p>
                 )}
               </motion.div>
+
+              {!isLogin && (
+                <motion.div
+                  initial={{ x: -20, opacity: 0 }}
+                  animate={{ x: 0, opacity: 1 }}
+                  transition={{ delay: 0.25 }}
+                  className="space-y-2"
+                >
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                    <Input
+                      type="email"
+                      placeholder="Email"
+                      {...form.register("email", { 
+                        required: !isLogin,
+                        pattern: {
+                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                          message: "Invalid email address"
+                        }
+                      })}
+                      disabled={isLoading}
+                      className="pl-10"
+                    />
+                  </div>
+                  {form.formState.errors.email && (
+                    <motion.p
+                      initial={{ opacity: 0 }}
+                      animate={{ opacity: 1 }}
+                      className="text-sm text-destructive"
+                    >
+                      {form.formState.errors.email.message}
+                    </motion.p>
+                  )}
+                </motion.div>
+              )}
 
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
