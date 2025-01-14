@@ -1,6 +1,5 @@
-import type { Express } from "express";
+import type { Express, Request } from "express";
 import { createServer, type Server } from "http";
-import { setupAuth } from "./auth";
 import { db } from "@db";
 import { rides, rideParticipants, users, insertRideSchema, type User } from "@db/schema";
 import { and, eq, sql } from "drizzle-orm";
@@ -15,14 +14,14 @@ import express from 'express';
 
 // Configure multer for handling file uploads
 const storage = multer.diskStorage({
-  destination: (_req, _file, cb) => {
+  destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
     const uploadDir = path.join(process.cwd(), 'uploads');
     if (!fs.existsSync(uploadDir)) {
       fs.mkdirSync(uploadDir, { recursive: true });
     }
     cb(null, uploadDir);
   },
-  filename: (_req, file, cb) => {
+  filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
     cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
   }
@@ -30,7 +29,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({
   storage,
-  fileFilter: (_req, file, cb) => {
+  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
     const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
     if (!allowedTypes.includes(file.mimetype)) {
       cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
@@ -43,10 +42,10 @@ const upload = multer({
   }
 });
 
-// Helper to ensure authenticated user
+// Helper to ensure authenticated user with proper error handling
 const ensureAuthenticated = (req: Express.Request): User => {
   if (!req.isAuthenticated()) {
-    const error = new Error("Not authenticated");
+    const error = new Error("Not authenticated") as Error & { status?: number };
     error.status = 401;
     throw error;
   }
@@ -54,9 +53,8 @@ const ensureAuthenticated = (req: Express.Request): User => {
 };
 
 export function registerRoutes(app: Express): Server {
-  setupAuth(app);
-
-  // Create new ride
+  // Register all API routes here
+  // Ride routes
   app.post("/api/rides", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
@@ -601,6 +599,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Create HTTP server
   const httpServer = createServer(app);
   return httpServer;
 }

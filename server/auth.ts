@@ -50,24 +50,21 @@ export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
   const sessionSettings: session.SessionOptions = {
     secret: process.env.REPL_ID || "cycling-group-secret",
-    resave: true,
-    saveUninitialized: true,
+    resave: false,
+    saveUninitialized: false,
     cookie: {
-      maxAge: 24 * 60 * 60 * 1000,
+      maxAge: 24 * 60 * 60 * 1000, // 24 hours
       httpOnly: true,
+      secure: process.env.NODE_ENV === "production",
+      sameSite: process.env.NODE_ENV === "production" ? 'none' : 'lax'
     },
     store: new MemoryStore({
-      checkPeriod: 86400000,
+      checkPeriod: 86400000, // 24 hours
     }),
   };
 
-  if (app.get("env") === "production") {
+  if (process.env.NODE_ENV === "production") {
     app.set("trust proxy", 1);
-    sessionSettings.cookie = {
-      ...sessionSettings.cookie,
-      secure: true,
-      sameSite: 'none'
-    };
   }
 
   app.use(session(sessionSettings));
@@ -86,12 +83,15 @@ export function setupAuth(app: Express) {
         if (!user) {
           return done(null, false, { message: "Incorrect username." });
         }
+
         const isMatch = await crypto.compare(password, user.password);
         if (!isMatch) {
           return done(null, false, { message: "Incorrect password." });
         }
+
         return done(null, user);
       } catch (err) {
+        console.error('Authentication error:', err);
         return done(err);
       }
     })
@@ -120,13 +120,48 @@ export function setupAuth(app: Express) {
         .from(users)
         .where(eq(users.id, id))
         .limit(1);
+
+      if (!user) {
+        return done(new Error('User not found'), false);
+      }
+
       done(null, user);
     } catch (err) {
+      console.error('Deserialization error:', err);
       done(err);
     }
   });
 
-  app.post("/api/register", async (req, res, next) => {
+  app.post("/api/login", (req, res, next) => {
+    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
+      if (err) {
+        console.error('Login error:', err);
+        return res.status(500).json({ error: "Internal server error during login" });
+      }
+
+      if (!user) {
+        return res.status(400).json({ error: info.message || "Login failed" });
+      }
+
+      req.logIn(user, (err) => {
+        if (err) {
+          console.error('Login session error:', err);
+          return res.status(500).json({ error: "Failed to establish session" });
+        }
+
+        return res.json({
+          message: "Login successful",
+          user: {
+            id: user.id,
+            username: user.username,
+            isAdmin: user.isAdmin,
+          },
+        });
+      });
+    })(req, res, next);
+  });
+
+  app.post("/api/register", async (req, res) => {
     try {
       const result = insertUserSchema.safeParse(req.body);
       if (!result.success) {
@@ -147,7 +182,6 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
-      const verificationToken = randomBytes(32).toString('hex');
       const hashedPassword = await crypto.hash(password);
 
       const [newUser] = await db
@@ -156,8 +190,7 @@ export function setupAuth(app: Express) {
           username,
           password: hashedPassword,
           email: result.data.email,
-          emailVerified: false,
-          verificationToken
+          isAdmin: false
         })
         .returning({
           id: users.id,
@@ -166,14 +199,10 @@ export function setupAuth(app: Express) {
           email: users.email
         });
 
-      // Send verification email here
-      // You'll need to set up an email service like SendGrid/NodeMailer
-      // For now, we'll log the verification link
-      console.log(`Verification link: /verify-email?token=${verificationToken}`);
-
       req.login(newUser, (err) => {
         if (err) {
-          return next(err);
+          console.error('Registration session error:', err);
+          return res.status(500).json({ error: "Failed to establish session after registration" });
         }
         return res.json({
           message: "Registration successful",
@@ -181,40 +210,15 @@ export function setupAuth(app: Express) {
         });
       });
     } catch (error) {
-      next(error);
+      console.error('Registration error:', error);
+      res.status(500).json({ error: "Failed to register user" });
     }
-  });
-
-  app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: any, user: Express.User | false, info: IVerifyOptions) => {
-      if (err) {
-        return next(err);
-      }
-
-      if (!user) {
-        return res.status(400).json({ error: info.message ?? "Login failed" });
-      }
-
-      req.logIn(user, (err) => {
-        if (err) {
-          return next(err);
-        }
-
-        return res.json({
-          message: "Login successful",
-          user: {
-            id: user.id,
-            username: user.username,
-            isAdmin: user.isAdmin,
-          },
-        });
-      });
-    })(req, res, next);
   });
 
   app.post("/api/logout", (req, res) => {
     req.logout((err) => {
       if (err) {
+        console.error('Logout error:', err);
         return res.status(500).json({ error: "Logout failed" });
       }
       res.json({ message: "Logout successful" });

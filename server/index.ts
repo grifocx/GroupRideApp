@@ -2,8 +2,11 @@ import express, { type Request, Response, NextFunction } from "express";
 import { ZodError } from "zod";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import { setupAuth } from "./auth";
 
 const app = express();
+
+// Basic middleware setup
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -40,6 +43,9 @@ app.use((req, res, next) => {
   next();
 });
 
+// Set up authentication after basic middleware
+setupAuth(app);
+
 (async () => {
   const server = registerRoutes(app);
 
@@ -56,17 +62,25 @@ app.use((req, res, next) => {
     }
 
     // Handle known errors with status codes
-    if (err instanceof Error && 'status' in err) {
+    if (err instanceof Error) {
       const status = (err as any).status || 500;
+      const message = err.message || "Internal Server Error";
+
+      // Log internal server errors
+      if (status === 500) {
+        console.error("Internal Server Error:", err);
+      }
+
       return res.status(status).json({
-        error: err.message || "Internal Server Error"
+        error: message,
+        details: app.get("env") === "development" ? err.stack : undefined
       });
     }
 
     // Default error response
     res.status(500).json({
       error: "Internal Server Error",
-      message: app.get("env") === "development" ? (err as Error).message : undefined
+      message: app.get("env") === "development" ? String(err) : undefined
     });
   });
 
@@ -77,7 +91,7 @@ app.use((req, res, next) => {
     serveStatic(app);
   }
 
-  const PORT = 5000;
+  const PORT = parseInt(process.env.PORT || "5000", 10);
   server.listen(PORT, "0.0.0.0", () => {
     log(`Server running on port ${PORT}`);
   });
