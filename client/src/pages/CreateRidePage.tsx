@@ -11,9 +11,6 @@ import { z } from "zod";
 const createRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.string(),
-  isRecurring: z.boolean().default(false),
-  recurringType: z.enum(['weekly', 'monthly']).optional(),
-  recurringDay: z.number().min(0).max(31).optional(),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
   maxRiders: z.number().min(1, "Must allow at least 1 rider"),
@@ -44,7 +41,7 @@ export default function CreateRidePage() {
       pace: 20,
       terrain: "FLAT",
       route_url: "",
-      description: ""
+      description: "",
     },
   });
 
@@ -55,7 +52,7 @@ export default function CreateRidePage() {
         distance: Number(data.distance),
         maxRiders: Number(data.maxRiders),
         pace: Number(data.pace),
-        dateTime: new Date(data.dateTime).toISOString(),
+        dateTime: new Date(data.dateTime),
       };
 
       // Clean up empty strings for optional fields
@@ -65,6 +62,7 @@ export default function CreateRidePage() {
       if (!formattedData.description) {
         formattedData.description = null;
       }
+
 
       const response = await fetch("/api/rides", {
         method: "POST",
@@ -209,6 +207,9 @@ export default function CreateRidePage() {
                 type="number"
                 {...form.register("pace", { valueAsNumber: true })}
               />
+              {form.formState.errors.pace && (
+                <p className="text-sm text-destructive">{form.formState.errors.pace.message}</p>
+              )}
             </div>
 
             <div className="space-y-2">

@@ -80,20 +80,11 @@ export function registerRoutes(app: Express): Server {
       }
 
       const [newRide] = await db.insert(rides).values({
-        title: result.data.title,
-        dateTime: result.data.dateTime,
-        distance: result.data.distance,
-        difficulty: result.data.difficulty,
-        maxRiders: result.data.maxRiders,
-        address: result.data.address,
+        ...result.data,
         latitude: coordinates.lat.toString(),
         longitude: coordinates.lon.toString(),
-        rideType: result.data.rideType,
-        pace: result.data.pace,
-        terrain: result.data.terrain,
         route_url: result.data.route_url || null,
         description: result.data.description || null,
-        ownerId: user.id
       }).returning();
 
       const rideWithOwner = await db.query.rides.findFirst({
