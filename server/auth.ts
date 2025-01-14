@@ -147,6 +147,7 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ error: "Username already exists" });
       }
 
+      const verificationToken = randomBytes(32).toString('hex');
       const hashedPassword = await crypto.hash(password);
 
       const [newUser] = await db
@@ -154,12 +155,21 @@ export function setupAuth(app: Express) {
         .values({
           username,
           password: hashedPassword,
+          email: result.data.email,
+          emailVerified: false,
+          verificationToken
         })
         .returning({
           id: users.id,
           username: users.username,
           isAdmin: users.isAdmin,
+          email: users.email
         });
+
+      // Send verification email here
+      // You'll need to set up an email service like SendGrid/NodeMailer
+      // For now, we'll log the verification link
+      console.log(`Verification link: /verify-email?token=${verificationToken}`);
 
       req.login(newUser, (err) => {
         if (err) {
