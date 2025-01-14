@@ -148,7 +148,12 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    const result = insertUserSchema.safeParse(req.body);
+    const loginSchema = z.object({
+      username: z.string().min(1, "Username is required"),
+      password: z.string().min(1, "Password is required"),
+    });
+    
+    const result = loginSchema.safeParse(req.body);
     if (!result.success) {
       return res
         .status(400)
