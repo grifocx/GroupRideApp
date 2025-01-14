@@ -69,9 +69,9 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
 }));
 
 export const insertUserSchema = createInsertSchema(users, {
-  email: z.string().email("Invalid email address").min(1, "Email is required"),
   username: z.string().min(3, "Username must be at least 3 characters"),
   password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().optional(),
 });
 export const selectUserSchema = createSelectSchema(users);
 
