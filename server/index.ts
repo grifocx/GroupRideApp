@@ -68,10 +68,40 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    const PORT = parseInt(process.env.PORT || "5000", 10);
-    server.listen(PORT, "0.0.0.0", () => {
-      log(`Server running on port ${PORT}`);
-    });
+    // Try different ports if default port is in use
+    const tryPorts = [5000, 5001, 5002, 5003];
+    let port: number | null = null;
+
+    for (const tryPort of tryPorts) {
+      try {
+        await new Promise((resolve, reject) => {
+          server.listen(tryPort, "0.0.0.0")
+            .once('listening', () => {
+              port = tryPort;
+              resolve(true);
+            })
+            .once('error', (err) => {
+              if (err.code === 'EADDRINUSE') {
+                resolve(false);
+              } else {
+                reject(err);
+              }
+            });
+        });
+
+        if (port !== null) {
+          break;
+        }
+      } catch (err) {
+        console.error(`Error trying port ${tryPort}:`, err);
+      }
+    }
+
+    if (port === null) {
+      throw new Error("Could not find an available port");
+    }
+
+    log(`Server running on port ${port}`);
   } catch (err) {
     console.error("Failed to start server:", err);
     process.exit(1);

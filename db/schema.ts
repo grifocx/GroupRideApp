@@ -22,6 +22,22 @@ export const users = pgTable("users", {
   birthdate: timestamp("birthdate"),
 });
 
+// Create user schemas first
+const userSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email().optional(),
+  display_name: z.string().optional(),
+  zip_code: z.string().optional(),
+  club: z.string().optional(),
+  home_bike_shop: z.string().optional(),
+  gender: z.string().optional(),
+  birthdate: z.date().optional(),
+});
+
+export const insertUserSchema = userSchema;
+export const selectUserSchema = createSelectSchema(users);
+
 export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -87,8 +103,8 @@ export const TerrainType = {
   MOUNTAIN: 'MOUNTAIN',
 } as const;
 
-// Base schema
-const baseRideSchema = {
+// Base ride schema
+const rideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.coerce.date(),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
@@ -102,9 +118,9 @@ const baseRideSchema = {
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   route_url: z.string().url().nullish(),
   description: z.string().nullish(),
-};
+});
 
-export const insertRideSchema = z.object(baseRideSchema);
+export const insertRideSchema = rideSchema;
 export const selectRideSchema = createSelectSchema(rides);
 
 // Type exports

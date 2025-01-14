@@ -6,7 +6,7 @@ import createMemoryStore from "memorystore";
 import { z } from "zod";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
-import { users, insertUserSchema, type User as SelectUser } from "@db/schema";
+import { users, type User as SelectUser } from "@db/schema";
 import { db } from "@db";
 import { eq } from "drizzle-orm";
 
@@ -35,6 +35,19 @@ declare global {
     interface User extends SelectUser { }
   }
 }
+
+// User registration schema
+const userRegistrationSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email().optional(),
+  display_name: z.string().optional(),
+  zip_code: z.string().optional(),
+  club: z.string().optional(),
+  home_bike_shop: z.string().optional(),
+  gender: z.string().optional(),
+  birthdate: z.date().optional(),
+});
 
 export function setupAuth(app: Express) {
   const MemoryStore = createMemoryStore(session);
@@ -101,7 +114,7 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const result = insertUserSchema.safeParse(req.body);
+      const result = userRegistrationSchema.safeParse(req.body);
       if (!result.success) {
         return res
           .status(400)
@@ -153,7 +166,7 @@ export function setupAuth(app: Express) {
       username: z.string().min(1, "Username is required"),
       password: z.string().min(1, "Password is required"),
     });
-    
+
     const result = loginSchema.safeParse(req.body);
     if (!result.success) {
       return res
