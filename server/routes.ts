@@ -1,48 +1,19 @@
-import type { Express, Request } from "express";
+import { type Express, type Request } from "express";
 import { createServer, type Server } from "http";
+import express from 'express';
+import multer from 'multer';
+import sharp from 'sharp';
+import path from 'path';
+import fs from 'fs';
+
 import { db } from "@db";
 import { rides, rideParticipants, users, insertRideSchema, type User } from "@db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
-import multer from 'multer';
-import sharp from 'sharp';
-import path from 'path';
-import fs from 'fs';
-import express from 'express';
 
-// Configure multer for handling file uploads
-const storage = multer.diskStorage({
-  destination: (req: Request, file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-    const uploadDir = path.join(process.cwd(), 'uploads');
-    if (!fs.existsSync(uploadDir)) {
-      fs.mkdirSync(uploadDir, { recursive: true });
-    }
-    cb(null, uploadDir);
-  },
-  filename: (req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
-  }
-});
-
-const upload = multer({
-  storage,
-  fileFilter: (req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-    if (!allowedTypes.includes(file.mimetype)) {
-      cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
-      return;
-    }
-    cb(null, true);
-  },
-  limits: {
-    fileSize: 5 * 1024 * 1024 // 5MB
-  }
-});
-
-// Helper to ensure authenticated user with proper error handling
+// Helper to ensure authenticated user
 const ensureAuthenticated = (req: Express.Request): User => {
   if (!req.isAuthenticated()) {
     const error = new Error("Not authenticated") as Error & { status?: number };
@@ -53,13 +24,44 @@ const ensureAuthenticated = (req: Express.Request): User => {
 };
 
 export function registerRoutes(app: Express): Server {
-  // Register all API routes here
-  // Ride routes
+  // Configure file upload middleware
+  const storage = multer.diskStorage({
+    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+      const uploadDir = path.join(process.cwd(), 'uploads');
+      if (!fs.existsSync(uploadDir)) {
+        fs.mkdirSync(uploadDir, { recursive: true });
+      }
+      cb(null, uploadDir);
+    },
+    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+      cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+    }
+  });
+
+  const upload = multer({
+    storage,
+    fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+      if (!allowedTypes.includes(file.mimetype)) {
+        cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
+        return;
+      }
+      cb(null, true);
+    },
+    limits: {
+      fileSize: 5 * 1024 * 1024 // 5MB
+    }
+  });
+
+  // Serve uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
+
+  // Create ride with recurring series support
   app.post("/api/rides", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
 
-      // Validate the input data
       const result = insertRideSchema.safeParse({
         ...req.body,
         ownerId: user.id
@@ -72,7 +74,6 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Get coordinates for the address
       const coordinates = await geocodeAddress(result.data.address);
       if (!coordinates) {
         return res.status(400).json({ 
@@ -81,7 +82,6 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Create base ride data
       const baseRide = {
         title: result.data.title,
         dateTime: result.data.dateTime,
@@ -105,31 +105,34 @@ export function registerRoutes(app: Express): Server {
       // Create the initial ride
       const [newRide] = await db.insert(rides).values(baseRide).returning();
 
-      // Generate future recurring rides if this is a recurring ride
+      // Generate future recurring rides if applicable
       if (baseRide.isRecurring && baseRide.recurringType && baseRide.recurringDay !== null) {
         const futureRides = [];
         const startDate = new Date(baseRide.dateTime);
-        const threeMonthsLater = new Date(startDate);
-        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+        const threeMonthsFromNow = new Date(startDate);
+        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
 
         let currentDate = new Date(startDate);
-        while (currentDate < threeMonthsLater) {
-          currentDate = new Date(currentDate);
+
+        while (currentDate < threeMonthsFromNow) {
+          let nextDate = new Date(currentDate);
 
           if (baseRide.recurringType === 'weekly') {
-            currentDate.setDate(currentDate.getDate() + 7);
+            nextDate.setDate(nextDate.getDate() + 7);
           } else if (baseRide.recurringType === 'monthly') {
-            currentDate.setMonth(currentDate.getMonth() + 1);
-            currentDate.setDate(baseRide.recurringDay);
+            nextDate.setMonth(nextDate.getMonth() + 1);
+            nextDate.setDate(baseRide.recurringDay);
           }
 
-          if (currentDate <= threeMonthsLater) {
+          if (nextDate < threeMonthsFromNow) {
             futureRides.push({
               ...baseRide,
-              dateTime: currentDate,
-              isRecurring: false // Only the parent ride is marked as recurring
+              dateTime: nextDate,
+              isRecurring: false
             });
           }
+
+          currentDate = nextDate;
         }
 
         if (futureRides.length > 0) {
@@ -137,8 +140,8 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      // Return the created ride with owner information
-      const rideWithOwner = await db.query.rides.findFirst({
+      // Return the created ride with details
+      const rideWithDetails = await db.query.rides.findFirst({
         where: eq(rides.id, newRide.id),
         with: {
           owner: true,
@@ -150,7 +153,7 @@ export function registerRoutes(app: Express): Server {
         }
       });
 
-      res.status(201).json(rideWithOwner);
+      res.status(201).json(rideWithDetails);
     } catch (error) {
       console.error("Error creating ride:", error);
       if (error instanceof Error && error.message === "Not authenticated") {
@@ -220,7 +223,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Update ride
+  // Update ride endpoint
   app.put("/api/rides/:id", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
@@ -230,7 +233,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ride ID" });
       }
 
-      // Verify ride ownership
       const ride = await db.query.rides.findFirst({
         where: eq(rides.id, rideId),
       });
@@ -243,10 +245,25 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ error: "Not authorized to update this ride" });
       }
 
-      // Validate update data
-      const validatedData = insertRideSchema.partial().parse(req.body);
+      const partialRideSchema = z.object({
+        title: z.string().min(1).optional(),
+        dateTime: z.coerce.date().optional(),
+        distance: z.coerce.number().min(1).optional(),
+        difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']).optional(),
+        maxRiders: z.coerce.number().min(1).optional(),
+        address: z.string().min(1).optional(),
+        rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']).optional(),
+        pace: z.coerce.number().min(1).optional(),
+        terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']).optional(),
+        route_url: z.string().url().nullish(),
+        description: z.string().nullish(),
+        isRecurring: z.boolean().optional(),
+        recurringType: z.enum(['weekly', 'monthly']).nullish(),
+        recurringDay: z.number().min(0).max(31).nullish(),
+      });
 
-      // If address is being updated, geocode it
+      const validatedData = partialRideSchema.parse(req.body);
+
       let coordinates = null;
       if (validatedData.address) {
         coordinates = await geocodeAddress(validatedData.address);
@@ -258,14 +275,13 @@ export function registerRoutes(app: Express): Server {
         }
       }
 
-      // Update the ride
       const [updatedRide] = await db
         .update(rides)
         .set({
           ...validatedData,
           ...(coordinates && {
-            latitude: coordinates.lat,
-            longitude: coordinates.lon
+            latitude: coordinates.lat.toString(),
+            longitude: coordinates.lon.toString()
           })
         })
         .where(eq(rides.id, rideId))
@@ -300,7 +316,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ride ID" });
       }
 
-      // Check if ride exists first
       const ride = await db.query.rides.findFirst({
         where: eq(rides.id, rideId),
         with: {
@@ -312,7 +327,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(404).json({ error: "Ride not found" });
       }
 
-      // Check if ride is full
       if (ride.participants.length >= ride.maxRiders) {
         return res.status(400).json({ error: "Ride is full" });
       }
@@ -361,7 +375,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ride ID" });
       }
 
-      // Check if user is actually in the ride
       const participant = await db
         .select()
         .from(rideParticipants)
@@ -408,7 +421,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "Invalid ride ID" });
       }
 
-      // Verify ride ownership
       const ride = await db.query.rides.findFirst({
         where: eq(rides.id, rideId),
       });
@@ -421,11 +433,9 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ error: "Not authorized to delete this ride" });
       }
 
-      // First delete all ride participants
       await db.delete(rideParticipants)
         .where(eq(rideParticipants.rideId, rideId));
 
-      // Then delete the ride
       await db.delete(rides)
         .where(eq(rides.id, rideId));
 
@@ -442,7 +452,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Admin Routes
+  // Admin routes
   app.get("/api/admin/users", ensureAdmin, async (_req, res) => {
     try {
       const allUsers = await db
@@ -453,7 +463,6 @@ export function registerRoutes(app: Express): Server {
         })
         .from(users);
 
-      // Get rides count separately to avoid duplicates
       const userRides = await db
         .select({
           ownerId: rides.ownerId,
@@ -467,7 +476,6 @@ export function registerRoutes(app: Express): Server {
         rides: userRides.find(r => r.ownerId === user.id)?.count || 0
       }));
 
-      // Remove password hashes from response
       res.json(usersWithRideCount);
     } catch (error) {
       console.error("Error fetching users:", error);
@@ -478,103 +486,11 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.delete("/api/admin/users/:id", ensureAdmin, async (req, res) => {
-    try {
-      const userId = parseInt(req.params.id);
-      if (isNaN(userId)) {
-        return res.status(400).json({ error: "Invalid user ID" });
-      }
-
-      // First delete all ride participants
-      await db.delete(rideParticipants)
-        .where(eq(rideParticipants.userId, userId));
-
-      // Then delete all rides created by the user
-      await db.delete(rides)
-        .where(eq(rides.ownerId, userId));
-
-      // Finally delete the user
-      await db.delete(users)
-        .where(eq(users.id, userId));
-
-      res.json({ message: "User and associated data deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting user:", error);
-      res.status(500).json({ 
-        error: "Failed to delete user",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.get("/api/admin/rides", ensureAdmin, async (_req, res) => {
-    try {
-      const allRides = await db.query.rides.findMany({
-        with: {
-          owner: true,
-          participants: {
-            with: {
-              user: true
-            }
-          }
-        }
-      });
-      res.json(allRides);
-    } catch (error) {
-      console.error("Error fetching rides:", error);
-      res.status(500).json({ 
-        error: "Failed to fetch rides",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  app.delete("/api/admin/rides/:id", ensureAdmin, async (req, res) => {
-    try {
-      const rideId = parseInt(req.params.id);
-      if (isNaN(rideId)) {
-        return res.status(400).json({ error: "Invalid ride ID" });
-      }
-
-      // First delete all ride participants
-      await db.delete(rideParticipants)
-        .where(eq(rideParticipants.rideId, rideId));
-
-      // Then delete the ride
-      await db.delete(rides)
-        .where(eq(rides.id, rideId));
-
-      res.json({ message: "Ride deleted successfully" });
-    } catch (error) {
-      console.error("Error deleting ride:", error);
-      res.status(500).json({ 
-        error: "Failed to delete ride",
-        details: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Serve uploaded files
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
-  // Update user profile
+  // Profile routes
   app.put("/api/user/profile", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
-      console.log('Profile update request body:', req.body);
-
       const { display_name, zip_code, club, home_bike_shop, gender, birthdate, email } = req.body;
-
-      // Log the values we're going to update
-      console.log('Updating user profile with values:', {
-        display_name,
-        zip_code,
-        club,
-        home_bike_shop,
-        gender,
-        birthdate,
-        email
-      });
 
       const [updatedUser] = await db
         .update(users)
@@ -590,9 +506,6 @@ export function registerRoutes(app: Express): Server {
         .where(eq(users.id, user.id))
         .returning();
 
-      console.log('Updated user:', updatedUser);
-
-      // Return the updated user data
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating profile:", error);
@@ -603,7 +516,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Upload avatar
+  // File upload routes
   app.post("/api/user/avatar", upload.single('avatar'), async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
@@ -613,7 +526,6 @@ export function registerRoutes(app: Express): Server {
         return res.status(400).json({ error: "No file uploaded" });
       }
 
-      // Process the image with sharp
       const processedImagePath = path.join(
         process.cwd(),
         'uploads',
@@ -625,10 +537,8 @@ export function registerRoutes(app: Express): Server {
         .jpeg({ quality: 90 })
         .toFile(processedImagePath);
 
-      // Delete the original file
       fs.unlinkSync(file.path);
 
-      // Update user's avatar URL in database
       const avatarUrl = `/uploads/processed-${file.filename}`;
       await db
         .update(users)
@@ -645,7 +555,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Create HTTP server
+  // Create and return HTTP server
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -68,14 +68,7 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
   }),
 }));
 
-export const insertUserSchema = createInsertSchema(users, {
-  username: z.string().min(3, "Username must be at least 3 characters"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().optional(),
-});
-export const selectUserSchema = createSelectSchema(users);
-
-// Define the difficulty levels as a const enum
+// Constants for validation
 export const DifficultyLevel = {
   BEGINNER: 'E',
   NOVICE: 'D',
@@ -84,56 +77,6 @@ export const DifficultyLevel = {
   EXPERT: 'A',
   EXTREME: 'AA'
 } as const;
-
-export const insertRideSchema = createInsertSchema(rides, {
-  rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
-  terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
-  distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
-  pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
-  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
-  maxRiders: z.coerce.number().min(1),
-  dateTime: z.string().transform((str) => new Date(str)),
-  ownerId: z.number().optional(),
-  address: z.string().min(1, "Address is required"),
-  latitude: z.string().optional(),
-  longitude: z.string().optional(),
-  route_url: z.string().url().nullish().or(z.literal('')),
-  description: z.string().nullish().or(z.literal('')),
-  isRecurring: z.boolean().optional().default(false),
-  recurringType: z.enum(['weekly', 'monthly']).optional(),
-  recurringDay: z.number().min(0).max(31).optional(),
-}).superRefine((data, ctx) => {
-  if (data.isRecurring && !data.recurringType) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Recurring type is required for recurring rides",
-      path: ['recurringType']
-    });
-  }
-  if (data.isRecurring && !data.recurringDay) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Recurring day is required for recurring rides",
-      path: ['recurringDay']
-    });
-  }
-  if (data.recurringType === 'weekly' && data.recurringDay !== undefined && (data.recurringDay < 0 || data.recurringDay > 6)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Weekly recurring day must be between 0-6 (Sun-Sat)",
-      path: ['recurringDay']
-    });
-  }
-  if (data.recurringType === 'monthly' && data.recurringDay !== undefined && (data.recurringDay < 1 || data.recurringDay > 31)) {
-    ctx.addIssue({
-      code: z.ZodIssueCode.custom,
-      message: "Monthly recurring day must be between 1-31",
-      path: ['recurringDay']
-    });
-  }
-});
-
-export const selectRideSchema = createSelectSchema(rides);
 
 export const RideType = {
   MTB: 'MTB',
@@ -147,6 +90,68 @@ export const TerrainType = {
   MOUNTAIN: 'MOUNTAIN',
 } as const;
 
+export const RecurringType = {
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly'
+} as const;
+
+// Base schemas
+const baseRideSchema = {
+  title: z.string().min(1, "Title is required"),
+  dateTime: z.coerce.date(),
+  distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
+  difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
+  maxRiders: z.coerce.number().min(1),
+  address: z.string().min(1, "Address is required"),
+  latitude: z.string(),
+  longitude: z.string(),
+  rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
+  pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
+  terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
+  route_url: z.string().url().nullish(),
+  description: z.string().nullish(),
+  isRecurring: z.boolean().default(false),
+  recurringType: z.enum(['weekly', 'monthly']).nullish(),
+  recurringDay: z.number().min(0).max(31).nullish(),
+};
+
+// Create insert schema with validation
+export const insertRideSchema = z.object(baseRideSchema).superRefine((data, ctx) => {
+  if (data.isRecurring) {
+    if (!data.recurringType) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring type is required for recurring rides",
+        path: ['recurringType']
+      });
+    }
+    if (!data.recurringDay) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring day is required for recurring rides",
+        path: ['recurringDay']
+      });
+    }
+    if (data.recurringType === 'weekly' && data.recurringDay !== undefined && (data.recurringDay < 0 || data.recurringDay > 6)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Weekly recurring day must be between 0-6 (Sun-Sat)",
+        path: ['recurringDay']
+      });
+    }
+    if (data.recurringType === 'monthly' && data.recurringDay !== undefined && (data.recurringDay < 1 || data.recurringDay > 31)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Monthly recurring day must be between 1-31",
+        path: ['recurringDay']
+      });
+    }
+  }
+});
+
+export const selectRideSchema = createSelectSchema(rides);
+
+// Type exports
 export type User = typeof users.$inferSelect;
 export type InsertUser = typeof users.$inferInsert;
 export type Ride = typeof rides.$inferSelect;
