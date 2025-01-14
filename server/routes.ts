@@ -68,7 +68,7 @@ export function registerRoutes(app: Express): Server {
       if (!result.success) {
         return res.status(400).json({ 
           error: "Validation error", 
-          details: result.error.issues.map(i => i.message)
+          details: result.error.errors.map(e => e.message)
         });
       }
 
@@ -81,15 +81,61 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      // Create the ride
-      const [newRide] = await db.insert(rides)
-        .values({
-          ...result.data,
-          latitude: coordinates.lat,
-          longitude: coordinates.lon,
-          ownerId: user.id
-        })
-        .returning();
+      // Create base ride data
+      const baseRide = {
+        title: result.data.title,
+        dateTime: result.data.dateTime,
+        distance: result.data.distance,
+        difficulty: result.data.difficulty,
+        maxRiders: result.data.maxRiders,
+        address: result.data.address,
+        latitude: coordinates.lat.toString(),
+        longitude: coordinates.lon.toString(),
+        rideType: result.data.rideType,
+        pace: result.data.pace,
+        terrain: result.data.terrain,
+        route_url: result.data.route_url || null,
+        description: result.data.description || null,
+        ownerId: user.id,
+        isRecurring: result.data.isRecurring || false,
+        recurringType: result.data.recurringType || null,
+        recurringDay: result.data.recurringDay || null
+      };
+
+      // Create the initial ride
+      const [newRide] = await db.insert(rides).values(baseRide).returning();
+
+      // Generate future recurring rides if this is a recurring ride
+      if (baseRide.isRecurring && baseRide.recurringType && baseRide.recurringDay !== null) {
+        const futureRides = [];
+        const startDate = new Date(baseRide.dateTime);
+        const threeMonthsLater = new Date(startDate);
+        threeMonthsLater.setMonth(threeMonthsLater.getMonth() + 3);
+
+        let currentDate = new Date(startDate);
+        while (currentDate < threeMonthsLater) {
+          currentDate = new Date(currentDate);
+
+          if (baseRide.recurringType === 'weekly') {
+            currentDate.setDate(currentDate.getDate() + 7);
+          } else if (baseRide.recurringType === 'monthly') {
+            currentDate.setMonth(currentDate.getMonth() + 1);
+            currentDate.setDate(baseRide.recurringDay);
+          }
+
+          if (currentDate <= threeMonthsLater) {
+            futureRides.push({
+              ...baseRide,
+              dateTime: currentDate,
+              isRecurring: false // Only the parent ride is marked as recurring
+            });
+          }
+        }
+
+        if (futureRides.length > 0) {
+          await db.insert(rides).values(futureRides);
+        }
+      }
 
       // Return the created ride with owner information
       const rideWithOwner = await db.query.rides.findFirst({

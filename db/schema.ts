@@ -26,9 +26,6 @@ export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time").notNull(),
-  isRecurring: boolean("is_recurring").default(false),
-  recurringType: text("recurring_type"),  // 'weekly' or 'monthly'
-  recurringDay: integer("recurring_day"), // 0-6 for weekly (Sun-Sat), 1-31 for monthly
   distance: integer("distance").notNull(),
   difficulty: varchar("difficulty", { length: 2 }).notNull(),
   maxRiders: integer("max_riders").notNull(),
@@ -41,6 +38,9 @@ export const rides = pgTable("rides", {
   terrain: text("terrain").notNull(),
   route_url: text("route_url"),
   description: text("description"),
+  isRecurring: boolean("is_recurring").default(false),
+  recurringType: text("recurring_type"),
+  recurringDay: integer("recurring_day"),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -99,6 +99,38 @@ export const insertRideSchema = createInsertSchema(rides, {
   longitude: z.string().optional(),
   route_url: z.string().url().nullish().or(z.literal('')),
   description: z.string().nullish().or(z.literal('')),
+  isRecurring: z.boolean().optional().default(false),
+  recurringType: z.enum(['weekly', 'monthly']).optional(),
+  recurringDay: z.number().min(0).max(31).optional(),
+}).superRefine((data, ctx) => {
+  if (data.isRecurring && !data.recurringType) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Recurring type is required for recurring rides",
+      path: ['recurringType']
+    });
+  }
+  if (data.isRecurring && !data.recurringDay) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Recurring day is required for recurring rides",
+      path: ['recurringDay']
+    });
+  }
+  if (data.recurringType === 'weekly' && data.recurringDay !== undefined && (data.recurringDay < 0 || data.recurringDay > 6)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Weekly recurring day must be between 0-6 (Sun-Sat)",
+      path: ['recurringDay']
+    });
+  }
+  if (data.recurringType === 'monthly' && data.recurringDay !== undefined && (data.recurringDay < 1 || data.recurringDay > 31)) {
+    ctx.addIssue({
+      code: z.ZodIssueCode.custom,
+      message: "Monthly recurring day must be between 1-31",
+      path: ['recurringDay']
+    });
+  }
 });
 
 export const selectRideSchema = createSelectSchema(rides);

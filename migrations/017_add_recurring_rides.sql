@@ -1,0 +1,4 @@
+-- Add recurring ride fields
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS is_recurring BOOLEAN DEFAULT FALSE;
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS recurring_type TEXT;
+ALTER TABLE rides ADD COLUMN IF NOT EXISTS recurring_day INTEGER;
