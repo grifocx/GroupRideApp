@@ -10,6 +10,9 @@ const app = express();
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
+// Set up authentication before routes
+setupAuth(app);
+
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
@@ -42,9 +45,6 @@ app.use((req, res, next) => {
 
   next();
 });
-
-// Set up authentication after basic middleware
-setupAuth(app);
 
 (async () => {
   const server = registerRoutes(app);
