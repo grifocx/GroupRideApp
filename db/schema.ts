@@ -1,6 +1,6 @@
 import { pgTable, text, serial, integer, boolean, timestamp, real, varchar } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
-import { relations } from "drizzle-orm";
+import { relations, type InferModel } from "drizzle-orm";
 import { z } from "zod";
 
 export const users = pgTable("users", {
@@ -38,9 +38,6 @@ export const rides = pgTable("rides", {
   terrain: text("terrain").notNull(),
   route_url: text("route_url"),
   description: text("description"),
-  isRecurring: boolean("is_recurring").default(false),
-  recurringType: text("recurring_type"),
-  recurringDay: integer("recurring_day"),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -90,12 +87,7 @@ export const TerrainType = {
   MOUNTAIN: 'MOUNTAIN',
 } as const;
 
-export const RecurringType = {
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly'
-} as const;
-
-// Base schemas
+// Base schema
 const baseRideSchema = {
   title: z.string().min(1, "Title is required"),
   dateTime: z.coerce.date(),
@@ -110,49 +102,13 @@ const baseRideSchema = {
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   route_url: z.string().url().nullish(),
   description: z.string().nullish(),
-  isRecurring: z.boolean().default(false),
-  recurringType: z.enum(['weekly', 'monthly']).nullish(),
-  recurringDay: z.number().min(0).max(31).nullish(),
 };
 
-// Create insert schema with validation
-export const insertRideSchema = z.object(baseRideSchema).superRefine((data, ctx) => {
-  if (data.isRecurring) {
-    if (!data.recurringType) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Recurring type is required for recurring rides",
-        path: ['recurringType']
-      });
-    }
-    if (!data.recurringDay) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Recurring day is required for recurring rides",
-        path: ['recurringDay']
-      });
-    }
-    if (data.recurringType === 'weekly' && data.recurringDay !== undefined && (data.recurringDay < 0 || data.recurringDay > 6)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Weekly recurring day must be between 0-6 (Sun-Sat)",
-        path: ['recurringDay']
-      });
-    }
-    if (data.recurringType === 'monthly' && data.recurringDay !== undefined && (data.recurringDay < 1 || data.recurringDay > 31)) {
-      ctx.addIssue({
-        code: z.ZodIssueCode.custom,
-        message: "Monthly recurring day must be between 1-31",
-        path: ['recurringDay']
-      });
-    }
-  }
-});
-
+export const insertRideSchema = z.object(baseRideSchema);
 export const selectRideSchema = createSelectSchema(rides);
 
 // Type exports
-export type User = typeof users.$inferSelect;
-export type InsertUser = typeof users.$inferInsert;
-export type Ride = typeof rides.$inferSelect;
-export type InsertRide = typeof rides.$inferInsert;
+export type User = InferModel<typeof users>;
+export type InsertUser = InferModel<typeof users, "insert">;
+export type Ride = InferModel<typeof rides>;
+export type InsertRide = InferModel<typeof rides, "insert">;

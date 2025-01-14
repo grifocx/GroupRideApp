@@ -13,6 +13,36 @@ import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
 
+// Configure multer for file uploads
+const storage = multer.diskStorage({
+  destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
+    const uploadDir = path.join(process.cwd(), 'uploads');
+    if (!fs.existsSync(uploadDir)) {
+      fs.mkdirSync(uploadDir, { recursive: true });
+    }
+    cb(null, uploadDir);
+  },
+  filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
+  }
+});
+
+const upload = multer({
+  storage,
+  fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
+    const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
+    if (!allowedTypes.includes(file.mimetype)) {
+      cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
+      return;
+    }
+    cb(null, true);
+  },
+  limits: {
+    fileSize: 5 * 1024 * 1024 // 5MB
+  }
+});
+
 // Helper to ensure authenticated user
 const ensureAuthenticated = (req: Express.Request): User => {
   if (!req.isAuthenticated()) {
@@ -24,40 +54,7 @@ const ensureAuthenticated = (req: Express.Request): User => {
 };
 
 export function registerRoutes(app: Express): Server {
-  // Configure file upload middleware
-  const storage = multer.diskStorage({
-    destination: (_req: Request, _file: Express.Multer.File, cb: (error: Error | null, destination: string) => void) => {
-      const uploadDir = path.join(process.cwd(), 'uploads');
-      if (!fs.existsSync(uploadDir)) {
-        fs.mkdirSync(uploadDir, { recursive: true });
-      }
-      cb(null, uploadDir);
-    },
-    filename: (_req: Request, file: Express.Multer.File, cb: (error: Error | null, filename: string) => void) => {
-      const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-      cb(null, `${uniqueSuffix}${path.extname(file.originalname)}`);
-    }
-  });
-
-  const upload = multer({
-    storage,
-    fileFilter: (_req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) => {
-      const allowedTypes = ['image/jpeg', 'image/png', 'image/gif'];
-      if (!allowedTypes.includes(file.mimetype)) {
-        cb(new Error('Invalid file type. Only JPEG, PNG and GIF are allowed'));
-        return;
-      }
-      cb(null, true);
-    },
-    limits: {
-      fileSize: 5 * 1024 * 1024 // 5MB
-    }
-  });
-
-  // Serve uploads directory
-  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
-
-  // Create ride with recurring series support
+  // Create ride
   app.post("/api/rides", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
@@ -82,7 +79,7 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      const baseRide = {
+      const [newRide] = await db.insert(rides).values({
         title: result.data.title,
         dateTime: result.data.dateTime,
         distance: result.data.distance,
@@ -96,52 +93,10 @@ export function registerRoutes(app: Express): Server {
         terrain: result.data.terrain,
         route_url: result.data.route_url || null,
         description: result.data.description || null,
-        ownerId: user.id,
-        isRecurring: result.data.isRecurring || false,
-        recurringType: result.data.recurringType || null,
-        recurringDay: result.data.recurringDay || null
-      };
+        ownerId: user.id
+      }).returning();
 
-      // Create the initial ride
-      const [newRide] = await db.insert(rides).values(baseRide).returning();
-
-      // Generate future recurring rides if applicable
-      if (baseRide.isRecurring && baseRide.recurringType && baseRide.recurringDay !== null) {
-        const futureRides = [];
-        const startDate = new Date(baseRide.dateTime);
-        const threeMonthsFromNow = new Date(startDate);
-        threeMonthsFromNow.setMonth(threeMonthsFromNow.getMonth() + 3);
-
-        let currentDate = new Date(startDate);
-
-        while (currentDate < threeMonthsFromNow) {
-          let nextDate = new Date(currentDate);
-
-          if (baseRide.recurringType === 'weekly') {
-            nextDate.setDate(nextDate.getDate() + 7);
-          } else if (baseRide.recurringType === 'monthly') {
-            nextDate.setMonth(nextDate.getMonth() + 1);
-            nextDate.setDate(baseRide.recurringDay);
-          }
-
-          if (nextDate < threeMonthsFromNow) {
-            futureRides.push({
-              ...baseRide,
-              dateTime: nextDate,
-              isRecurring: false
-            });
-          }
-
-          currentDate = nextDate;
-        }
-
-        if (futureRides.length > 0) {
-          await db.insert(rides).values(futureRides);
-        }
-      }
-
-      // Return the created ride with details
-      const rideWithDetails = await db.query.rides.findFirst({
+      const rideWithOwner = await db.query.rides.findFirst({
         where: eq(rides.id, newRide.id),
         with: {
           owner: true,
@@ -153,7 +108,7 @@ export function registerRoutes(app: Express): Server {
         }
       });
 
-      res.status(201).json(rideWithDetails);
+      res.status(201).json(rideWithOwner);
     } catch (error) {
       console.error("Error creating ride:", error);
       if (error instanceof Error && error.message === "Not authenticated") {
@@ -223,7 +178,7 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // Update ride endpoint
+  // Update ride
   app.put("/api/rides/:id", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
@@ -245,23 +200,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ error: "Not authorized to update this ride" });
       }
 
-      const partialRideSchema = z.object({
-        title: z.string().min(1).optional(),
-        dateTime: z.coerce.date().optional(),
-        distance: z.coerce.number().min(1).optional(),
-        difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']).optional(),
-        maxRiders: z.coerce.number().min(1).optional(),
-        address: z.string().min(1).optional(),
-        rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']).optional(),
-        pace: z.coerce.number().min(1).optional(),
-        terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']).optional(),
-        route_url: z.string().url().nullish(),
-        description: z.string().nullish(),
-        isRecurring: z.boolean().optional(),
-        recurringType: z.enum(['weekly', 'monthly']).nullish(),
-        recurringDay: z.number().min(0).max(31).nullish(),
-      });
-
+      const partialRideSchema = insertRideSchema.partial();
       const validatedData = partialRideSchema.parse(req.body);
 
       let coordinates = null;
@@ -554,6 +493,9 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
+
+  // Serve uploads directory
+  app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
   // Create and return HTTP server
   const httpServer = createServer(app);
