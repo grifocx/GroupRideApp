@@ -26,6 +26,9 @@ export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   dateTime: timestamp("date_time").notNull(),
+  isRecurring: boolean("is_recurring").default(false),
+  recurringType: text("recurring_type"),  // 'weekly' or 'monthly'
+  recurringDay: integer("recurring_day"), // 0-6 for weekly (Sun-Sat), 1-31 for monthly
   distance: integer("distance").notNull(),
   difficulty: varchar("difficulty", { length: 2 }).notNull(),
   maxRiders: integer("max_riders").notNull(),

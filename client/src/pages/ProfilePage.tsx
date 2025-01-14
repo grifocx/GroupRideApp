@@ -15,6 +15,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
 import { ProfileProgress } from "@/components/ProfileProgress";
+import { RideStats } from "@/components/RideStats";
 import { motion } from "framer-motion";
 
 const editRideSchema = z.object({

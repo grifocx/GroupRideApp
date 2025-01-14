@@ -1,0 +1,9 @@
+
+BEGIN;
+
+ALTER TABLE rides 
+ADD COLUMN is_recurring BOOLEAN DEFAULT FALSE,
+ADD COLUMN recurring_type TEXT,
+ADD COLUMN recurring_day INTEGER;
+
+COMMIT;
