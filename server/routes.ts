@@ -134,7 +134,7 @@ export function registerRoutes(app: Express): Server {
 
       console.log("Validated data:", JSON.stringify(result.data, null, 2));
 
-      // Geocode the address
+      // Geocode the address first
       const coordinates = await geocodeAddress(result.data.address);
       if (!coordinates) {
         return res.status(400).json({ 
@@ -142,6 +142,13 @@ export function registerRoutes(app: Express): Server {
           details: "Could not find coordinates for the provided address"
         });
       }
+
+      // Add geocoded coordinates to the validated data
+      const rideData = {
+        ...result.data,
+        latitude: coordinates.lat.toString(),
+        longitude: coordinates.lon.toString(),
+      };
 
       // Handle recurring rides
       if (result.data.is_recurring) {
@@ -153,11 +160,7 @@ export function registerRoutes(app: Express): Server {
         });
 
         const rides = await createRecurringRides(
-          {
-            ...result.data,
-            latitude: coordinates.lat.toString(),
-            longitude: coordinates.lon.toString(),
-          },
+          rideData,
           {
             recurring_type: result.data.recurring_type!,
             recurring_day: result.data.recurring_day!,
@@ -191,11 +194,7 @@ export function registerRoutes(app: Express): Server {
         }
       } else {
         // Handle single ride creation
-        const [newRide] = await db.insert(rides).values({
-          ...result.data,
-          latitude: coordinates.lat.toString(),
-          longitude: coordinates.lon.toString(),
-        }).returning();
+        const [newRide] = await db.insert(rides).values(rideData).returning();
 
         const rideWithOwner = await db.query.rides.findFirst({
           where: eq(rides.id, newRide.id),
