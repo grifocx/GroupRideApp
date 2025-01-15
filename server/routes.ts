@@ -242,6 +242,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching rides...");
       const allRides = await db.query.rides.findMany({
+        where: sql`${rides.dateTime} >= NOW()`,
         with: {
           owner: {
             columns: {
@@ -260,7 +261,6 @@ export function registerRoutes(app: Express): Server {
           }
         },
         orderBy: (rides, { asc }) => [
-          sql`CASE WHEN ${rides.dateTime} >= NOW() THEN 0 ELSE 1 END`,
           sql`ABS(EXTRACT(EPOCH FROM (${rides.dateTime} - NOW())))`
         ],
       });
