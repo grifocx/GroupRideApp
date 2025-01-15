@@ -23,18 +23,37 @@ export function useUserRides() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
 
-  const { data: rides, isLoading, error } = useQuery<Ride[]>({
+  const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ['/api/rides/user'],
     queryFn: async () => {
-      const response = await fetch('/api/rides/user', {
-        credentials: 'include'
-      });
+      // Modified to fetch both owned and participating rides
+      const [ownedResponse, participatingResponse] = await Promise.all([
+        fetch('/api/rides/user/owned', {
+          credentials: 'include'
+        }),
+        fetch('/api/rides/user/participating', {
+          credentials: 'include'
+        })
+      ]);
 
-      if (!response.ok) {
-        throw new Error(await response.text());
+      if (!ownedResponse.ok) {
+        throw new Error(await ownedResponse.text());
       }
 
-      return response.json();
+      if (!participatingResponse.ok) {
+        throw new Error(await participatingResponse.text());
+      }
+
+      const [ownedRides, participatingRides] = await Promise.all([
+        ownedResponse.json(),
+        participatingResponse.json()
+      ]);
+
+      // Combine and deduplicate rides
+      const allRides = [...ownedRides, ...participatingRides];
+      const uniqueRides = Array.from(new Map(allRides.map(ride => [ride.id, ride])).values());
+
+      return uniqueRides;
     }
   });
 
