@@ -5,6 +5,7 @@ import { useToast } from '@/hooks/use-toast';
 type RideWithRelations = Ride & {
   owner: { username: string };
   participants: Array<{ user: { username: string } }>;
+  is_recurring?: boolean;
 };
 
 export function useRides() {
