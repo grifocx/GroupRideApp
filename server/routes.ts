@@ -115,21 +115,33 @@ export function registerRoutes(app: Express): Server {
   // Get all rides
   app.get("/api/rides", async (_req, res) => {
     try {
+      console.log("Fetching rides...");
       const allRides = await db.query.rides.findMany({
         with: {
-          owner: true,
+          owner: {
+            columns: {
+              id: true,
+              username: true
+            }
+          },
           participants: {
             with: {
-              user: true
+              user: {
+                columns: {
+                  username: true
+                }
+              }
             }
           }
         },
         orderBy: (rides, { desc }) => [desc(rides.dateTime)]
       });
 
-      // Format the response to exclude null recurring fields
+      console.log(`Found ${allRides.length} rides`);
+
       const formattedRides = allRides.map(ride => {
-        const base = {
+        // Base ride information that's always included
+        const baseRide = {
           id: ride.id,
           title: ride.title,
           dateTime: ride.dateTime,
@@ -140,28 +152,46 @@ export function registerRoutes(app: Express): Server {
           rideType: ride.rideType,
           pace: ride.pace,
           terrain: ride.terrain,
-          route_url: ride.route_url,
-          description: ride.description,
           owner: ride.owner,
           participants: ride.participants,
           latitude: ride.latitude,
-          longitude: ride.longitude
+          longitude: ride.longitude,
         };
 
-        // Only include recurring fields if the ride is recurring
+        // Optional fields
+        if (ride.route_url) {
+          baseRide.route_url = ride.route_url;
+        }
+        if (ride.description) {
+          baseRide.description = ride.description;
+        }
+
+        // Only include recurring fields if this is a recurring ride and the fields exist
         if (ride.is_recurring) {
-          return {
-            ...base,
+          const recurringFields = {
             is_recurring: true,
             recurring_type: ride.recurring_type,
-            recurring_day: ride.recurring_day,
-            recurring_time: ride.recurring_time,
-            recurring_end_date: ride.recurring_end_date,
-            series_id: ride.series_id
+            recurring_day: ride.recurring_day
+          };
+
+          // Only add optional recurring fields if they exist
+          if ('recurring_time' in ride) {
+            recurringFields.recurring_time = ride.recurring_time;
+          }
+          if ('recurring_end_date' in ride) {
+            recurringFields.recurring_end_date = ride.recurring_end_date;
+          }
+          if ('series_id' in ride) {
+            recurringFields.series_id = ride.series_id;
+          }
+
+          return {
+            ...baseRide,
+            ...recurringFields
           };
         }
 
-        return base;
+        return baseRide;
       });
 
       res.json(formattedRides);
