@@ -123,9 +123,48 @@ export function registerRoutes(app: Express): Server {
               user: true
             }
           }
-        }
+        },
+        orderBy: (rides, { desc }) => [desc(rides.dateTime)]
       });
-      res.json(allRides);
+
+      // Format the response to exclude null recurring fields
+      const formattedRides = allRides.map(ride => {
+        const base = {
+          id: ride.id,
+          title: ride.title,
+          dateTime: ride.dateTime,
+          distance: ride.distance,
+          difficulty: ride.difficulty,
+          maxRiders: ride.maxRiders,
+          address: ride.address,
+          rideType: ride.rideType,
+          pace: ride.pace,
+          terrain: ride.terrain,
+          route_url: ride.route_url,
+          description: ride.description,
+          owner: ride.owner,
+          participants: ride.participants,
+          latitude: ride.latitude,
+          longitude: ride.longitude
+        };
+
+        // Only include recurring fields if the ride is recurring
+        if (ride.is_recurring) {
+          return {
+            ...base,
+            is_recurring: true,
+            recurring_type: ride.recurring_type,
+            recurring_day: ride.recurring_day,
+            recurring_time: ride.recurring_time,
+            recurring_end_date: ride.recurring_end_date,
+            series_id: ride.series_id
+          };
+        }
+
+        return base;
+      });
+
+      res.json(formattedRides);
     } catch (error) {
       console.error("Error fetching rides:", error);
       res.status(500).json({ 
