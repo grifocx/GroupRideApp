@@ -259,54 +259,19 @@ export function registerRoutes(app: Express): Server {
             }
           }
         },
-        orderBy: (rides, { desc }) => [desc(rides.dateTime)]
+        orderBy: (rides, { asc }) => [
+          sql`CASE WHEN ${rides.dateTime} >= NOW() THEN 0 ELSE 1 END`,
+          sql`ABS(EXTRACT(EPOCH FROM (${rides.dateTime} - NOW())))`
+        ],
       });
 
       console.log(`Found ${allRides.length} rides`);
 
-      const formattedRides = allRides.map(ride => {
-        // Base ride information that's always included
-        const baseRide = {
-          id: ride.id,
-          title: ride.title,
-          dateTime: ride.dateTime,
-          distance: ride.distance,
-          difficulty: ride.difficulty,
-          maxRiders: ride.maxRiders,
-          address: ride.address,
-          rideType: ride.rideType,
-          pace: ride.pace,
-          terrain: ride.terrain,
-          owner: ride.owner,
-          participants: ride.participants,
-          latitude: ride.latitude,
-          longitude: ride.longitude,
-        };
-
-        // Optional fields
-        if (ride.route_url) {
-          baseRide.route_url = ride.route_url;
-        }
-        if (ride.description) {
-          baseRide.description = ride.description;
-        }
-
-        // Only include recurring fields if this is a recurring ride
-        if (ride.is_recurring) {
-          const recurringFields = {
-            is_recurring: true,
-            recurring_type: ride.recurring_type,
-            recurring_day: ride.recurring_day,
-            ...(ride.recurring_time && { recurring_time: ride.recurring_time }),
-            ...(ride.recurring_end_date && { recurring_end_date: ride.recurring_end_date }),
-            ...(ride.series_id && { series_id: ride.series_id })
-          };
-
-          return { ...baseRide, ...recurringFields };
-        }
-
-        return baseRide;
-      });
+      const formattedRides = allRides.map(ride => ({
+        ...ride,
+        owner: ride.owner,
+        participants: ride.participants,
+      }));
 
       res.json(formattedRides);
     } catch (error) {
