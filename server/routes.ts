@@ -60,7 +60,7 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  const seriesId = `series-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const seriesId = Date.now(); // Using a number for the series_id to match the schema
   const rides = [];
 
   // Create the first ride
@@ -135,6 +135,16 @@ export function registerRoutes(app: Express): Server {
 
       // Handle recurring rides
       if (result.data.is_recurring) {
+        if (!result.data.recurring_type || 
+            result.data.recurring_day === undefined || 
+            !result.data.recurring_time || 
+            !result.data.recurring_end_date) {
+          return res.status(400).json({
+            error: "Validation error",
+            details: ["Missing required fields for recurring ride"]
+          });
+        }
+
         const rides = await createRecurringRides(
           {
             ...result.data,

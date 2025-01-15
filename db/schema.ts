@@ -138,6 +138,18 @@ const rideSchema = z.object({
   recurring_day: z.number().min(0).max(31).optional(),
   recurring_time: z.string().optional(),
   recurring_end_date: z.coerce.date().optional(),
+  ownerId: z.number(),
+}).refine((data) => {
+  // If it's a recurring ride, ensure all required recurring fields are present
+  if (data.is_recurring) {
+    return data.recurring_type && 
+           data.recurring_day !== undefined && 
+           data.recurring_time && 
+           data.recurring_end_date;
+  }
+  return true;
+}, {
+  message: "When creating a recurring ride, recurring_type, recurring_day, recurring_time, and recurring_end_date are required"
 });
 
 export const insertRideSchema = rideSchema;
