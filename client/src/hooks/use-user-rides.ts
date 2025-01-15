@@ -1,10 +1,12 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { Ride } from '@db/schema';
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/hooks/use-user';
 
 export function useUserRides() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useUser();
 
   const { data: rides, isLoading, error } = useQuery<Ride[]>({
     queryKey: ['/api/rides/user'],
@@ -32,8 +34,14 @@ export function useUserRides() {
         participatingResponse.json()
       ]);
 
+      // Add canEdit flag to each ride
+      const processRides = (rides: Ride[]) => rides.map(ride => ({
+        ...ride,
+        canEdit: user?.isAdmin || ride.ownerId === user?.id
+      }));
+
       // Combine and deduplicate rides
-      const allRides = [...ownedRides, ...participatingRides];
+      const allRides = [...processRides(ownedRides), ...processRides(participatingRides)];
       const uniqueRides = Array.from(new Map(allRides.map(ride => [ride.id, ride])).values());
 
       return uniqueRides;
@@ -72,6 +80,11 @@ export function useUserRides() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Ride> }) => {
+      const ride = rides?.find(r => r.id === id);
+      if (!ride?.canEdit) {
+        throw new Error('You do not have permission to edit this ride');
+      }
+
       const response = await fetch(`/api/rides/${id}`, {
         method: 'PUT',
         headers: {
@@ -108,7 +121,18 @@ export function useUserRides() {
     rides,
     isLoading,
     error,
-    deleteRide: deleteMutation.mutate,
+    deleteRide: (rideId: number) => {
+      const ride = rides?.find(r => r.id === rideId);
+      if (!ride?.canEdit) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'You do not have permission to delete this ride'
+        });
+        return;
+      }
+      deleteMutation.mutate(rideId);
+    },
     updateRide: updateMutation.mutate
   };
 }
