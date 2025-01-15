@@ -644,6 +644,45 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Admin delete user endpoint
+  app.delete("/api/admin/users/:id", ensureAdmin, async (req, res) => {
+    try {
+      const userId = parseInt(req.params.id);
+      if (isNaN(userId)) {
+        return res.status(400).json({ error: "Invalid user ID" });
+      }
+
+      // First, delete all user's comments
+      await db.delete(rideComments)
+        .where(eq(rideComments.userId, userId));
+
+      // Delete user's ride participations
+      await db.delete(rideParticipants)
+        .where(eq(rideParticipants.userId, userId));
+
+      // Delete rides owned by the user
+      await db.delete(rides)
+        .where(eq(rides.ownerId, userId));
+
+      // Finally, delete the user
+      const [deletedUser] = await db.delete(users)
+        .where(eq(users.id, userId))
+        .returning();
+
+      if (!deletedUser) {
+        return res.status(404).json({ error: "User not found" });
+      }
+
+      res.json({ message: "User deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting user:", error);
+      res.status(500).json({
+        error: "Failed to delete user",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Profile routes
   app.put("/api/user/profile", async (req, res) => {
     try {
