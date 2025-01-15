@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Map, MapPin, Copy, Check } from "lucide-react";
+import { Map, MapPin, Copy, Check, Repeat } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -79,7 +79,7 @@ export default function RideCard({ ride }: RideCardProps) {
 
   const handleJoinToggle = async () => {
     try {
-      const endpoint = `/api/rides/${ride.id}/${isJoined ? 'unjoin' : 'join'}`;
+      const endpoint = `/api/rides/${ride.id}/${isJoined ? 'leave' : 'join'}`;
       const response = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
@@ -155,6 +155,15 @@ export default function RideCard({ ride }: RideCardProps) {
             <div className="text-sm text-muted-foreground">
               {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
             </div>
+            {ride.is_recurring && (
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
+                <Repeat className="h-4 w-4" />
+                <span>
+                  Recurring {ride.recurring_type} ride
+                  {ride.recurring_end_date && ` until ${format(new Date(ride.recurring_end_date), "MMM d, yyyy")}`}
+                </span>
+              </div>
+            )}
           </div>
           <div className="flex gap-2 z-10">
             <Button
