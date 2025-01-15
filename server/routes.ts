@@ -63,9 +63,22 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   const seriesId = Date.now();
   const rides = [];
 
-  // Create the first ride
+  // Create the first ride with all required fields
   const firstRide = {
-    ...initialRide,
+    title: initialRide.title,
+    dateTime: initialRide.dateTime,
+    distance: initialRide.distance,
+    difficulty: initialRide.difficulty,
+    maxRiders: initialRide.maxRiders,
+    ownerId: initialRide.ownerId,
+    address: initialRide.address,
+    latitude: initialRide.latitude,
+    longitude: initialRide.longitude,
+    rideType: initialRide.rideType,
+    pace: initialRide.pace,
+    terrain: initialRide.terrain,
+    route_url: initialRide.route_url,
+    description: initialRide.description,
     is_recurring: true,
     recurring_type: recurringOptions.recurring_type,
     recurring_day: recurringOptions.recurring_day,
@@ -80,7 +93,7 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   const endDate = new Date(recurringOptions.recurring_end_date);
 
   while (isBefore(currentDate, endDate)) {
-    currentDate = recurringOptions.recurring_type === 'WEEKLY' 
+    currentDate = recurringOptions.recurring_type === 'WEEKLY'
       ? addWeeks(currentDate, 1)
       : addMonths(currentDate, 1);
 
@@ -88,15 +101,10 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
       break;
     }
 
+    // Create subsequent rides with all required fields
     const nextRide = {
-      ...initialRide,
-      dateTime: currentDate,
-      is_recurring: true,
-      recurring_type: recurringOptions.recurring_type,
-      recurring_day: recurringOptions.recurring_day,
-      recurring_time: recurringOptions.recurring_time,
-      recurring_end_date: recurringOptions.recurring_end_date,
-      series_id: seriesId
+      ...firstRide,
+      dateTime: currentDate
     };
     rides.push(nextRide);
   }
@@ -116,8 +124,8 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!result.success) {
-        return res.status(400).json({ 
-          error: "Validation error", 
+        return res.status(400).json({
+          error: "Validation error",
           details: result.error.errors
         });
       }
@@ -125,7 +133,7 @@ export function registerRoutes(app: Express): Server {
       // Geocode the address
       const coordinates = await geocodeAddress(result.data.address);
       if (!coordinates) {
-        return res.status(400).json({ 
+        return res.status(400).json({
           error: "Invalid address",
           details: "Could not find coordinates for the provided address"
         });
@@ -134,19 +142,23 @@ export function registerRoutes(app: Express): Server {
       // Add geocoded coordinates to the validated data
       const rideData = {
         ...result.data,
-        latitude: coordinates.lat.toString(),
-        longitude: coordinates.lon.toString(),
+        latitude: coordinates.lat,
+        longitude: coordinates.lon,
       };
 
       // Handle recurring rides
-      if (rideData.is_recurring) {
+      if (rideData.is_recurring && rideData.recurring_type &&
+          rideData.recurring_day !== undefined &&
+          rideData.recurring_time &&
+          rideData.recurring_end_date) {
+
         const rides = await createRecurringRides(
           rideData,
           {
-            recurring_type: rideData.recurring_type!,
-            recurring_day: rideData.recurring_day!,
-            recurring_end_date: rideData.recurring_end_date!,
-            recurring_time: rideData.recurring_time!
+            recurring_type: rideData.recurring_type,
+            recurring_day: rideData.recurring_day,
+            recurring_end_date: rideData.recurring_end_date,
+            recurring_time: rideData.recurring_time
           }
         );
 
@@ -188,7 +200,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to create ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -269,7 +281,7 @@ export function registerRoutes(app: Express): Server {
       res.json(formattedRides);
     } catch (error) {
       console.error("Error fetching rides:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch rides",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -303,7 +315,7 @@ export function registerRoutes(app: Express): Server {
       res.json(ride);
     } catch (error) {
       console.error("Error fetching ride:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -339,7 +351,7 @@ export function registerRoutes(app: Express): Server {
       if (validatedData.address) {
         coordinates = await geocodeAddress(validatedData.address);
         if (!coordinates) {
-          return res.status(400).json({ 
+          return res.status(400).json({
             error: "Invalid address",
             details: "Could not find coordinates for the provided address"
           });
@@ -362,15 +374,15 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error updating ride:", error);
       if (error instanceof z.ZodError) {
-        return res.status(400).json({ 
-          error: "Validation error", 
+        return res.status(400).json({
+          error: "Validation error",
           details: error.issues.map(i => i.message)
         });
       }
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -429,7 +441,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to join ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -475,7 +487,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to leave ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -516,7 +528,7 @@ export function registerRoutes(app: Express): Server {
       if (error instanceof Error && error.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to delete ride",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -550,7 +562,7 @@ export function registerRoutes(app: Express): Server {
       res.json(usersWithRideCount);
     } catch (error) {
       console.error("Error fetching users:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to fetch users",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -580,7 +592,7 @@ export function registerRoutes(app: Express): Server {
       res.json(updatedUser);
     } catch (error) {
       console.error("Error updating profile:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to update profile",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
@@ -619,7 +631,7 @@ export function registerRoutes(app: Express): Server {
       res.json({ avatarUrl });
     } catch (error) {
       console.error("Error uploading avatar:", error);
-      res.status(500).json({ 
+      res.status(500).json({
         error: "Failed to upload avatar",
         details: error instanceof Error ? error.message : 'Unknown error'
       });
