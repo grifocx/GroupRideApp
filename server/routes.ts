@@ -75,7 +75,8 @@ async function createRecurringRides(initialRide: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  const seriesId = Date.now();
+  // Use timestamp in seconds instead of milliseconds for series_id
+  const seriesId = Math.floor(Date.now() / 1000);
   const ridesArray = [];
 
   // Create the first ride with all required fields

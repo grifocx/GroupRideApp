@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, varchar } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, bigint } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations, type InferModel } from "drizzle-orm";
 import { z } from "zod";
@@ -59,7 +59,7 @@ export const rides = pgTable("rides", {
   recurring_day: integer("recurring_day"),
   recurring_time: text("recurring_time"),
   recurring_end_date: timestamp("recurring_end_date"),
-  series_id: integer("series_id"),
+  series_id: bigint("series_id", { mode: "number" }),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -139,9 +139,9 @@ const rideSchema = z.object({
   ownerId: z.number(),
 }).refine((data) => {
   if (data.is_recurring) {
-    return data.recurring_type && 
-           data.recurring_day !== undefined && 
-           data.recurring_time && 
+    return data.recurring_type &&
+           data.recurring_day !== undefined &&
+           data.recurring_time &&
            data.recurring_end_date;
   }
   return true;

@@ -1,0 +1,1 @@
+ALTER TABLE rides ALTER COLUMN series_id TYPE BIGINT;
