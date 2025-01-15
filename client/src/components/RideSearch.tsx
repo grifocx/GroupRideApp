@@ -7,8 +7,9 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { format } from "date-fns";
 import { useState } from "react";
 import { RideType, TerrainType, DifficultyLevel } from "@db/schema";
-import { CalendarIcon } from "lucide-react";
+import { CalendarIcon, Repeat } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { Switch } from "@/components/ui/switch";
 
 export type RideFilters = {
   search: string;
@@ -19,6 +20,7 @@ export type RideFilters = {
   terrain: string;
   startDate: Date | null;
   endDate: Date | null;
+  showRecurring: boolean;
 };
 
 type RideSearchProps = {
@@ -44,6 +46,7 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
     terrain: "all",
     startDate: null,
     endDate: null,
+    showRecurring: false,
   });
 
   const handleFilterChange = (updates: Partial<RideFilters>) => {
@@ -197,6 +200,19 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
             </Popover>
           </div>
         </div>
+      </div>
+
+      {/* Add recurring ride filter */}
+      <div className="flex items-center gap-2">
+        <Switch
+          id="recurring-filter"
+          checked={filters.showRecurring}
+          onCheckedChange={(checked) => handleFilterChange({ showRecurring: checked })}
+        />
+        <label htmlFor="recurring-filter" className="text-sm font-medium cursor-pointer flex items-center gap-2">
+          <Repeat className="h-4 w-4" />
+          Show only recurring rides
+        </label>
       </div>
     </div>
   );

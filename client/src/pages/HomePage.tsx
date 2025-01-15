@@ -36,32 +36,51 @@ export default function HomePage() {
     terrain: "all",
     startDate: null,
     endDate: null,
+    showRecurring: false,
   });
 
   const filteredRides = useMemo(() => {
     if (!rides) return [];
 
+    const currentDate = new Date();
+
     return rides.filter((ride) => {
+      // Filter out past rides
+      if (new Date(ride.dateTime) < currentDate) {
+        return false;
+      }
+
+      // Apply text search filter
       if (filters.search && !ride.title.toLowerCase().includes(filters.search.toLowerCase())) {
         return false;
       }
 
+      // Apply recurring filter
+      if (filters.showRecurring && !ride.is_recurring) {
+        return false;
+      }
+
+      // Apply ride type filter
       if (filters.rideType !== "all" && ride.rideType !== filters.rideType) {
         return false;
       }
 
+      // Apply distance filter
       if (ride.distance < filters.minDistance || ride.distance > filters.maxDistance) {
         return false;
       }
 
+      // Apply difficulty filter
       if (filters.difficulty !== "all" && ride.difficulty !== filters.difficulty) {
         return false;
       }
 
+      // Apply terrain filter
       if (filters.terrain !== "all" && ride.terrain !== filters.terrain) {
         return false;
       }
 
+      // Apply date range filter
       const rideDate = new Date(ride.dateTime);
       if (filters.startDate && rideDate < filters.startDate) {
         return false;
@@ -71,7 +90,7 @@ export default function HomePage() {
       }
 
       return true;
-    });
+    }).sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
   }, [rides, filters]);
 
   // Group rides by date for the calendar
@@ -131,7 +150,7 @@ export default function HomePage() {
                 <CardContent className="p-4">
                   <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
                   <div className="h-[400px]">
-                    <MapComponent 
+                    <MapComponent
                       rides={filteredRides}
                       onMarkerClick={(ride) => {
                         console.log('Clicked ride:', ride);
@@ -146,7 +165,7 @@ export default function HomePage() {
                 <CardContent className="p-4">
                   <div className="flex justify-between items-center mb-4">
                     <h2 className="text-lg font-semibold">This Month's Rides</h2>
-                    <Button 
+                    <Button
                       variant="outline"
                       className="flex items-center gap-2"
                       onClick={() => setLocation("/calendar")}
@@ -155,7 +174,7 @@ export default function HomePage() {
                       Full Calendar
                     </Button>
                   </div>
-                  <CalendarView 
+                  <CalendarView
                     rides={filteredRides}
                     compact={true}
                     ridesByDate={ridesByDate}
