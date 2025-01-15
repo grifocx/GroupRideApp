@@ -75,11 +75,7 @@ async function createRecurringRides(initialRide: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  // Use timestamp in seconds instead of milliseconds for series_id
-  const seriesId = Math.floor(Date.now() / 1000);
-  const ridesArray = [];
-
-  // Create the first ride with all required fields
+  // Create the first ride without series_id
   const firstRide = {
     title: initialRide.title,
     dateTime: initialRide.dateTime,
@@ -100,11 +96,10 @@ async function createRecurringRides(initialRide: {
     recurring_day: recurringOptions.recurring_day,
     recurring_time: recurringOptions.recurring_time,
     recurring_end_date: recurringOptions.recurring_end_date,
-    series_id: seriesId
   };
-  ridesArray.push(firstRide);
 
-  // Calculate subsequent ride dates
+  // Calculate subsequent rides
+  const ridesArray = [firstRide];
   let currentDate = new Date(initialRide.dateTime);
   const endDate = new Date(recurringOptions.recurring_end_date);
 
@@ -117,7 +112,6 @@ async function createRecurringRides(initialRide: {
       break;
     }
 
-    // Create subsequent rides with all required fields
     const nextRide = {
       ...firstRide,
       dateTime: currentDate
@@ -125,7 +119,32 @@ async function createRecurringRides(initialRide: {
     ridesArray.push(nextRide);
   }
 
-  return ridesArray;
+  // Create all rides
+  const createdRides = await db.insert(rides).values(ridesArray).returning();
+
+  // Update all rides with the series_id (using the first ride's ID)
+  if (createdRides.length > 0) {
+    const seriesId = createdRides[0].id;
+    await db
+      .update(rides)
+      .set({ series_id: seriesId })
+      .where(sql`id = ANY(${sql.array(createdRides.map(r => r.id))})`);
+  }
+
+  // Return the first ride with all details
+  const firstRideWithDetails = await db.query.rides.findFirst({
+    where: eq(rides.id, createdRides[0].id),
+    with: {
+      owner: true,
+      participants: {
+        with: {
+          user: true
+        }
+      }
+    }
+  });
+
+  return firstRideWithDetails;
 }
 
 export function registerRoutes(app: Express): Server {
