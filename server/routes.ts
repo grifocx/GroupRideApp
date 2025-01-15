@@ -707,6 +707,75 @@ export function registerRoutes(app: Express): Server {
   // Serve uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // Get user's owned rides
+  app.get("/api/rides/user/owned", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+
+      const userRides = await db.query.rides.findMany({
+        where: eq(rides.ownerId, user.id),
+        with: {
+          owner: true,
+          participants: {
+            with: {
+              user: true
+            }
+          }
+        },
+        orderBy: (rides, { asc }) => [asc(rides.dateTime)]
+      });
+
+      res.json(userRides);
+    } catch (error) {
+      console.error("Error fetching user owned rides:", error);
+      if (error instanceof Error && error.message === "Not authenticated") {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      res.status(500).json({
+        error: "Failed to fetch owned rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Get rides where user is a participant
+  app.get("/api/rides/user/participating", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+
+      // First get all ride IDs where the user is a participant
+      const participatingRideIds = await db
+        .select({ rideId: rideParticipants.rideId })
+        .from(rideParticipants)
+        .where(eq(rideParticipants.userId, user.id));
+
+      // Then get the full ride details for these IDs
+      const participatingRides = await db.query.rides.findMany({
+        where: inArray(rides.id, participatingRideIds.map(r => r.rideId)),
+        with: {
+          owner: true,
+          participants: {
+            with: {
+              user: true
+            }
+          }
+        },
+        orderBy: (rides, { asc }) => [asc(rides.dateTime)]
+      });
+
+      res.json(participatingRides);
+    } catch (error) {
+      console.error("Error fetching participating rides:", error);
+      if (error instanceof Error && error.message === "Not authenticated") {
+        return res.status(401).json({ error: "Not authenticated" });
+      }
+      res.status(500).json({
+        error: "Failed to fetch participating rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Create and return HTTP server
   const httpServer = createServer(app);
   return httpServer;
