@@ -166,29 +166,18 @@ export function registerRoutes(app: Express): Server {
           baseRide.description = ride.description;
         }
 
-        // Only include recurring fields if this is a recurring ride and the fields exist
+        // Only include recurring fields if this is a recurring ride
         if (ride.is_recurring) {
           const recurringFields = {
             is_recurring: true,
             recurring_type: ride.recurring_type,
-            recurring_day: ride.recurring_day
+            recurring_day: ride.recurring_day,
+            ...(ride.recurring_time && { recurring_time: ride.recurring_time }),
+            ...(ride.recurring_end_date && { recurring_end_date: ride.recurring_end_date }),
+            ...(ride.series_id && { series_id: ride.series_id })
           };
 
-          // Only add optional recurring fields if they exist
-          if ('recurring_time' in ride) {
-            recurringFields.recurring_time = ride.recurring_time;
-          }
-          if ('recurring_end_date' in ride) {
-            recurringFields.recurring_end_date = ride.recurring_end_date;
-          }
-          if ('series_id' in ride) {
-            recurringFields.series_id = ride.series_id;
-          }
-
-          return {
-            ...baseRide,
-            ...recurringFields
-          };
+          return { ...baseRide, ...recurringFields };
         }
 
         return baseRide;
