@@ -7,7 +7,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { db } from "@db";
-import { rides, rideParticipants, users, insertRideSchema, type User, RecurringType } from "@db/schema";
+import { rides, rideParticipants, users, rideComments, insertRideSchema, type User, RecurringType } from "@db/schema";
 import { and, eq, sql, inArray } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
