@@ -16,17 +16,17 @@ setupAuth(app);
 // Request logging middleware
 app.use((req, res, next) => {
   const start = Date.now();
+  log(`Incoming request: ${req.method} ${req.path}`);
   res.on("finish", () => {
     const duration = Date.now() - start;
-    if (req.path.startsWith("/api")) {
-      log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
-    }
+    log(`${req.method} ${req.path} ${res.statusCode} in ${duration}ms`);
   });
   next();
 });
 
 (async () => {
   try {
+    log("Starting server initialization...");
     // Register routes and get HTTP server
     const server = registerRoutes(app);
 
@@ -63,8 +63,10 @@ app.use((req, res, next) => {
 
     // Setup Vite or static file serving based on environment
     if (app.get("env") === "development") {
+      log("Setting up Vite for development...");
       await setupVite(app, server);
     } else {
+      log("Setting up static file serving for production...");
       serveStatic(app);
     }
 
@@ -75,6 +77,7 @@ app.use((req, res, next) => {
     for (const tryPort of tryPorts) {
       try {
         await new Promise((resolve, reject) => {
+          log(`Attempting to start server on port ${tryPort}...`);
           server.listen(tryPort, "0.0.0.0")
             .once('listening', () => {
               port = tryPort;
@@ -82,6 +85,7 @@ app.use((req, res, next) => {
             })
             .once('error', (err) => {
               if (err.code === 'EADDRINUSE') {
+                log(`Port ${tryPort} is in use, trying next port...`);
                 resolve(false);
               } else {
                 reject(err);
@@ -101,7 +105,7 @@ app.use((req, res, next) => {
       throw new Error("Could not find an available port");
     }
 
-    log(`Server running on port ${port}`);
+    log(`Server successfully started and running on port ${port}`);
   } catch (err) {
     console.error("Failed to start server:", err);
     process.exit(1);
