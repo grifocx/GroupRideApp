@@ -1,16 +1,18 @@
 import { useState } from "react";
 import { Calendar } from "@/components/ui/calendar";
-import { Card, CardContent } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { format } from "date-fns";
 import type { Ride } from "@db/schema";
 import RideCard from "./RideCard";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Badge } from "@/components/ui/badge";
+import { useUser } from "@/hooks/use-user";
 
 type RideWithRelations = Ride & {
   owner: { username: string };
   participants: Array<{ user: { username: string } }>;
+  canEdit?: boolean;
 };
 
 type CalendarViewProps = {
@@ -21,6 +23,7 @@ type CalendarViewProps = {
 
 export default function CalendarView({ rides, compact = false, ridesByDate: propRidesByDate }: CalendarViewProps) {
   const [selectedDate, setSelectedDate] = useState<Date | undefined>(new Date());
+  const { user } = useUser();
 
   // Group rides by date if not provided
   const ridesByDate = propRidesByDate || rides.reduce((acc, ride) => {
@@ -39,6 +42,10 @@ export default function CalendarView({ rides, compact = false, ridesByDate: prop
   const selectedRides = selectedDate 
     ? ridesByDate[format(selectedDate, 'yyyy-MM-dd')] || []
     : rides.sort((a, b) => new Date(a.dateTime).getTime() - new Date(b.dateTime).getTime());
+
+  // Split rides into owned and joined
+  const ownedRides = selectedRides.filter(ride => ride.ownerId === user?.id);
+  const joinedRides = selectedRides.filter(ride => ride.ownerId !== user?.id);
 
   if (compact) {
     return (
@@ -125,12 +132,30 @@ export default function CalendarView({ rides, compact = false, ridesByDate: prop
           </div>
 
           <ScrollArea className="h-[600px] pr-4">
-            <div className="space-y-4">
-              {selectedRides.length > 0 ? (
-                selectedRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))
-              ) : (
+            <div className="space-y-6">
+              {ownedRides.length > 0 && (
+                <div>
+                  <h4 className="text-base font-medium mb-3 text-primary">Your Rides</h4>
+                  <div className="space-y-4">
+                    {ownedRides.map((ride) => (
+                      <RideCard key={ride.id} ride={ride} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {joinedRides.length > 0 && (
+                <div>
+                  <h4 className="text-base font-medium mb-3 text-secondary">Joined Rides</h4>
+                  <div className="space-y-4">
+                    {joinedRides.map((ride) => (
+                      <RideCard key={ride.id} ride={ride} />
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {selectedRides.length === 0 && (
                 <div className="text-center text-muted-foreground py-8">
                   {selectedDate 
                     ? 'No rides scheduled for this date' 
