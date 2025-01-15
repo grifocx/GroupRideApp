@@ -12,6 +12,7 @@ import { and, eq, sql } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
+import { addDays, addWeeks, addMonths, isBefore, startOfDay } from "date-fns";
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -53,6 +54,59 @@ const ensureAuthenticated = (req: Express.Request): User => {
   return req.user as User;
 };
 
+async function createRecurringRides(initialRide: any, recurringOptions: {
+  recurring_type: 'WEEKLY' | 'MONTHLY';
+  recurring_day: number;
+  recurring_end_date: Date;
+  recurring_time: string;
+}) {
+  const seriesId = `series-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+  const rides = [];
+
+  // Create the first ride
+  const firstRide = {
+    ...initialRide,
+    is_recurring: true,
+    recurring_type: recurringOptions.recurring_type,
+    recurring_day: recurringOptions.recurring_day,
+    recurring_time: recurringOptions.recurring_time,
+    recurring_end_date: recurringOptions.recurring_end_date,
+    series_id: seriesId
+  };
+  rides.push(firstRide);
+
+  // Calculate subsequent ride dates
+  let currentDate = new Date(initialRide.dateTime);
+  const endDate = new Date(recurringOptions.recurring_end_date);
+
+  while (isBefore(currentDate, endDate)) {
+    // Add either a week or a month based on recurring type
+    currentDate = recurringOptions.recurring_type === 'WEEKLY' 
+      ? addWeeks(currentDate, 1)
+      : addMonths(currentDate, 1);
+
+    // Skip if we've passed the end date
+    if (!isBefore(startOfDay(currentDate), startOfDay(endDate))) {
+      break;
+    }
+
+    // Create the next ride instance
+    const nextRide = {
+      ...initialRide,
+      dateTime: currentDate,
+      is_recurring: true,
+      recurring_type: recurringOptions.recurring_type,
+      recurring_day: recurringOptions.recurring_day,
+      recurring_time: recurringOptions.recurring_time,
+      recurring_end_date: recurringOptions.recurring_end_date,
+      series_id: seriesId
+    };
+    rides.push(nextRide);
+  }
+
+  return rides;
+}
+
 export function registerRoutes(app: Express): Server {
   // Create ride
   app.post("/api/rides", async (req, res) => {
@@ -79,27 +133,65 @@ export function registerRoutes(app: Express): Server {
         });
       }
 
-      const [newRide] = await db.insert(rides).values({
-        ...result.data,
-        latitude: coordinates.lat.toString(),
-        longitude: coordinates.lon.toString(),
-        route_url: result.data.route_url || null,
-        description: result.data.description || null,
-      }).returning();
+      // Handle recurring rides
+      if (result.data.is_recurring) {
+        const rides = await createRecurringRides(
+          {
+            ...result.data,
+            latitude: coordinates.lat.toString(),
+            longitude: coordinates.lon.toString(),
+            route_url: result.data.route_url || null,
+            description: result.data.description || null,
+          },
+          {
+            recurring_type: result.data.recurring_type,
+            recurring_day: result.data.recurring_day,
+            recurring_end_date: result.data.recurring_end_date,
+            recurring_time: result.data.recurring_time
+          }
+        );
 
-      const rideWithOwner = await db.query.rides.findFirst({
-        where: eq(rides.id, newRide.id),
-        with: {
-          owner: true,
-          participants: {
-            with: {
-              user: true
+        // Insert all rides in the series
+        const createdRides = await db.insert(rides).values(rides).returning();
+
+        // Return the first ride with owner and participant information
+        const firstRideWithDetails = await db.query.rides.findFirst({
+          where: eq(rides.id, createdRides[0].id),
+          with: {
+            owner: true,
+            participants: {
+              with: {
+                user: true
+              }
             }
           }
-        }
-      });
+        });
 
-      res.status(201).json(rideWithOwner);
+        res.status(201).json(firstRideWithDetails);
+      } else {
+        // Handle single ride creation (existing logic)
+        const [newRide] = await db.insert(rides).values({
+          ...result.data,
+          latitude: coordinates.lat.toString(),
+          longitude: coordinates.lon.toString(),
+          route_url: result.data.route_url || null,
+          description: result.data.description || null,
+        }).returning();
+
+        const rideWithOwner = await db.query.rides.findFirst({
+          where: eq(rides.id, newRide.id),
+          with: {
+            owner: true,
+            participants: {
+              with: {
+                user: true
+              }
+            }
+          }
+        });
+
+        res.status(201).json(rideWithOwner);
+      }
     } catch (error) {
       console.error("Error creating ride:", error);
       if (error instanceof Error && error.message === "Not authenticated") {
