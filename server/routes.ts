@@ -60,7 +60,7 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  const seriesId = Date.now(); // Using timestamp as series_id
+  const seriesId = Date.now();
   const rides = [];
 
   // Create the first ride
@@ -80,17 +80,14 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   const endDate = new Date(recurringOptions.recurring_end_date);
 
   while (isBefore(currentDate, endDate)) {
-    // Add either a week or a month based on recurring type
     currentDate = recurringOptions.recurring_type === 'WEEKLY' 
       ? addWeeks(currentDate, 1)
       : addMonths(currentDate, 1);
 
-    // Skip if we've passed the end date
     if (!isBefore(startOfDay(currentDate), startOfDay(endDate))) {
       break;
     }
 
-    // Create the next ride instance
     const nextRide = {
       ...initialRide,
       dateTime: currentDate,
@@ -112,29 +109,20 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/rides", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
-      console.log("Raw request body:", JSON.stringify(req.body, null, 2));
 
-      // Parse the incoming data
       const result = insertRideSchema.safeParse({
         ...req.body,
         ownerId: user.id
       });
 
       if (!result.success) {
-        console.error("Validation errors:", JSON.stringify(result.error.errors, null, 2));
         return res.status(400).json({ 
           error: "Validation error", 
-          details: result.error.errors.map(e => ({
-            path: e.path.join('.'),
-            message: e.message,
-            code: e.code
-          }))
+          details: result.error.errors
         });
       }
 
-      console.log("Validated data:", JSON.stringify(result.data, null, 2));
-
-      // Geocode the address first
+      // Geocode the address
       const coordinates = await geocodeAddress(result.data.address);
       if (!coordinates) {
         return res.status(400).json({ 
@@ -151,47 +139,32 @@ export function registerRoutes(app: Express): Server {
       };
 
       // Handle recurring rides
-      if (result.data.is_recurring) {
-        console.log("Creating recurring ride series with options:", {
-          recurring_type: result.data.recurring_type,
-          recurring_day: result.data.recurring_day,
-          recurring_time: result.data.recurring_time,
-          recurring_end_date: result.data.recurring_end_date
-        });
-
+      if (rideData.is_recurring) {
         const rides = await createRecurringRides(
           rideData,
           {
-            recurring_type: result.data.recurring_type!,
-            recurring_day: result.data.recurring_day!,
-            recurring_end_date: result.data.recurring_end_date!,
-            recurring_time: result.data.recurring_time!
+            recurring_type: rideData.recurring_type!,
+            recurring_day: rideData.recurring_day!,
+            recurring_end_date: rideData.recurring_end_date!,
+            recurring_time: rideData.recurring_time!
           }
         );
 
-        console.log(`Generated ${rides.length} recurring rides`);
+        const createdRides = await db.insert(rides).values(rides).returning();
 
-        try {
-          const createdRides = await db.insert(rides).values(rides).returning();
-          console.log(`Successfully created ${createdRides.length} recurring rides`);
-
-          const firstRideWithDetails = await db.query.rides.findFirst({
-            where: eq(rides.id, createdRides[0].id),
-            with: {
-              owner: true,
-              participants: {
-                with: {
-                  user: true
-                }
+        const firstRideWithDetails = await db.query.rides.findFirst({
+          where: eq(rides.id, createdRides[0].id),
+          with: {
+            owner: true,
+            participants: {
+              with: {
+                user: true
               }
             }
-          });
+          }
+        });
 
-          return res.status(201).json(firstRideWithDetails);
-        } catch (dbError) {
-          console.error("Database error while creating recurring rides:", dbError);
-          throw dbError;
-        }
+        return res.status(201).json(firstRideWithDetails);
       } else {
         // Handle single ride creation
         const [newRide] = await db.insert(rides).values(rideData).returning();
