@@ -55,7 +55,7 @@ export const rides = pgTable("rides", {
   route_url: text("route_url"),
   description: text("description"),
   is_recurring: boolean("is_recurring").default(false),
-  recurring_type: text("recurring_type", { enum: ['WEEKLY', 'MONTHLY'] }),
+  recurring_type: text("recurring_type", { enum: ['weekly', 'monthly'] }),
   recurring_day: integer("recurring_day"),
   recurring_time: text("recurring_time"),
   recurring_end_date: timestamp("recurring_end_date"),
@@ -114,8 +114,8 @@ export const TerrainType = {
 } as const;
 
 export const RecurringType = {
-  WEEKLY: 'WEEKLY',
-  MONTHLY: 'MONTHLY',
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
 } as const;
 
 // Simplified ride schema with working validation
@@ -132,7 +132,7 @@ const rideSchema = z.object({
   route_url: z.string().url().nullish(),
   description: z.string().nullish(),
   is_recurring: z.boolean().optional(),
-  recurring_type: z.enum(['WEEKLY', 'MONTHLY']).optional(),
+  recurring_type: z.enum(['weekly', 'monthly']).optional(),
   recurring_day: z.number().min(0).max(31).optional(),
   recurring_time: z.string().optional(),
   recurring_end_date: z.coerce.date().optional(),

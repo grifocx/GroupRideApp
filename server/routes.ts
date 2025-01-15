@@ -96,7 +96,7 @@ async function createRecurringRides(initialRide: {
     route_url: initialRide.route_url || null,
     description: initialRide.description || null,
     is_recurring: true,
-    recurring_type: recurringOptions.recurring_type,
+    recurring_type: RecurringType[recurringOptions.recurring_type],
     recurring_day: recurringOptions.recurring_day,
     recurring_time: recurringOptions.recurring_time,
     recurring_end_date: recurringOptions.recurring_end_date,
