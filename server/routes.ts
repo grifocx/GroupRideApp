@@ -60,7 +60,7 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  const seriesId = Date.now(); // Using a number for the series_id to match the schema
+  const seriesId = Date.now(); // Using timestamp as series_id
   const rides = [];
 
   // Create the first ride
@@ -112,6 +112,7 @@ export function registerRoutes(app: Express): Server {
   app.post("/api/rides", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);
+      console.log("Creating ride with data:", JSON.stringify(req.body, null, 2));
 
       const result = insertRideSchema.safeParse({
         ...req.body,
@@ -119,9 +120,13 @@ export function registerRoutes(app: Express): Server {
       });
 
       if (!result.success) {
+        console.error("Validation errors:", result.error.errors);
         return res.status(400).json({ 
           error: "Validation error", 
-          details: result.error.errors.map(e => e.message)
+          details: result.error.errors.map(e => ({
+            path: e.path.join('.'),
+            message: e.message
+          }))
         });
       }
 
@@ -135,34 +140,24 @@ export function registerRoutes(app: Express): Server {
 
       // Handle recurring rides
       if (result.data.is_recurring) {
-        if (!result.data.recurring_type || 
-            result.data.recurring_day === undefined || 
-            !result.data.recurring_time || 
-            !result.data.recurring_end_date) {
-          return res.status(400).json({
-            error: "Validation error",
-            details: ["Missing required fields for recurring ride"]
-          });
-        }
-
+        console.log("Creating recurring ride series");
         const rides = await createRecurringRides(
           {
             ...result.data,
             latitude: coordinates.lat.toString(),
             longitude: coordinates.lon.toString(),
-            route_url: result.data.route_url || null,
-            description: result.data.description || null,
           },
           {
-            recurring_type: result.data.recurring_type,
-            recurring_day: result.data.recurring_day,
-            recurring_end_date: result.data.recurring_end_date,
-            recurring_time: result.data.recurring_time
+            recurring_type: result.data.recurring_type!,
+            recurring_day: result.data.recurring_day!,
+            recurring_end_date: result.data.recurring_end_date!,
+            recurring_time: result.data.recurring_time!
           }
         );
 
         // Insert all rides in the series
         const createdRides = await db.insert(rides).values(rides).returning();
+        console.log(`Created ${createdRides.length} recurring rides`);
 
         // Return the first ride with owner and participant information
         const firstRideWithDetails = await db.query.rides.findFirst({
@@ -179,13 +174,11 @@ export function registerRoutes(app: Express): Server {
 
         res.status(201).json(firstRideWithDetails);
       } else {
-        // Handle single ride creation (existing logic)
+        // Handle single ride creation
         const [newRide] = await db.insert(rides).values({
           ...result.data,
           latitude: coordinates.lat.toString(),
           longitude: coordinates.lon.toString(),
-          route_url: result.data.route_url || null,
-          description: result.data.description || null,
         }).returning();
 
         const rideWithOwner = await db.query.rides.findFirst({

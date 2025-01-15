@@ -55,11 +55,11 @@ export const rides = pgTable("rides", {
   route_url: text("route_url"),
   description: text("description"),
   is_recurring: boolean("is_recurring").default(false),
-  recurring_type: text("recurring_type"),
+  recurring_type: text("recurring_type", { enum: ['WEEKLY', 'MONTHLY'] }),
   recurring_day: integer("recurring_day"),
   recurring_time: text("recurring_time"),
-  series_id: integer("series_id").references(() => rides.id),
   recurring_end_date: timestamp("recurring_end_date"),
+  series_id: integer("series_id"),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -139,17 +139,37 @@ const rideSchema = z.object({
   recurring_time: z.string().optional(),
   recurring_end_date: z.coerce.date().optional(),
   ownerId: z.number(),
-}).refine((data) => {
-  // If it's a recurring ride, ensure all required recurring fields are present
+}).superRefine((data, ctx) => {
   if (data.is_recurring) {
-    return data.recurring_type && 
-           data.recurring_day !== undefined && 
-           data.recurring_time && 
-           data.recurring_end_date;
+    if (!data.recurring_type) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring type is required for recurring rides",
+        path: ["recurring_type"]
+      });
+    }
+    if (data.recurring_day === undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring day is required for recurring rides",
+        path: ["recurring_day"]
+      });
+    }
+    if (!data.recurring_time) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "Recurring time is required for recurring rides",
+        path: ["recurring_time"]
+      });
+    }
+    if (!data.recurring_end_date) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        message: "End date is required for recurring rides",
+        path: ["recurring_end_date"]
+      });
+    }
   }
-  return true;
-}, {
-  message: "When creating a recurring ride, recurring_type, recurring_day, recurring_time, and recurring_end_date are required"
 });
 
 export const insertRideSchema = rideSchema;
