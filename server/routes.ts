@@ -92,7 +92,7 @@ async function createRecurringRides(initialRide: {
     route_url: initialRide.route_url || null,
     description: initialRide.description || null,
     is_recurring: true,
-    recurring_type: recurringOptions.recurring_type.toLowerCase(), // Convert to lowercase
+    recurring_type: recurringOptions.recurring_type.toLowerCase(),
     recurring_day: recurringOptions.recurring_day,
     recurring_time: recurringOptions.recurring_time,
     recurring_end_date: recurringOptions.recurring_end_date,
@@ -128,7 +128,7 @@ async function createRecurringRides(initialRide: {
     await db
       .update(rides)
       .set({ series_id: seriesId })
-      .where(sql`id = ANY(${sql.array(createdRides.map(r => r.id))})`);
+      .where(sql`id = ANY(${sql`ARRAY[${sql.join(createdRides.map(r => r.id))}]`})`);
   }
 
   // Return the first ride with all details
