@@ -59,7 +59,7 @@ export const rides = pgTable("rides", {
   recurring_day: integer("recurring_day"),
   recurring_time: text("recurring_time"),
   recurring_end_date: timestamp("recurring_end_date"),
-  series_id: bigint("series_id", { mode: "number" }),
+  series_id: bigint("series_id", { mode: "number" }).references(() => rides.id, { onDelete: 'set null' }),
 });
 
 export const rideParticipants = pgTable("ride_participants", {

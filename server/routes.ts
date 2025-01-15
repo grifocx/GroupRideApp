@@ -77,20 +77,7 @@ async function createRecurringRides(initialRide: {
 }) {
   // Create the first ride
   const [firstRide] = await db.insert(rides).values({
-    title: initialRide.title,
-    dateTime: initialRide.dateTime,
-    distance: initialRide.distance,
-    difficulty: initialRide.difficulty,
-    maxRiders: initialRide.maxRiders,
-    ownerId: initialRide.ownerId,
-    address: initialRide.address,
-    latitude: initialRide.latitude,
-    longitude: initialRide.longitude,
-    rideType: initialRide.rideType,
-    pace: initialRide.pace,
-    terrain: initialRide.terrain,
-    route_url: initialRide.route_url || null,
-    description: initialRide.description || null,
+    ...initialRide,
     is_recurring: true,
     recurring_type: recurringOptions.recurring_type.toLowerCase(),
     recurring_day: recurringOptions.recurring_day,
@@ -117,10 +104,27 @@ async function createRecurringRides(initialRide: {
       break;
     }
 
-    // Create subsequent ride with series_id already set
+    // Create subsequent ride without including the first ride's ID
     await db.insert(rides).values({
-      ...firstRide,
+      title: initialRide.title,
       dateTime: currentDate,
+      distance: initialRide.distance,
+      difficulty: initialRide.difficulty,
+      maxRiders: initialRide.maxRiders,
+      ownerId: initialRide.ownerId,
+      address: initialRide.address,
+      latitude: initialRide.latitude,
+      longitude: initialRide.longitude,
+      rideType: initialRide.rideType,
+      pace: initialRide.pace,
+      terrain: initialRide.terrain,
+      route_url: initialRide.route_url,
+      description: initialRide.description,
+      is_recurring: true,
+      recurring_type: recurringOptions.recurring_type.toLowerCase(),
+      recurring_day: recurringOptions.recurring_day,
+      recurring_time: recurringOptions.recurring_time,
+      recurring_end_date: recurringOptions.recurring_end_date,
       series_id: firstRide.id
     });
   }
