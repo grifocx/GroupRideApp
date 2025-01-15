@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Map, MapPin, Copy, Check, Repeat, Pencil } from "lucide-react";
+import { MapPin, Copy, Check, Repeat, Pencil } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -155,19 +155,19 @@ export default function RideCard({ ride }: RideCardProps) {
             className="cursor-pointer hover:text-primary transition-colors"
             onClick={() => setLocation(`/rides/${ride.id}`)}
           >
-            <div className="flex items-center">
+            <div className="flex items-center gap-2">
               <CardTitle className="text-xl font-bold">
                 {ride.title}
               </CardTitle>
               {ride.canEdit === true && (
                 <Button
                   variant="ghost"
-                  size="sm"
-                  className="ml-2"
+                  size="icon"
                   onClick={(e) => {
                     e.stopPropagation();
                     setLocation(`/rides/${ride.id}/edit`);
                   }}
+                  title="Edit ride"
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>

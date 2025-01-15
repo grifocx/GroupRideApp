@@ -15,11 +15,13 @@ export function useRides() {
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ["/api/rides"],
     select: (data) => {
+      if (!user) return data.map(ride => ({ ...ride, canEdit: false }));
       return data.map(ride => ({
         ...ride,
-        canEdit: user?.id === ride.ownerId
+        canEdit: user.id === ride.ownerId
       }));
-    }
+    },
+    enabled: true // This ensures the query runs even if user is not yet loaded
   });
 
   return {
@@ -37,7 +39,6 @@ export function useUserRides() {
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ['/api/rides/user'],
     queryFn: async () => {
-      // Fetch both owned and participating rides
       const [ownedResponse, participatingResponse] = await Promise.all([
         fetch('/api/rides/user/owned', {
           credentials: 'include'
@@ -63,31 +64,27 @@ export function useUserRides() {
       // Process owned rides - only these should have canEdit: true
       const processedOwnedRides = ownedRides.map(ride => ({
         ...ride,
-        canEdit: true // User created these rides
+        canEdit: true // User owns these rides
       }));
 
+      // Process participating rides - these should have canEdit: false
       const processedParticipatingRides = participatingRides.map(ride => ({
         ...ride,
-        canEdit: false // User only participating in these rides
+        canEdit: false // User is just a participant
       }));
 
-      // Combine rides, keeping canEdit true only for owned rides
-      const allRides = [...processedOwnedRides, ...processedParticipatingRides];
-      const uniqueRides = Array.from(
-        new Map(
-          allRides.map(ride => [
-            ride.id,
-            allRides.find(r => r.id === ride.id && r.canEdit) || ride
-          ])
-        ).values()
-      );
-
-      return uniqueRides;
-    }
+      return [...processedOwnedRides, ...processedParticipatingRides];
+    },
+    enabled: !!user
   });
 
   const deleteMutation = useMutation({
     mutationFn: async (rideId: number) => {
+      const ride = rides?.find(r => r.id === rideId);
+      if (!ride?.canEdit) {
+        throw new Error('You do not have permission to delete this ride');
+      }
+
       const response = await fetch(`/api/rides/${rideId}`, {
         method: 'DELETE',
         credentials: 'include'
