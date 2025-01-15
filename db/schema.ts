@@ -74,6 +74,7 @@ export const rideRelations = relations(rides, ({ one, many }) => ({
     references: [users.id],
   }),
   participants: many(rideParticipants),
+  comments: many(rideComments),
   series: one(rides, {
     fields: [rides.series_id],
     references: [rides.id],
