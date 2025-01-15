@@ -34,15 +34,28 @@ export function useUserRides() {
         participatingResponse.json()
       ]);
 
-      // Add canEdit flag to each ride
-      const processRides = (rides: Ride[]) => rides.map(ride => ({
+      // Process owned rides - only these should have canEdit: true
+      const processedOwnedRides = ownedRides.map((ride: Ride) => ({
         ...ride,
-        canEdit: user?.isAdmin || ride.ownerId === user?.id
+        canEdit: true // User owns these rides
       }));
 
-      // Combine and deduplicate rides
-      const allRides = [...processRides(ownedRides), ...processRides(participatingRides)];
-      const uniqueRides = Array.from(new Map(allRides.map(ride => [ride.id, ride])).values());
+      // Process participating rides - these should have canEdit: false
+      const processedParticipatingRides = participatingRides.map((ride: Ride) => ({
+        ...ride,
+        canEdit: false // User is just a participant
+      }));
+
+      // Combine rides, keeping canEdit true only for owned rides
+      const allRides = [...processedOwnedRides, ...processedParticipatingRides];
+      const uniqueRides = Array.from(
+        new Map(
+          allRides.map(ride => [
+            ride.id,
+            allRides.find(r => r.id === ride.id && r.canEdit) || ride
+          ])
+        ).values()
+      );
 
       return uniqueRides;
     }
