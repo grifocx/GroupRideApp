@@ -54,14 +54,29 @@ const ensureAuthenticated = (req: Express.Request): User => {
   return req.user as User;
 };
 
-async function createRecurringRides(initialRide: any, recurringOptions: {
+async function createRecurringRides(initialRide: {
+  title: string;
+  dateTime: Date;
+  distance: number;
+  difficulty: string;
+  maxRiders: number;
+  ownerId: number;
+  address: string;
+  latitude: string;
+  longitude: string;
+  rideType: string;
+  pace: number;
+  terrain: string;
+  route_url?: string | null;
+  description?: string | null;
+}, recurringOptions: {
   recurring_type: 'WEEKLY' | 'MONTHLY';
   recurring_day: number;
   recurring_end_date: Date;
   recurring_time: string;
 }) {
   const seriesId = Date.now();
-  const rides = [];
+  const ridesArray = [];
 
   // Create the first ride with all required fields
   const firstRide = {
@@ -77,8 +92,8 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
     rideType: initialRide.rideType,
     pace: initialRide.pace,
     terrain: initialRide.terrain,
-    route_url: initialRide.route_url,
-    description: initialRide.description,
+    route_url: initialRide.route_url || null,
+    description: initialRide.description || null,
     is_recurring: true,
     recurring_type: recurringOptions.recurring_type,
     recurring_day: recurringOptions.recurring_day,
@@ -86,7 +101,7 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
     recurring_end_date: recurringOptions.recurring_end_date,
     series_id: seriesId
   };
-  rides.push(firstRide);
+  ridesArray.push(firstRide);
 
   // Calculate subsequent ride dates
   let currentDate = new Date(initialRide.dateTime);
@@ -106,10 +121,10 @@ async function createRecurringRides(initialRide: any, recurringOptions: {
       ...firstRide,
       dateTime: currentDate
     };
-    rides.push(nextRide);
+    ridesArray.push(nextRide);
   }
 
-  return rides;
+  return ridesArray;
 }
 
 export function registerRoutes(app: Express): Server {
@@ -152,8 +167,23 @@ export function registerRoutes(app: Express): Server {
           rideData.recurring_time &&
           rideData.recurring_end_date) {
 
-        const rides = await createRecurringRides(
-          rideData,
+        const recurringRides = await createRecurringRides(
+          {
+            title: rideData.title,
+            dateTime: rideData.dateTime,
+            distance: rideData.distance,
+            difficulty: rideData.difficulty,
+            maxRiders: rideData.maxRiders,
+            ownerId: rideData.ownerId,
+            address: rideData.address,
+            latitude: rideData.latitude,
+            longitude: rideData.longitude,
+            rideType: rideData.rideType,
+            pace: rideData.pace,
+            terrain: rideData.terrain,
+            route_url: rideData.route_url,
+            description: rideData.description
+          },
           {
             recurring_type: rideData.recurring_type,
             recurring_day: rideData.recurring_day,
@@ -162,7 +192,7 @@ export function registerRoutes(app: Express): Server {
           }
         );
 
-        const createdRides = await db.insert(rides).values(rides).returning();
+        const createdRides = await db.insert(rides).values(recurringRides).returning();
 
         const firstRideWithDetails = await db.query.rides.findFirst({
           where: eq(rides.id, createdRides[0].id),
