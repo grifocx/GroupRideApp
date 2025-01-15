@@ -266,6 +266,119 @@ export default function RidePage() {
                 </div>
               </CardContent>
             </Card>
+          {/* Comments Section */}
+            <motion.div
+              className="lg:col-span-2 space-y-6"
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.3 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Comments</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {user ? (
+                    <form onSubmit={async (e) => {
+                      e.preventDefault();
+                      const form = e.target as HTMLFormElement;
+                      const content = (form.elements.namedItem('comment') as HTMLTextAreaElement).value;
+                      
+                      try {
+                        const response = await fetch(`/api/rides/${ride.id}/comments`, {
+                          method: 'POST',
+                          headers: {
+                            'Content-Type': 'application/json',
+                          },
+                          body: JSON.stringify({ content }),
+                          credentials: 'include',
+                        });
+
+                        if (!response.ok) throw new Error('Failed to post comment');
+                        
+                        queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+                        (form.elements.namedItem('comment') as HTMLTextAreaElement).value = '';
+                        
+                        toast({
+                          title: "Success",
+                          description: "Comment posted successfully",
+                        });
+                      } catch (error) {
+                        toast({
+                          variant: "destructive",
+                          title: "Error",
+                          description: error instanceof Error ? error.message : "Failed to post comment",
+                        });
+                      }
+                    }} className="space-y-4">
+                      <textarea
+                        name="comment"
+                        className="w-full min-h-[100px] p-2 border rounded-md"
+                        placeholder="Write a comment..."
+                      />
+                      <Button type="submit">Post Comment</Button>
+                    </form>
+                  ) : (
+                    <p className="text-muted-foreground">Please log in to comment</p>
+                  )}
+
+                  <div className="mt-6 space-y-4">
+                    {ride.comments?.map((comment) => (
+                      <div key={comment.id} className="border rounded-lg p-4 space-y-2">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback>
+                                {comment.user.username[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span className="font-medium">{comment.user.username}</span>
+                          </div>
+                          <span className="text-sm text-muted-foreground">
+                            {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
+                          </span>
+                        </div>
+                        <p>{comment.content}</p>
+                        {ride.ownerId === user?.id && !comment.isPinned && (
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={async () => {
+                              try {
+                                const response = await fetch(`/api/rides/${ride.id}/comments/${comment.id}/pin`, {
+                                  method: 'POST',
+                                  credentials: 'include',
+                                });
+
+                                if (!response.ok) throw new Error('Failed to pin comment');
+                                
+                                queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+                                
+                                toast({
+                                  title: "Success",
+                                  description: "Comment pinned successfully",
+                                });
+                              } catch (error) {
+                                toast({
+                                  variant: "destructive",
+                                  title: "Error",
+                                  description: error instanceof Error ? error.message : "Failed to pin comment",
+                                });
+                              }
+                            }}
+                          >
+                            Pin Comment
+                          </Button>
+                        )}
+                        {comment.isPinned && (
+                          <Badge variant="secondary">Pinned</Badge>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </motion.div>
           </motion.div>
         </div>
       </motion.main>

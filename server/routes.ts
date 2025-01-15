@@ -707,6 +707,68 @@ export function registerRoutes(app: Express): Server {
   // Serve uploads directory
   app.use('/uploads', express.static(path.join(process.cwd(), 'uploads')));
 
+  // Comment endpoints
+  app.post("/api/rides/:id/comments", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const rideId = parseInt(req.params.id);
+      const { content } = req.body;
+
+      if (!content) {
+        return res.status(400).json({ error: "Comment content is required" });
+      }
+
+      const [comment] = await db.insert(rideComments)
+        .values({
+          rideId,
+          userId: user.id,
+          content,
+        })
+        .returning();
+
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({
+        error: "Failed to create comment",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  app.post("/api/rides/:rideId/comments/:commentId/pin", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const rideId = parseInt(req.params.rideId);
+      const commentId = parseInt(req.params.commentId);
+
+      const ride = await db.query.rides.findFirst({
+        where: eq(rides.id, rideId),
+      });
+
+      if (!ride || ride.ownerId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to pin comments" });
+      }
+
+      const [updatedComment] = await db
+        .update(rideComments)
+        .set({ isPinned: true })
+        .where(and(
+          eq(rideComments.id, commentId),
+          eq(rideComments.rideId, rideId)
+        ))
+        .returning();
+
+      res.json(updatedComment);
+    } catch (error) {
+      console.error("Error pinning comment:", error);
+      res.status(500).json({
+        error: "Failed to pin comment",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get user's owned rides
   app.get("/api/rides/user/owned", async (req, res) => {
     try {

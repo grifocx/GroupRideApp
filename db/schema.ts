@@ -157,3 +157,32 @@ export type User = InferModel<typeof users>;
 export type InsertUser = InferModel<typeof users, "insert">;
 export type Ride = InferModel<typeof rides>;
 export type InsertRide = InferModel<typeof rides, "insert">;
+
+export const rideComments = pgTable("ride_comments", {
+  id: serial("id").primaryKey(),
+  rideId: integer("ride_id").notNull().references(() => rides.id, { onDelete: 'cascade' }),
+  userId: integer("user_id").notNull().references(() => users.id),
+  content: text("content").notNull(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  isPinned: boolean("is_pinned").notNull().default(false),
+});
+
+export const rideCommentsRelations = relations(rideComments, ({ one }) => ({
+  ride: one(rides, {
+    fields: [rideComments.rideId],
+    references: [rides.id],
+  }),
+  user: one(users, {
+    fields: [rideComments.userId],
+    references: [users.id],
+  }),
+}));
+
+export const insertCommentSchema = z.object({
+  content: z.string().min(1, "Comment cannot be empty"),
+  rideId: z.number(),
+  userId: z.number(),
+});
+
+export type RideComment = InferModel<typeof rideComments>;
+export type InsertRideComment = InferModel<typeof rideComments, "insert">;
