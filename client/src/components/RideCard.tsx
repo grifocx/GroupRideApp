@@ -13,12 +13,14 @@ import { useUser } from "@/hooks/use-user";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
 
+type RideWithRelations = Ride & {
+  owner: { username: string };
+  participants: Array<{ user: { username: string } }>;
+  canEdit?: boolean;
+};
+
 type RideCardProps = {
-  ride: Ride & {
-    owner: { username: string };
-    participants: Array<{ user: { username: string } }>;
-    canEdit?: boolean;
-  };
+  ride: RideWithRelations;
 };
 
 const difficultyColors = {
@@ -36,7 +38,7 @@ const difficultyLabels = {
   'C': 'Intermediate',
   'B': 'Advanced',
   'A': 'Expert',
-  'AA': 'Extreme'
+  'AA': 'Professional'
 } as const;
 
 export default function RideCard({ ride }: RideCardProps) {
@@ -80,6 +82,7 @@ export default function RideCard({ ride }: RideCardProps) {
 
   const handleJoinToggle = async () => {
     try {
+      const isJoined = ride.participants.some(p => p.user.username === user?.username);
       const endpoint = `/api/rides/${ride.id}/${isJoined ? 'leave' : 'join'}`;
       const response = await fetch(endpoint, {
         method: "POST",
@@ -152,22 +155,24 @@ export default function RideCard({ ride }: RideCardProps) {
             className="cursor-pointer hover:text-primary transition-colors"
             onClick={() => setLocation(`/rides/${ride.id}`)}
           >
-            <CardTitle className="text-xl font-bold">
-              {ride.title}
-              {ride.canEdit && (
+            <div className="flex items-center">
+              <CardTitle className="text-xl font-bold">
+                {ride.title}
+              </CardTitle>
+              {ride.canEdit === true && (
                 <Button
                   variant="ghost"
                   size="sm"
                   className="ml-2"
                   onClick={(e) => {
                     e.stopPropagation();
-                    // Handle edit action
+                    setLocation(`/rides/${ride.id}/edit`);
                   }}
                 >
                   <Pencil className="h-4 w-4" />
                 </Button>
               )}
-            </CardTitle>
+            </div>
             <div className="text-sm text-muted-foreground">
               {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
             </div>
