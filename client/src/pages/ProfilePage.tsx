@@ -82,9 +82,9 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
 
           <div className="space-y-2">
             <label>Route URL (optional)</label>
-            <Input 
-              type="url" 
-              placeholder="https://www.strava.com/routes/..." 
+            <Input
+              type="url"
+              placeholder="https://www.strava.com/routes/..."
               {...form.register("route_url")}
             />
             {form.formState.errors.route_url && (
@@ -94,7 +94,7 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
 
           <div className="space-y-2">
             <label>Description (optional)</label>
-            <textarea 
+            <textarea
               className="w-full p-2 border rounded min-h-[100px]"
               placeholder="Add any additional details about the ride..."
               {...form.register("description")}
@@ -453,50 +453,89 @@ export default function ProfilePage() {
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8"
+          className="mt-8 space-y-8"
         >
-          <h2 className="text-2xl font-bold mb-4">Your Rides</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {rides?.map((ride) => (
-              <Card key={ride.id}>
-                <CardHeader>
-                  <div className="flex justify-between items-start">
-                    <CardTitle className="text-lg">{ride.title}</CardTitle>
-                    <div className="flex gap-2">
-                      <EditRideDialog ride={ride} onSave={handleUpdate(ride)} />
-                      <Button
-                        variant="outline"
-                        size="icon"
-                        onClick={() => {
-                          if (confirm('Are you sure you want to delete this ride?')) {
-                            deleteRide(ride.id);
-                          }
-                        }}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+          {/* Your Rides Section */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Your Created Rides</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rides?.filter(ride => ride.ownerId === user?.id).map((ride) => (
+                <Card key={ride.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{ride.title}</CardTitle>
+                      <div className="flex gap-2">
+                        <EditRideDialog ride={ride} onSave={handleUpdate(ride)} />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this ride?')) {
+                              deleteRide(ride.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="text-sm text-muted-foreground">
-                    {format(new Date(ride.dateTime), "PPP")}
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="space-y-2">
-                    <div>Distance: {ride.distance} miles</div>
-                    <div>Difficulty: {ride.difficulty}</div>
-                    <div>Location: {ride.address}</div>
-                    <div>Type: {ride.rideType}</div>
-                    <div>Terrain: {ride.terrain}</div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))}
-            {rides?.length === 0 && (
-              <div className="col-span-full text-center py-8 text-muted-foreground">
-                You haven't created any rides yet
-              </div>
-            )}
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(ride.dateTime), "PPP")}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div>Distance: {ride.distance} miles</div>
+                      <div>Difficulty: {ride.difficulty}</div>
+                      <div>Location: {ride.address}</div>
+                      <div>Type: {ride.rideType}</div>
+                      <div>Terrain: {ride.terrain}</div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {rides?.filter(ride => ride.ownerId === user?.id).length === 0 && (
+                <div className="col-span-full text-center py-8 text-muted-foreground">
+                  You haven't created any rides yet
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Joined Rides Section */}
+          <div>
+            <h2 className="text-2xl font-bold mb-4">Rides You've Joined</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {rides?.filter(ride => ride.ownerId !== user?.id).map((ride) => (
+                <Card key={ride.id}>
+                  <CardHeader>
+                    <div className="flex justify-between items-start">
+                      <CardTitle className="text-lg">{ride.title}</CardTitle>
+                    </div>
+                    <div className="text-sm text-muted-foreground">
+                      {format(new Date(ride.dateTime), "PPP")}
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <div className="space-y-2">
+                      <div>Distance: {ride.distance} miles</div>
+                      <div>Difficulty: {ride.difficulty}</div>
+                      <div>Location: {ride.address}</div>
+                      <div>Type: {ride.rideType}</div>
+                      <div>Terrain: {ride.terrain}</div>
+                      <div className="text-sm text-muted-foreground">
+                        Created by: {ride.owner.username}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+              {rides?.filter(ride => ride.ownerId !== user?.id).length === 0 && (
+                <div className="col-span-full text-center py-8 text-muted-foreground">
+                  You haven't joined any rides yet
+                </div>
+              )}
+            </div>
           </div>
         </motion.div>
       </main>
