@@ -12,6 +12,8 @@ import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
 import { format } from "date-fns";
 import { Card, CardContent } from "@/components/ui/card";
+import { ScrollIndicator } from "@/components/ScrollIndicator";
+import { motion } from "framer-motion";
 
 // Layout component
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -27,15 +29,31 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const ScrollButton = ({ targetId, children }: { targetId: string, children: React.ReactNode }) => {
   const handleClick = () => {
     const element = document.getElementById(targetId);
+    const offset = 80; // Account for fixed header
     if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      const elementPosition = element.getBoundingClientRect().top;
+      const offsetPosition = elementPosition + window.pageYOffset - offset;
+
+      window.scrollTo({
+        top: offsetPosition,
+        behavior: "smooth"
+      });
     }
   };
 
   return (
-    <Button variant="outline" onClick={handleClick} className="flex items-center gap-2">
-      {children}
-    </Button>
+    <motion.div
+      whileHover={{ scale: 1.05 }}
+      whileTap={{ scale: 0.95 }}
+    >
+      <Button
+        variant="outline"
+        onClick={handleClick}
+        className="flex items-center gap-2 transition-colors hover:bg-primary hover:text-primary-foreground"
+      >
+        {children}
+      </Button>
+    </motion.div>
   );
 };
 
@@ -122,18 +140,30 @@ export default function HomePage() {
 
   return (
     <Layout>
+      <ScrollIndicator />
       {/* Welcome Banner with Navigation */}
-      <section className="bg-primary text-primary-foreground py-6">
+      <section className="bg-primary text-primary-foreground py-6 sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
-            <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
-            <p className="text-lg max-w-2xl mx-auto">
-              Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
-            </p>
+            <motion.div
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+            >
+              <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
+              <p className="text-lg max-w-2xl mx-auto">
+                Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
+              </p>
+            </motion.div>
           </div>
 
           {/* Quick Navigation */}
-          <div className="flex justify-center gap-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="flex justify-center gap-4"
+          >
             <ScrollButton targetId="search-section">
               <Search className="h-4 w-4" /> Find Rides
             </ScrollButton>
@@ -143,7 +173,7 @@ export default function HomePage() {
             <ScrollButton targetId="rides-section">
               <List className="h-4 w-4" /> Browse Rides
             </ScrollButton>
-          </div>
+          </motion.div>
         </div>
       </section>
 
