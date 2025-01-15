@@ -11,8 +11,15 @@ type RideWithRelations = Ride & {
 };
 
 export function useRides() {
+  const { user } = useUser();
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ["/api/rides"],
+    select: (data) => {
+      return data.map(ride => ({
+        ...ride,
+        canEdit: user?.id === ride.ownerId
+      }));
+    }
   });
 
   return {
@@ -30,7 +37,7 @@ export function useUserRides() {
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ['/api/rides/user'],
     queryFn: async () => {
-      // Modified to fetch both owned and participating rides
+      // Fetch both owned and participating rides
       const [ownedResponse, participatingResponse] = await Promise.all([
         fetch('/api/rides/user/owned', {
           credentials: 'include'
@@ -53,7 +60,7 @@ export function useUserRides() {
         participatingResponse.json()
       ]);
 
-      // Add canEdit flag to each ride based on ownership
+      // Process owned rides - only these should have canEdit: true
       const processedOwnedRides = ownedRides.map(ride => ({
         ...ride,
         canEdit: true // User created these rides
@@ -64,7 +71,7 @@ export function useUserRides() {
         canEdit: false // User only participating in these rides
       }));
 
-      // Combine and deduplicate rides, preserving canEdit from owned rides
+      // Combine rides, keeping canEdit true only for owned rides
       const allRides = [...processedOwnedRides, ...processedParticipatingRides];
       const uniqueRides = Array.from(
         new Map(
