@@ -1,11 +1,13 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
 import { useToast } from '@/hooks/use-toast';
+import { useUser } from '@/hooks/use-user';
 
 type RideWithRelations = Ride & {
   owner: { username: string };
   participants: Array<{ user: { username: string } }>;
   is_recurring?: boolean;
+  canEdit?: boolean;
 };
 
 export function useRides() {
@@ -23,6 +25,7 @@ export function useRides() {
 export function useUserRides() {
   const queryClient = useQueryClient();
   const { toast } = useToast();
+  const { user } = useUser();
 
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ['/api/rides/user'],
@@ -50,9 +53,27 @@ export function useUserRides() {
         participatingResponse.json()
       ]);
 
-      // Combine and deduplicate rides
-      const allRides = [...ownedRides, ...participatingRides];
-      const uniqueRides = Array.from(new Map(allRides.map(ride => [ride.id, ride])).values());
+      // Add canEdit flag to each ride based on ownership
+      const processedOwnedRides = ownedRides.map(ride => ({
+        ...ride,
+        canEdit: true // User created these rides
+      }));
+
+      const processedParticipatingRides = participatingRides.map(ride => ({
+        ...ride,
+        canEdit: false // User only participating in these rides
+      }));
+
+      // Combine and deduplicate rides, preserving canEdit from owned rides
+      const allRides = [...processedOwnedRides, ...processedParticipatingRides];
+      const uniqueRides = Array.from(
+        new Map(
+          allRides.map(ride => [
+            ride.id,
+            allRides.find(r => r.id === ride.id && r.canEdit) || ride
+          ])
+        ).values()
+      );
 
       return uniqueRides;
     }
@@ -90,6 +111,11 @@ export function useUserRides() {
 
   const updateMutation = useMutation({
     mutationFn: async ({ id, data }: { id: number; data: Partial<Ride> }) => {
+      const ride = rides?.find(r => r.id === id);
+      if (!ride?.canEdit) {
+        throw new Error('You do not have permission to edit this ride');
+      }
+
       const response = await fetch(`/api/rides/${id}`, {
         method: 'PUT',
         headers: {
@@ -126,7 +152,18 @@ export function useUserRides() {
     rides,
     isLoading,
     error,
-    deleteRide: deleteMutation.mutate,
+    deleteRide: (rideId: number) => {
+      const ride = rides?.find(r => r.id === rideId);
+      if (!ride?.canEdit) {
+        toast({
+          variant: 'destructive',
+          title: 'Error',
+          description: 'You do not have permission to delete this ride'
+        });
+        return;
+      }
+      deleteMutation.mutate(rideId);
+    },
     updateRide: updateMutation.mutate
   };
 }
