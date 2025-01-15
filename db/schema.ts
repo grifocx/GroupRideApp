@@ -57,7 +57,9 @@ export const rides = pgTable("rides", {
   is_recurring: boolean("is_recurring").default(false),
   recurring_type: text("recurring_type"),
   recurring_day: integer("recurring_day"),
+  recurring_time: text("recurring_time"),
   series_id: integer("series_id").references(() => rides.id),
+  recurring_end_date: timestamp("recurring_end_date"),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -134,6 +136,8 @@ const rideSchema = z.object({
   is_recurring: z.boolean().optional(),
   recurring_type: z.enum(['WEEKLY', 'MONTHLY']).optional(),
   recurring_day: z.number().min(0).max(31).optional(),
+  recurring_time: z.string().optional(),
+  recurring_end_date: z.coerce.date().optional(),
 });
 
 export const insertRideSchema = rideSchema;
