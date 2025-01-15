@@ -57,7 +57,7 @@ export default function CreateRidePage() {
       recurring_type: "WEEKLY",
       recurring_day: 0,
       recurring_time: "09:00",
-      recurring_end_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'), // 30 days from now
+      recurring_end_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
     },
   });
 
@@ -65,36 +65,26 @@ export default function CreateRidePage() {
     try {
       const dateTime = new Date(`${data.date}T${data.time}`);
 
-      const formattedData: Partial<InsertRide> = {
-        ...data,
+      const formattedData = {
+        title: data.title,
         dateTime,
         distance: Number(data.distance),
+        difficulty: data.difficulty,
         maxRiders: Number(data.maxRiders),
+        address: data.address,
+        rideType: data.rideType,
         pace: Number(data.pace),
+        terrain: data.terrain,
+        route_url: data.route_url || null,
+        description: data.description || null,
+        is_recurring: data.is_recurring,
+        ...(data.is_recurring && {
+          recurring_type: data.recurring_type,
+          recurring_day: data.recurring_day,
+          recurring_time: data.time, 
+          recurring_end_date: new Date(data.recurring_end_date)
+        })
       };
-
-      // Clean up empty strings for optional fields
-      if (!formattedData.route_url) {
-        formattedData.route_url = null;
-      }
-      if (!formattedData.description) {
-        formattedData.description = null;
-      }
-
-      // Handle recurring ride data
-      if (formattedData.is_recurring) {
-        formattedData.recurring_end_date = new Date(data.recurring_end_date);
-        formattedData.recurring_time = data.time; // Use the same time as the first occurrence
-      } else {
-        delete formattedData.recurring_type;
-        delete formattedData.recurring_day;
-        delete formattedData.recurring_time;
-        delete formattedData.recurring_end_date;
-      }
-
-      // Remove form-specific fields
-      delete formattedData.date;
-      delete formattedData.time;
 
       const response = await fetch("/api/rides", {
         method: "POST",
@@ -103,10 +93,9 @@ export default function CreateRidePage() {
         credentials: "include",
       });
 
-      const responseData = await response.json();
-
       if (!response.ok) {
-        throw new Error(responseData.message || responseData.error || "Failed to create ride");
+        const errorData = await response.json();
+        throw new Error(errorData.error || errorData.message || "Failed to create ride");
       }
 
       toast({
