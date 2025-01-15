@@ -7,6 +7,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { Loader2, User, KeyRound, Mail } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { useLocation } from "wouter";
 
 type FormData = {
   username: string;
@@ -19,6 +20,7 @@ export default function AuthPage() {
   const [isLoading, setIsLoading] = useState(false);
   const { toast } = useToast();
   const { login, register } = useUser();
+  const [, setLocation] = useLocation();
 
   const form = useForm<FormData>({
     defaultValues: {
@@ -31,10 +33,20 @@ export default function AuthPage() {
     try {
       setIsLoading(true);
       await (isLogin ? login(data) : register(data));
-      toast({
-        title: "Success",
-        description: isLogin ? "Successfully logged in!" : "Successfully registered!",
-      });
+
+      if (isLogin) {
+        toast({
+          title: "Success",
+          description: "Successfully logged in!",
+        });
+        setLocation("/");
+      } else {
+        toast({
+          title: "Welcome to RideGroops!",
+          description: "Your account has been created. Let's set up your profile!",
+        });
+        setLocation("/profile");
+      }
     } catch (error) {
       console.error("Auth error:", error);
       toast({
@@ -117,12 +129,12 @@ export default function AuthPage() {
                     <Input
                       type="email"
                       placeholder="Email"
-                      {...form.register("email", { 
+                      {...form.register("email", {
                         required: !isLogin,
                         pattern: {
                           value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Invalid email address"
-                        }
+                          message: "Invalid email address",
+                        },
                       })}
                       disabled={isLoading}
                       className="pl-10"
