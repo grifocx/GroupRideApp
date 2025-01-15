@@ -26,7 +26,7 @@ const createRideSchema = z.object({
   route_url: z.string().url().optional().or(z.literal('')),
   description: z.string().optional(),
   is_recurring: z.boolean().optional(),
-  recurring_type: z.enum(['WEEKLY', 'MONTHLY']).optional(),
+  recurring_type: z.enum(['weekly', 'monthly']).optional(),
   recurring_day: z.coerce.number().min(0).max(31).optional(),
   recurring_time: z.string().optional(),
   recurring_end_date: z.string().optional(),
@@ -54,7 +54,7 @@ export default function CreateRidePage() {
       route_url: "",
       description: "",
       is_recurring: false,
-      recurring_type: "WEEKLY",
+      recurring_type: "weekly",
       recurring_day: 0,
       recurring_time: "09:00",
       recurring_end_date: format(new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), 'yyyy-MM-dd'),
@@ -100,12 +100,11 @@ export default function CreateRidePage() {
         const errorData = await response.json();
         console.error("Server validation error:", errorData);
 
-        // Show detailed error message
         toast({
           variant: "destructive",
           title: "Error",
-          description: errorData.details 
-            ? Array.isArray(errorData.details) 
+          description: errorData.details
+            ? Array.isArray(errorData.details)
               ? errorData.details.map((e: any) => `${e.path}: ${e.message}`).join(', ')
               : errorData.details
             : errorData.error || "Failed to create ride",
@@ -115,7 +114,7 @@ export default function CreateRidePage() {
 
       toast({
         title: "Success",
-        description: formattedData.is_recurring 
+        description: formattedData.is_recurring
           ? "Recurring ride series created successfully"
           : "Ride created successfully",
       });
@@ -134,14 +133,14 @@ export default function CreateRidePage() {
   const recurringType = form.watch("recurring_type");
 
   const getRecurringDayLabel = () => {
-    if (recurringType === "WEEKLY") {
+    if (recurringType === "weekly") {
       return "Day of Week";
     }
     return "Day of Month";
   };
 
   const getRecurringDayOptions = () => {
-    if (recurringType === "WEEKLY") {
+    if (recurringType === "weekly") {
       return [
         { value: 0, label: "Sunday" },
         { value: 1, label: "Monday" },
@@ -176,7 +175,6 @@ export default function CreateRidePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Basic Ride Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Basic Information</h3>
 
@@ -227,7 +225,6 @@ export default function CreateRidePage() {
 
             <Separator />
 
-            {/* Ride Details */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Ride Details</h3>
 
@@ -260,9 +257,9 @@ export default function CreateRidePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="difficulty">Difficulty</Label>
-                  <select 
+                  <select
                     id="difficulty"
-                    className="w-full p-2 border rounded" 
+                    className="w-full p-2 border rounded"
                     {...form.register("difficulty")}
                   >
                     <option value="E">E - Easy</option>
@@ -293,9 +290,9 @@ export default function CreateRidePage() {
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="rideType">Ride Type</Label>
-                  <select 
+                  <select
                     id="rideType"
-                    className="w-full p-2 border rounded" 
+                    className="w-full p-2 border rounded"
                     {...form.register("rideType")}
                   >
                     <option value="MTB">Mountain Bike</option>
@@ -306,9 +303,9 @@ export default function CreateRidePage() {
 
                 <div className="space-y-2">
                   <Label htmlFor="terrain">Terrain</Label>
-                  <select 
+                  <select
                     id="terrain"
-                    className="w-full p-2 border rounded" 
+                    className="w-full p-2 border rounded"
                     {...form.register("terrain")}
                   >
                     <option value="FLAT">Flat</option>
@@ -321,7 +318,6 @@ export default function CreateRidePage() {
 
             <Separator />
 
-            {/* Additional Information */}
             <div className="space-y-4">
               <h3 className="text-lg font-medium">Additional Information</h3>
 
@@ -351,7 +347,6 @@ export default function CreateRidePage() {
 
             <Separator />
 
-            {/* Recurring Ride Settings */}
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h3 className="text-lg font-medium">Recurring Ride</h3>
@@ -375,8 +370,8 @@ export default function CreateRidePage() {
                         className="w-full p-2 border rounded"
                         {...form.register("recurring_type")}
                       >
-                        <option value="WEEKLY">Weekly</option>
-                        <option value="MONTHLY">Monthly</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
                       </select>
                     </div>
 
