@@ -599,6 +599,73 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // New route to get all rides for admin
+  app.get("/api/admin/rides", ensureAdmin, async (_req, res) => {
+    try {
+      const allRides = await db.query.rides.findMany({
+        with: {
+          owner: {
+            columns: {
+              id: true,
+              username: true
+            }
+          },
+          participants: {
+            with: {
+              user: {
+                columns: {
+                  username: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: (rides, { desc }) => [desc(rides.dateTime)]
+      });
+
+      res.json(allRides);
+    } catch (error) {
+      console.error("Error fetching rides for admin:", error);
+      res.status(500).json({
+        error: "Failed to fetch rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // New route to delete ride as admin
+  app.delete("/api/admin/rides/:id", ensureAdmin, async (req, res) => {
+    try {
+      const rideId = parseInt(req.params.id);
+      if (isNaN(rideId)) {
+        return res.status(400).json({ error: "Invalid ride ID" });
+      }
+
+      const ride = await db.query.rides.findFirst({
+        where: eq(rides.id, rideId),
+      });
+
+      if (!ride) {
+        return res.status(404).json({ error: "Ride not found" });
+      }
+
+
+      await db.delete(rideParticipants)
+        .where(eq(rideParticipants.rideId, rideId));
+
+      await db.delete(rides)
+        .where(eq(rides.id, rideId));
+
+      res.json({ message: "Successfully deleted ride" });
+    } catch (error) {
+      console.error("Error deleting ride as admin:", error);
+      res.status(500).json({
+        error: "Failed to delete ride",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Profile routes
   app.put("/api/user/profile", async (req, res) => {
     try {
