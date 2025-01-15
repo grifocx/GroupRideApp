@@ -75,8 +75,8 @@ async function createRecurringRides(initialRide: {
   recurring_end_date: Date;
   recurring_time: string;
 }) {
-  // Create the first ride without series_id
-  const firstRide = {
+  // Create the first ride
+  const [firstRide] = await db.insert(rides).values({
     title: initialRide.title,
     dateTime: initialRide.dateTime,
     distance: initialRide.distance,
@@ -96,10 +96,15 @@ async function createRecurringRides(initialRide: {
     recurring_day: recurringOptions.recurring_day,
     recurring_time: recurringOptions.recurring_time,
     recurring_end_date: recurringOptions.recurring_end_date,
-  };
+  }).returning();
 
-  // Calculate subsequent rides
-  const ridesArray = [firstRide];
+  // Update the first ride with its own ID as series_id
+  await db
+    .update(rides)
+    .set({ series_id: firstRide.id })
+    .where(eq(rides.id, firstRide.id));
+
+  // Calculate and create subsequent rides
   let currentDate = new Date(initialRide.dateTime);
   const endDate = new Date(recurringOptions.recurring_end_date);
 
@@ -112,30 +117,17 @@ async function createRecurringRides(initialRide: {
       break;
     }
 
-    const nextRide = {
+    // Create subsequent ride with series_id already set
+    await db.insert(rides).values({
       ...firstRide,
-      dateTime: currentDate
-    };
-    ridesArray.push(nextRide);
-  }
-
-  // Create all rides
-  const createdRides = await db.insert(rides).values(ridesArray).returning();
-
-  // Update all rides with the series_id (using the first ride's ID)
-  if (createdRides.length > 0) {
-    const seriesId = createdRides[0].id;
-    const rideIds = createdRides.map(r => r.id);
-
-    await db
-      .update(rides)
-      .set({ series_id: seriesId })
-      .where(inArray(rides.id, rideIds));
+      dateTime: currentDate,
+      series_id: firstRide.id
+    });
   }
 
   // Return the first ride with all details
   const firstRideWithDetails = await db.query.rides.findFirst({
-    where: eq(rides.id, createdRides[0].id),
+    where: eq(rides.id, firstRide.id),
     with: {
       owner: true,
       participants: {
@@ -213,21 +205,7 @@ export function registerRoutes(app: Express): Server {
             recurring_time: rideData.recurring_time
           }
         );
-
-        const createdRides = await db.insert(rides).values(recurringRides).returning();
-
-        const firstRideWithDetails = await db.query.rides.findFirst({
-          where: eq(rides.id, createdRides[0].id),
-          with: {
-            owner: true,
-            participants: {
-              with: {
-                user: true
-              }
-            }
-          }
-        });
-
+        const firstRideWithDetails = recurringRides;
         return res.status(201).json(firstRideWithDetails);
       } else {
         // Handle single ride creation
