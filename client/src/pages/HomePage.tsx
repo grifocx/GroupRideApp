@@ -128,21 +128,6 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="space-y-8">
-            {/* Rides Section */}
-            <div>
-              <h2 className="text-xl font-bold mb-4">Available Rides</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {filteredRides.map((ride) => (
-                  <RideCard key={ride.id} ride={ride} />
-                ))}
-                {filteredRides.length === 0 && (
-                  <div className="col-span-full text-center text-muted-foreground py-8">
-                    No rides found matching your criteria
-                  </div>
-                )}
-              </div>
-            </div>
-
             {/* Map and Calendar Section */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
               {/* Map Section */}
@@ -181,6 +166,21 @@ export default function HomePage() {
                   />
                 </CardContent>
               </Card>
+            </div>
+
+            {/* Rides Section */}
+            <div>
+              <h2 className="text-xl font-bold mb-4">Available Rides</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {filteredRides.map((ride) => (
+                  <RideCard key={ride.id} ride={ride} />
+                ))}
+                {filteredRides.length === 0 && (
+                  <div className="col-span-full text-center text-muted-foreground py-8">
+                    No rides found matching your criteria
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         )}
