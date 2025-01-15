@@ -64,6 +64,7 @@ export default function CreateRidePage() {
   const onSubmit = async (data: CreateRideForm) => {
     try {
       const dateTime = new Date(`${data.date}T${data.time}`);
+      console.log("Form data before submission:", data);
 
       const formattedData = {
         title: data.title,
@@ -81,10 +82,12 @@ export default function CreateRidePage() {
         ...(data.is_recurring && {
           recurring_type: data.recurring_type,
           recurring_day: data.recurring_day,
-          recurring_time: data.time, 
+          recurring_time: data.time,
           recurring_end_date: new Date(data.recurring_end_date)
         })
       };
+
+      console.log("Formatted data being sent to server:", JSON.stringify(formattedData, null, 2));
 
       const response = await fetch("/api/rides", {
         method: "POST",
@@ -95,7 +98,19 @@ export default function CreateRidePage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.error || errorData.message || "Failed to create ride");
+        console.error("Server validation error:", errorData);
+
+        // Show detailed error message
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: errorData.details 
+            ? Array.isArray(errorData.details) 
+              ? errorData.details.map((e: any) => `${e.path}: ${e.message}`).join(', ')
+              : errorData.details
+            : errorData.error || "Failed to create ride",
+        });
+        return;
       }
 
       toast({
