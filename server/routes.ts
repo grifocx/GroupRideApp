@@ -7,7 +7,7 @@ import path from 'path';
 import fs from 'fs';
 
 import { db } from "@db";
-import { rides, rideParticipants, users, insertRideSchema, type User } from "@db/schema";
+import { rides, rideParticipants, users, insertRideSchema, type User, RecurringType } from "@db/schema";
 import { and, eq, sql } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
@@ -70,7 +70,7 @@ async function createRecurringRides(initialRide: {
   route_url?: string | null;
   description?: string | null;
 }, recurringOptions: {
-  recurring_type: 'WEEKLY' | 'MONTHLY';
+  recurring_type: keyof typeof RecurringType;
   recurring_day: number;
   recurring_end_date: Date;
   recurring_time: string;
