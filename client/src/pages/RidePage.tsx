@@ -44,6 +44,13 @@ export default function RidePage() {
   const { data: ride, isLoading } = useQuery<Ride & {
     owner: { username: string };
     participants: Array<{ user: { username: string } }>;
+    comments: Array<{ 
+      id: number;
+      content: string;
+      createdAt: string;
+      isPinned: boolean;
+      user: { username: string };
+    }>;
   }>({
     queryKey: [`/api/rides/${id}`],
   });

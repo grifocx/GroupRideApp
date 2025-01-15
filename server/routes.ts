@@ -303,6 +303,15 @@ export function registerRoutes(app: Express): Server {
             with: {
               user: true
             }
+          },
+          comments: {
+            with: {
+              user: true
+            },
+            orderBy: (comments, { desc }) => [
+              desc(comments.isPinned),
+              desc(comments.createdAt)
+            ]
           }
         }
       });
