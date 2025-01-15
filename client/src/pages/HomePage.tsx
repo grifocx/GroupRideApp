@@ -6,7 +6,7 @@ import RideSearch, { type RideFilters } from "@/components/RideSearch";
 import Footer from "@/components/Footer";
 import { MapComponent } from "@/components/MapComponent";
 import CalendarView from "@/components/CalendarView";
-import { Loader2, Calendar as CalendarIcon } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, MapPin, Search, List } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -21,6 +21,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <main>{children}</main>
       <Footer />
     </div>
+  );
+};
+
+const ScrollButton = ({ targetId, children }: { targetId: string, children: React.ReactNode }) => {
+  const handleClick = () => {
+    const element = document.getElementById(targetId);
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+  };
+
+  return (
+    <Button variant="outline" onClick={handleClick} className="flex items-center gap-2">
+      {children}
+    </Button>
   );
 };
 
@@ -107,18 +122,34 @@ export default function HomePage() {
 
   return (
     <Layout>
-      {/* Welcome Banner - More compact */}
+      {/* Welcome Banner with Navigation */}
       <section className="bg-primary text-primary-foreground py-6">
-        <div className="container mx-auto px-4 text-center">
-          <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
-          <p className="text-lg max-w-2xl mx-auto">
-            Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
-          </p>
+        <div className="container mx-auto px-4">
+          <div className="text-center mb-6">
+            <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
+            <p className="text-lg max-w-2xl mx-auto">
+              Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
+            </p>
+          </div>
+
+          {/* Quick Navigation */}
+          <div className="flex justify-center gap-4">
+            <ScrollButton targetId="search-section">
+              <Search className="h-4 w-4" /> Find Rides
+            </ScrollButton>
+            <ScrollButton targetId="map-calendar-section">
+              <MapPin className="h-4 w-4" /> View Map
+            </ScrollButton>
+            <ScrollButton targetId="rides-section">
+              <List className="h-4 w-4" /> Browse Rides
+            </ScrollButton>
+          </div>
         </div>
       </section>
 
       <main className="container mx-auto px-4 py-6">
-        <div className="mb-6">
+        {/* Search Section */}
+        <div id="search-section" className="mb-6 scroll-mt-16">
           <RideSearch onFilterChange={setFilters} />
         </div>
 
@@ -129,47 +160,49 @@ export default function HomePage() {
         ) : (
           <div className="space-y-8">
             {/* Map and Calendar Section */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Map Section */}
-              <Card>
-                <CardContent className="p-4">
-                  <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
-                  <div className="h-[400px]">
-                    <MapComponent
-                      rides={filteredRides}
-                      onMarkerClick={(ride) => {
-                        console.log('Clicked ride:', ride);
-                      }}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
+            <div id="map-calendar-section" className="scroll-mt-16">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                {/* Map Section */}
+                <Card>
+                  <CardContent className="p-4">
+                    <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
+                    <div className="h-[400px]">
+                      <MapComponent
+                        rides={filteredRides}
+                        onMarkerClick={(ride) => {
+                          console.log('Clicked ride:', ride);
+                        }}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
 
-              {/* Calendar Section */}
-              <Card>
-                <CardContent className="p-4">
-                  <div className="flex justify-between items-center mb-4">
-                    <h2 className="text-lg font-semibold">This Month's Rides</h2>
-                    <Button
-                      variant="outline"
-                      className="flex items-center gap-2"
-                      onClick={() => setLocation("/calendar")}
-                    >
-                      <CalendarIcon className="h-4 w-4" />
-                      Full Calendar
-                    </Button>
-                  </div>
-                  <CalendarView
-                    rides={filteredRides}
-                    compact={true}
-                    ridesByDate={ridesByDate}
-                  />
-                </CardContent>
-              </Card>
+                {/* Calendar Section */}
+                <Card>
+                  <CardContent className="p-4">
+                    <div className="flex justify-between items-center mb-4">
+                      <h2 className="text-lg font-semibold">This Month's Rides</h2>
+                      <Button
+                        variant="outline"
+                        className="flex items-center gap-2"
+                        onClick={() => setLocation("/calendar")}
+                      >
+                        <CalendarIcon className="h-4 w-4" />
+                        Full Calendar
+                      </Button>
+                    </div>
+                    <CalendarView
+                      rides={filteredRides}
+                      compact={true}
+                      ridesByDate={ridesByDate}
+                    />
+                  </CardContent>
+                </Card>
+              </div>
             </div>
 
             {/* Rides Section */}
-            <div>
+            <div id="rides-section" className="scroll-mt-16">
               <h2 className="text-xl font-bold mb-4">Available Rides</h2>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRides.map((ride) => (
