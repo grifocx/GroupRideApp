@@ -8,7 +8,7 @@ import fs from 'fs';
 
 import { db } from "@db";
 import { rides, rideParticipants, users, insertRideSchema, type User, RecurringType } from "@db/schema";
-import { and, eq, sql } from "drizzle-orm";
+import { and, eq, sql, inArray } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
@@ -125,10 +125,12 @@ async function createRecurringRides(initialRide: {
   // Update all rides with the series_id (using the first ride's ID)
   if (createdRides.length > 0) {
     const seriesId = createdRides[0].id;
+    const rideIds = createdRides.map(r => r.id);
+
     await db
       .update(rides)
       .set({ series_id: seriesId })
-      .where(sql`id = ANY(${sql`ARRAY[${sql.join(createdRides.map(r => r.id))}]`})`);
+      .where(inArray(rides.id, rideIds));
   }
 
   // Return the first ride with all details
