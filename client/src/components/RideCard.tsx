@@ -2,7 +2,7 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Map, MapPin, Copy, Check, Repeat } from "lucide-react";
+import { Map, MapPin, Copy, Check, Repeat, Pencil } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
 import { useEffect, useRef } from "react";
 import { useLocation } from "wouter";
@@ -17,6 +17,7 @@ type RideCardProps = {
   ride: Ride & {
     owner: { username: string };
     participants: Array<{ user: { username: string } }>;
+    canEdit?: boolean;
   };
 };
 
@@ -147,11 +148,26 @@ export default function RideCard({ ride }: RideCardProps) {
     )}>
       <CardHeader className="pb-2">
         <div className="flex justify-between items-start">
-          <div 
+          <div
             className="cursor-pointer hover:text-primary transition-colors"
             onClick={() => setLocation(`/rides/${ride.id}`)}
           >
-            <CardTitle className="text-xl font-bold">{ride.title}</CardTitle>
+            <CardTitle className="text-xl font-bold">
+              {ride.title}
+              {ride.canEdit && (
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="ml-2"
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    // Handle edit action
+                  }}
+                >
+                  <Pencil className="h-4 w-4" />
+                </Button>
+              )}
+            </CardTitle>
             <div className="text-sm text-muted-foreground">
               {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
             </div>
