@@ -7,6 +7,8 @@ import { useToast } from "@/hooks/use-toast";
 import type { InsertRide } from "@db/schema";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 
 const createRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -20,6 +22,9 @@ const createRideSchema = z.object({
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   route_url: z.string().url().optional().or(z.literal('')),
   description: z.string().optional(),
+  is_recurring: z.boolean().optional(),
+  recurring_type: z.enum(['WEEKLY', 'MONTHLY']).optional(),
+  recurring_day: z.coerce.number().min(0).max(31).optional(),
 });
 
 type CreateRideForm = z.infer<typeof createRideSchema>;
@@ -42,6 +47,9 @@ export default function CreateRidePage() {
       terrain: "FLAT",
       route_url: "",
       description: "",
+      is_recurring: false,
+      recurring_type: "WEEKLY",
+      recurring_day: 0,
     },
   });
 
@@ -63,6 +71,11 @@ export default function CreateRidePage() {
         formattedData.description = null;
       }
 
+      // Only include recurring fields if is_recurring is true
+      if (!formattedData.is_recurring) {
+        delete formattedData.recurring_type;
+        delete formattedData.recurring_day;
+      }
 
       const response = await fetch("/api/rides", {
         method: "POST",
@@ -93,6 +106,9 @@ export default function CreateRidePage() {
     }
   };
 
+  const isRecurring = form.watch("is_recurring");
+  const recurringType = form.watch("recurring_type");
+
   return (
     <div className="min-h-screen bg-background flex items-center justify-center">
       <Card className="w-[600px] mx-4">
@@ -101,6 +117,7 @@ export default function CreateRidePage() {
         </CardHeader>
         <CardContent>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+            {/* Existing fields */}
             <div className="space-y-2">
               <label>Title</label>
               <Input
@@ -219,6 +236,51 @@ export default function CreateRidePage() {
                 <option value="HILLY">Hilly</option>
                 <option value="MOUNTAIN">Mountain</option>
               </select>
+            </div>
+
+            {/* New recurring ride fields */}
+            <div className="space-y-4 border-t pt-4">
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="is-recurring"
+                  {...form.register("is_recurring")}
+                />
+                <Label htmlFor="is-recurring">Make this a recurring ride</Label>
+              </div>
+
+              {isRecurring && (
+                <>
+                  <div className="space-y-2">
+                    <label>Recurring Type</label>
+                    <select
+                      className="w-full p-2 border rounded"
+                      {...form.register("recurring_type")}
+                    >
+                      <option value="WEEKLY">Weekly</option>
+                      <option value="MONTHLY">Monthly</option>
+                    </select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label>
+                      {recurringType === "WEEKLY"
+                        ? "Day of Week (0 = Sunday, 6 = Saturday)"
+                        : "Day of Month (1-31)"}
+                    </label>
+                    <Input
+                      type="number"
+                      min={recurringType === "WEEKLY" ? 0 : 1}
+                      max={recurringType === "WEEKLY" ? 6 : 31}
+                      {...form.register("recurring_day", { valueAsNumber: true })}
+                    />
+                    {form.formState.errors.recurring_day && (
+                      <p className="text-sm text-destructive">
+                        {form.formState.errors.recurring_day.message}
+                      </p>
+                    )}
+                  </div>
+                </>
+              )}
             </div>
 
             <div className="flex gap-4">

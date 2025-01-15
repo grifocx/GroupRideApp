@@ -54,6 +54,10 @@ export const rides = pgTable("rides", {
   terrain: text("terrain").notNull(),
   route_url: text("route_url"),
   description: text("description"),
+  is_recurring: boolean("is_recurring").default(false),
+  recurring_type: text("recurring_type"),
+  recurring_day: integer("recurring_day"),
+  series_id: integer("series_id").references(() => rides.id),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -68,6 +72,10 @@ export const rideRelations = relations(rides, ({ one, many }) => ({
     references: [users.id],
   }),
   participants: many(rideParticipants),
+  series: one(rides, {
+    fields: [rides.series_id],
+    references: [rides.id],
+  }),
 }));
 
 export const rideParticipantsRelations = relations(rideParticipants, ({ one }) => ({
@@ -103,6 +111,11 @@ export const TerrainType = {
   MOUNTAIN: 'MOUNTAIN',
 } as const;
 
+export const RecurringType = {
+  WEEKLY: 'WEEKLY',
+  MONTHLY: 'MONTHLY',
+} as const;
+
 // Base ride schema
 const rideSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -118,6 +131,9 @@ const rideSchema = z.object({
   terrain: z.enum(['FLAT', 'HILLY', 'MOUNTAIN']),
   route_url: z.string().url().nullish(),
   description: z.string().nullish(),
+  is_recurring: z.boolean().optional(),
+  recurring_type: z.enum(['WEEKLY', 'MONTHLY']).optional(),
+  recurring_day: z.number().min(0).max(31).optional(),
 });
 
 export const insertRideSchema = rideSchema;
