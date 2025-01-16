@@ -49,7 +49,7 @@ const ScrollButton = ({ targetId, children }: { targetId: string, children: Reac
       <Button
         variant="outline"
         onClick={handleClick}
-        className="flex items-center gap-2 transition-colors hover:bg-primary hover:text-primary-foreground"
+        className="flex items-center gap-2 bg-primary/10 text-primary-foreground hover:bg-primary hover:text-primary-foreground border-primary-foreground/20"
       >
         {children}
       </Button>
