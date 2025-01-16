@@ -150,7 +150,7 @@ export default function HomePage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-bold mb-2">Welcome to RideGroops</h1>
+              <h1 className="text-3xl font-bold mb-2">Welcome to GroupRideApp</h1>
               <p className="text-lg max-w-2xl mx-auto">
                 Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
               </p>
