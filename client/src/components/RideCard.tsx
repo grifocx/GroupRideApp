@@ -2,9 +2,9 @@ import { format } from "date-fns";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { MapPin, Copy, Check, Repeat, Pencil } from "lucide-react";
+import { MapPin, Copy, Check, Repeat, Pencil, Share2, Mail, MessageSquare } from "lucide-react";
 import { FaTwitter, FaFacebook } from "react-icons/fa";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useLocation } from "wouter";
 import L from "leaflet";
 import type { Ride } from "@db/schema";
@@ -12,6 +12,13 @@ import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import { useQueryClient } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 type RideWithRelations = Ride & {
   owner: { username: string };
@@ -110,34 +117,37 @@ export default function RideCard({ ride }: RideCardProps) {
   const handleShare = async (platform?: string) => {
     const shareUrl = `${window.location.origin}/rides/${ride.id}`;
     const shareText = `Join me for a ${ride.distance} mile ${ride.rideType.toLowerCase()} ride: ${ride.title}`;
+    const encodedText = encodeURIComponent(shareText);
+    const encodedUrl = encodeURIComponent(shareUrl);
 
-    if (platform) {
-      let shareLink = '';
-
-      switch (platform) {
-        case 'twitter':
-          shareLink = `https://twitter.com/intent/tweet?text=${encodeURIComponent(shareText)}&url=${encodeURIComponent(shareUrl)}`;
-          break;
-        case 'facebook':
-          shareLink = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`;
-          break;
-      }
-
-      window.open(shareLink, '_blank', 'noopener,noreferrer');
-    } else {
-      try {
-        await navigator.clipboard.writeText(`${shareText}\n${shareUrl}`);
-        toast({
-          title: "Success",
-          description: "Link copied to clipboard",
-        });
-      } catch (error) {
-        toast({
-          variant: "destructive",
-          title: "Error",
-          description: "Failed to copy link",
-        });
-      }
+    switch (platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
+        break;
+      case 'email':
+        window.open(`mailto:?subject=${encodedText}&body=${encodedText}%0A%0A${encodedUrl}`, '_blank');
+        break;
+      case 'sms':
+        window.open(`sms:?body=${encodedText} ${encodedUrl}`, '_blank');
+        break;
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          toast({
+            title: "Success",
+            description: "Link copied to clipboard",
+          });
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to copy link",
+          });
+        }
+        break;
     }
   };
 
@@ -186,32 +196,36 @@ export default function RideCard({ ride }: RideCardProps) {
               </div>
             )}
           </div>
-          <div className="flex gap-2 z-10">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare('twitter')}
-              title="Share on Twitter"
-            >
-              <FaTwitter className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare('facebook')}
-              title="Share on Facebook"
-            >
-              <FaFacebook className="h-4 w-4" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => handleShare()}
-              title="Copy Link"
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
-          </div>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="icon" className="ml-2">
+                <Share2 className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-[200px]">
+              <DropdownMenuItem onClick={() => handleShare('copy')}>
+                <Copy className="mr-2 h-4 w-4" />
+                Copy Link
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => handleShare('twitter')}>
+                <FaTwitter className="mr-2 h-4 w-4" />
+                Share on Twitter
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare('facebook')}>
+                <FaFacebook className="mr-2 h-4 w-4" />
+                Share on Facebook
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare('email')}>
+                <Mail className="mr-2 h-4 w-4" />
+                Share via Email
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => handleShare('sms')}>
+                <MessageSquare className="mr-2 h-4 w-4" />
+                Share via SMS
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </CardHeader>
       <div className="relative h-32 bg-muted">
