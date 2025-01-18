@@ -10,10 +10,19 @@ type RideWithRelations = Ride & {
   canEdit?: boolean;
 };
 
-export function useRides() {
+export function useRides(status: 'active' | 'archived' = 'active') {
   const { user } = useUser();
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
-    queryKey: ["/api/rides"],
+    queryKey: ["/api/rides", status],
+    queryFn: async () => {
+      const response = await fetch(`/api/rides?status=${status}`, {
+        credentials: 'include'
+      });
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+      return response.json();
+    },
     select: (data) => {
       if (!user) return data.map(ride => ({ ...ride, canEdit: false }));
       return data.map(ride => ({

@@ -13,6 +13,7 @@ import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
 import { addDays, addWeeks, addMonths, isBefore, startOfDay } from "date-fns";
+import { addDays as addDays2, isAfter } from "date-fns";
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -53,6 +54,40 @@ const ensureAuthenticated = (req: Express.Request): User => {
   }
   return req.user as User;
 };
+
+// Add RideStatus enum
+enum RideStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived'
+}
+
+// Add archive check function
+async function checkAndArchiveRides() {
+  try {
+    console.log("Running scheduled ride archival check...");
+
+    // Get yesterday's date for comparison
+    const archiveDate = addDays2(new Date(), -1);
+
+    // Update all active rides that ended more than 24 hours ago
+    const [updatedRides] = await db
+      .update(rides)
+      .set({ status: RideStatus.ARCHIVED })
+      .where(
+        and(
+          eq(rides.status, RideStatus.ACTIVE),
+          sql`${rides.dateTime} < ${archiveDate.toISOString()}`
+        )
+      )
+      .returning();
+
+    if (updatedRides) {
+      console.log(`Archived ${updatedRides.length} rides`);
+    }
+  } catch (error) {
+    console.error("Error in ride archival check:", error);
+  }
+}
 
 async function createRecurringRides(initialRide: {
   title: string;
@@ -129,23 +164,19 @@ async function createRecurringRides(initialRide: {
     });
   }
 
-  // Return the first ride with all details
-  const firstRideWithDetails = await db.query.rides.findFirst({
-    where: eq(rides.id, firstRide.id),
-    with: {
-      owner: true,
-      participants: {
-        with: {
-          user: true
-        }
-      }
-    }
-  });
-
-  return firstRideWithDetails;
+  return firstRide;
 }
 
 export function registerRoutes(app: Express): Server {
+  // Add scheduled job setup
+  const ARCHIVE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+  // Run initial check
+  checkAndArchiveRides();
+
+  // Schedule subsequent checks
+  setInterval(checkAndArchiveRides, ARCHIVE_CHECK_INTERVAL);
+
   // Create ride
   app.post("/api/rides", async (req, res) => {
     try {
@@ -242,11 +273,18 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Get all rides
-  app.get("/api/rides", async (_req, res) => {
+  app.get("/api/rides", async (req, res) => {
     try {
       console.log("Fetching rides...");
+      const status = req.query.status as string || 'active';
+
       const allRides = await db.query.rides.findMany({
-        where: sql`${rides.dateTime} >= NOW()`,
+        where: and(
+          status === 'active'
+            ? sql`${rides.dateTime} >= NOW()`
+            : sql`${rides.dateTime} < NOW()`,
+          eq(rides.status, status)
+        ),
         with: {
           owner: {
             columns: {
@@ -264,7 +302,7 @@ export function registerRoutes(app: Express): Server {
             }
           }
         },
-        orderBy: (rides, { asc }) => [
+        orderBy: [
           sql`ABS(EXTRACT(EPOCH FROM (${rides.dateTime} - NOW())))`
         ],
       });

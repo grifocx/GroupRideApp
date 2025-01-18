@@ -38,6 +38,12 @@ const userSchema = z.object({
 export const insertUserSchema = userSchema;
 export const selectUserSchema = createSelectSchema(users);
 
+// Add RideStatus enum
+export const RideStatus = {
+  ACTIVE: 'active',
+  ARCHIVED: 'archived',
+} as const;
+
 export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -60,6 +66,7 @@ export const rides = pgTable("rides", {
   recurring_time: text("recurring_time"),
   recurring_end_date: timestamp("recurring_end_date"),
   series_id: bigint("series_id", { mode: "number" }).references(() => rides.id, { onDelete: 'set null' }),
+  status: text("status", { enum: ['active', 'archived'] }).notNull().default('active'),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -119,7 +126,7 @@ export const RecurringType = {
   MONTHLY: 'monthly',
 } as const;
 
-// Simplified ride schema with working validation
+// Update ride schema with status field
 const rideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.coerce.date(),
@@ -138,6 +145,7 @@ const rideSchema = z.object({
   recurring_time: z.string().optional(),
   recurring_end_date: z.coerce.date().optional(),
   ownerId: z.number(),
+  status: z.enum(['active', 'archived']).default('active'),
 }).refine((data) => {
   if (data.is_recurring) {
     return data.recurring_type &&
