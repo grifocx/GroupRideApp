@@ -14,14 +14,14 @@ export function useRides() {
   const { user } = useUser();
   const { data: rides, isLoading, error } = useQuery<RideWithRelations[]>({
     queryKey: ["/api/rides"],
-    select: (data: RideWithRelations[]) => {
-      if (!user) return data.map((ride: RideWithRelations) => ({ ...ride, canEdit: false }));
-      return data.map((ride: RideWithRelations) => ({
+    select: (data) => {
+      if (!user) return data.map(ride => ({ ...ride, canEdit: false }));
+      return data.map(ride => ({
         ...ride,
         canEdit: user.id === ride.ownerId
       }));
     },
-    enabled: true
+    enabled: true // This ensures the query runs even if user is not yet loaded
   });
 
   return {
