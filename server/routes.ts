@@ -246,7 +246,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching rides...");
       const allRides = await db.query.rides.findMany({
-        where: sql`${rides.date_time} >= CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`,
+        where: sql`${rides.date_time} > CURRENT_DATE`,
         with: {
           owner: {
             columns: {
@@ -270,11 +270,15 @@ export function registerRoutes(app: Express): Server {
       });
 
       console.log(`Found ${allRides.length} upcoming rides`);
-      console.log("Sample upcoming rides:", allRides.slice(0, 3).map(r => ({
-        id: r.id,
-        title: r.title,
-        date_time: r.date_time
-      })));
+      if (allRides.length > 0) {
+        console.log("Sample upcoming rides:", allRides.slice(0, 3).map(r => ({
+          id: r.id,
+          title: r.title,
+          date_time: r.date_time
+        })));
+      } else {
+        console.log("No upcoming rides found");
+      }
 
       const formattedRides = allRides.map(ride => ({
         ...ride,
@@ -553,7 +557,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching archived rides...");
       const archivedRides = await db.query.rides.findMany({
-        where: sql`${rides.date_time} < CURRENT_TIMESTAMP AT TIME ZONE 'UTC'`,
+        where: sql`${rides.date_time} <= CURRENT_DATE`,
         with: {
           owner: {
             columns: {
@@ -575,11 +579,15 @@ export function registerRoutes(app: Express): Server {
       });
 
       console.log(`Found ${archivedRides.length} archived rides`);
-      console.log("Sample archived rides:", archivedRides.slice(0, 3).map(r => ({
-        id: r.id,
-        title: r.title,
-        date_time: r.date_time
-      })));
+      if (archivedRides.length > 0) {
+        console.log("Sample archived rides:", archivedRides.slice(0, 3).map(r => ({
+          id: r.id,
+          title: r.title,
+          date_time: r.date_time
+        })));
+      } else {
+        console.log("No archived rides found");
+      }
 
       res.json(archivedRides);
     } catch (error) {
