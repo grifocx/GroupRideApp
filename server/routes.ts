@@ -246,7 +246,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching rides...");
       const allRides = await db.query.rides.findMany({
-        where: sql`${rides.dateTime} >= NOW()`,
+        where: sql`${rides.date_time} >= CURRENT_TIMESTAMP`,
         with: {
           owner: {
             columns: {
@@ -265,11 +265,12 @@ export function registerRoutes(app: Express): Server {
           }
         },
         orderBy: (rides, { asc }) => [
-          sql`ABS(EXTRACT(EPOCH FROM (${rides.dateTime} - NOW())))`
+          sql`ABS(EXTRACT(EPOCH FROM (${rides.date_time} - CURRENT_TIMESTAMP)))`
         ],
       });
 
-      console.log(`Found ${allRides.length} rides`);
+      console.log(`Found ${allRides.length} upcoming rides`);
+      console.log("First few rides:", allRides.slice(0, 3));
 
       const formattedRides = allRides.map(ride => ({
         ...ride,
@@ -548,7 +549,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching archived rides...");
       const archivedRides = await db.query.rides.findMany({
-        where: sql`${rides.dateTime} < NOW()`,
+        where: sql`${rides.date_time} < CURRENT_TIMESTAMP`,
         with: {
           owner: {
             columns: {
@@ -566,10 +567,12 @@ export function registerRoutes(app: Express): Server {
             }
           }
         },
-        orderBy: (rides, { desc }) => [desc(rides.dateTime)],
+        orderBy: (rides, { desc }) => [desc(rides.date_time)],
       });
 
       console.log(`Found ${archivedRides.length} archived rides`);
+      console.log("First few archived rides:", archivedRides.slice(0, 3));
+
       res.json(archivedRides);
     } catch (error) {
       console.error("Error fetching archived rides:", error);
