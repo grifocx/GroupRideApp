@@ -95,8 +95,13 @@ export default function RidePage() {
         throw new Error(await response.text());
       }
 
-      queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
-      queryClient.invalidateQueries({ queryKey: ['/api/rides'] });
+      // Invalidate all related queries to trigger refreshes
+      await Promise.all([
+        queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] }), // Current ride page
+        queryClient.invalidateQueries({ queryKey: ['/api/rides'] }), // Home page rides list
+        queryClient.invalidateQueries({ queryKey: ['/api/rides/user/participating'] }), // Profile page participating rides
+        queryClient.invalidateQueries({ queryKey: ['/api/rides/user/owned'] }), // Profile page owned rides
+      ]);
 
       toast({
         title: "Success",
