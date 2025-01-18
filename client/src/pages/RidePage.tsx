@@ -5,15 +5,34 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain, Link2 } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain, Link2, Pencil, Trash2 } from "lucide-react";
 import { format } from "date-fns";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
 import { useToast } from "@/hooks/use-toast";
 import { useUser } from "@/hooks/use-user";
 import type { Ride } from "@db/schema";
 import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
 
 const difficultyColors = {
   'E': 'bg-green-500',
@@ -40,6 +59,8 @@ export default function RidePage() {
   const queryClient = useQueryClient();
   const mapRef = useRef<HTMLDivElement>(null);
   const mapInstanceRef = useRef<L.Map | null>(null);
+  const [editingComment, setEditingComment] = useState<{ id: number, content: string } | null>(null);
+  const [deletingComment, setDeletingComment] = useState<number | null>(null);
 
   const { data: ride, isLoading } = useQuery<Ride & {
     owner: { username: string };
@@ -50,6 +71,7 @@ export default function RidePage() {
       createdAt: string;
       isPinned: boolean;
       user: { username: string };
+      isEdited: boolean; // Added isEdited field
     }>;
   }>({
     queryKey: [`/api/rides/${id}`],
@@ -112,6 +134,62 @@ export default function RidePage() {
         variant: "destructive",
         title: "Error",
         description: error instanceof Error ? error.message : `Failed to ${isJoined ? 'leave' : 'join'} ride`,
+      });
+    }
+  };
+
+  const handleEditComment = async (commentId: number, newContent: string) => {
+    try {
+      const response = await fetch(`/api/rides/${id}/comments/${commentId}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ content: newContent }),
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+      setEditingComment(null);
+      toast({
+        title: "Success",
+        description: "Comment updated successfully",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update comment",
+      });
+    }
+  };
+
+  const handleDeleteComment = async (commentId: number) => {
+    try {
+      const response = await fetch(`/api/rides/${id}/comments/${commentId}`, {
+        method: 'DELETE',
+        credentials: 'include',
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+      setDeletingComment(null);
+      toast({
+        title: "Success",
+        description: "Comment deleted successfully",
+      });
+    } catch (error) {
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to delete comment",
       });
     }
   };
@@ -345,43 +423,35 @@ export default function RidePage() {
                               </AvatarFallback>
                             </Avatar>
                             <span className="font-medium">{comment.user.username}</span>
+                            {comment.isEdited && (
+                              <Badge variant="secondary" className="text-xs">Edited</Badge>
+                            )}
                           </div>
-                          <span className="text-sm text-muted-foreground">
-                            {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
-                          </span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-sm text-muted-foreground">
+                              {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
+                            </span>
+                            {comment.user.username === user?.username && (
+                              <div className="flex gap-2">
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setEditingComment({ id: comment.id, content: comment.content })}
+                                >
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => setDeletingComment(comment.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            )}
+                          </div>
                         </div>
                         <p>{comment.content}</p>
-                        {ride.ownerId === user?.id && !comment.isPinned && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={async () => {
-                              try {
-                                const response = await fetch(`/api/rides/${ride.id}/comments/${comment.id}/pin`, {
-                                  method: 'POST',
-                                  credentials: 'include',
-                                });
-
-                                if (!response.ok) throw new Error('Failed to pin comment');
-
-                                queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
-
-                                toast({
-                                  title: "Success",
-                                  description: "Comment pinned successfully",
-                                });
-                              } catch (error) {
-                                toast({
-                                  variant: "destructive",
-                                  title: "Error",
-                                  description: error instanceof Error ? error.message : "Failed to pin comment",
-                                });
-                              }
-                            }}
-                          >
-                            Pin Comment
-                          </Button>
-                        )}
                         {comment.isPinned && (
                           <Badge variant="secondary">Pinned</Badge>
                         )}
