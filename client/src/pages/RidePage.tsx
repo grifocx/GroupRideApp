@@ -71,7 +71,7 @@ export default function RidePage() {
       createdAt: string;
       isPinned: boolean;
       user: { username: string };
-      isEdited: boolean; // Added isEdited field
+      isEdited: boolean;
     }>;
   }>({
     queryKey: [`/api/rides/${id}`],
@@ -117,14 +117,8 @@ export default function RidePage() {
         throw new Error(await response.text());
       }
 
-      // Invalidate all related queries to trigger refreshes
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] }), // Current ride page
-        queryClient.invalidateQueries({ queryKey: ['/api/rides'] }), // Home page rides list
-        queryClient.invalidateQueries({ queryKey: ['/api/rides/user/participating'] }), // Profile page participating rides
-        queryClient.invalidateQueries({ queryKey: ['/api/rides/user/owned'] }), // Profile page owned rides
-      ]);
-
+      queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+      queryClient.invalidateQueries({ queryKey: ['/api/rides'] });
       toast({
         title: "Success",
         description: isJoined ? "Left the ride" : "Successfully joined the ride",
@@ -356,7 +350,6 @@ export default function RidePage() {
                 </div>
               </CardContent>
             </Card>
-            {/* Comments Section */}
             <motion.div
               className="lg:col-span-2 space-y-6"
               initial={{ opacity: 0, y: 20 }}
@@ -401,9 +394,9 @@ export default function RidePage() {
                         });
                       }
                     }} className="space-y-4">
-                      <textarea
+                      <Textarea
                         name="comment"
-                        className="w-full min-h-[100px] p-2 border rounded-md"
+                        className="min-h-[100px]"
                         placeholder="Write a comment..."
                       />
                       <Button type="submit">Post Comment</Button>
@@ -458,6 +451,58 @@ export default function RidePage() {
                       </div>
                     ))}
                   </div>
+
+                  <Dialog 
+                    open={editingComment !== null} 
+                    onOpenChange={(open) => !open && setEditingComment(null)}
+                  >
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Edit Comment</DialogTitle>
+                        <DialogDescription>
+                          Make changes to your comment below.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={(e) => {
+                        e.preventDefault();
+                        if (!editingComment) return;
+                        const form = e.target as HTMLFormElement;
+                        const textarea = form.elements.namedItem('content') as HTMLTextAreaElement;
+                        handleEditComment(editingComment.id, textarea.value);
+                      }}>
+                        <Textarea
+                          name="content"
+                          defaultValue={editingComment?.content}
+                          className="min-h-[100px] mb-4"
+                        />
+                        <DialogFooter>
+                          <Button type="submit">Save Changes</Button>
+                        </DialogFooter>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+
+                  <AlertDialog 
+                    open={deletingComment !== null} 
+                    onOpenChange={(open) => !open && setDeletingComment(null)}
+                  >
+                    <AlertDialogContent>
+                      <AlertDialogHeader>
+                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                        <AlertDialogDescription>
+                          This action cannot be undone. This will permanently delete your comment.
+                        </AlertDialogDescription>
+                      </AlertDialogHeader>
+                      <AlertDialogFooter>
+                        <AlertDialogCancel>Cancel</AlertDialogCancel>
+                        <AlertDialogAction onClick={() => {
+                          if (deletingComment) {
+                            handleDeleteComment(deletingComment);
+                          }
+                        }}>Delete</AlertDialogAction>
+                      </AlertDialogFooter>
+                    </AlertDialogContent>
+                  </AlertDialog>
                 </CardContent>
               </Card>
             </motion.div>
