@@ -198,7 +198,7 @@ export default function RideCard({ ride }: RideCardProps) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-2">
+              <Button variant="ghost" size="icon" className="ml-2" style={{zIndex: 10}}> {/* Added zIndex here */}
                 <Share2 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -229,7 +229,7 @@ export default function RideCard({ ride }: RideCardProps) {
         </div>
       </CardHeader>
       <div className="relative h-32 bg-muted">
-        <div ref={mapRef} className="h-full w-full" />
+        <div ref={mapRef} className="h-full w-full" style={{ zIndex: 0 }} />
         {(!ride.latitude || !ride.longitude) && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
             <MapPin className="h-8 w-8 text-muted-foreground" />
