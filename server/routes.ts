@@ -203,7 +203,7 @@ export function registerRoutes(app: Express): Server {
             description: rideData.description
           },
           {
-            recurring_type: rideData.recurring_type,
+            recurring_type: rideData.recurring_type.toUpperCase() as keyof typeof RecurringType,
             recurring_day: rideData.recurring_day,
             recurring_end_date: rideData.recurring_end_date,
             recurring_time: rideData.recurring_time
@@ -542,6 +542,44 @@ export function registerRoutes(app: Express): Server {
       });
     }
   });
+
+  // Get archived rides
+  app.get("/api/rides/archived", async (_req, res) => {
+    try {
+      console.log("Fetching archived rides...");
+      const archivedRides = await db.query.rides.findMany({
+        where: sql`${rides.dateTime} < NOW()`,
+        with: {
+          owner: {
+            columns: {
+              id: true,
+              username: true
+            }
+          },
+          participants: {
+            with: {
+              user: {
+                columns: {
+                  username: true
+                }
+              }
+            }
+          }
+        },
+        orderBy: (rides, { desc }) => [desc(rides.dateTime)],
+      });
+
+      console.log(`Found ${archivedRides.length} archived rides`);
+      res.json(archivedRides);
+    } catch (error) {
+      console.error("Error fetching archived rides:", error);
+      res.status(500).json({
+        error: "Failed to fetch archived rides",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
 
   // Admin routes
   app.get("/api/admin/users", ensureAdmin, async (_req, res) => {

@@ -7,6 +7,7 @@ import ProfilePage from "./pages/ProfilePage";
 import CalendarPage from "./pages/CalendarPage";
 import AdminPage from "./pages/AdminPage";
 import RidePage from "./pages/RidePage";
+import ArchivedRidesPage from "./pages/ArchivedRidesPage";
 import { useUser } from "./hooks/use-user";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { AnimatePresence } from "framer-motion";
@@ -63,6 +64,11 @@ function App() {
           <Route path="/rides/:id">
             <PageTransition>
               <RidePage />
+            </PageTransition>
+          </Route>
+          <Route path="/archived">
+            <PageTransition>
+              <ArchivedRidesPage />
             </PageTransition>
           </Route>
           <Route path="/create">
