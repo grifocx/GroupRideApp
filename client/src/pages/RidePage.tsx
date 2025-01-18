@@ -467,7 +467,7 @@ function RidePage() {
             open={editingComment !== null}
             onOpenChange={(open) => !open && setEditingComment(null)}
           >
-            <DialogContent className="fixed inset-0 flex items-center justify-center z-[100]">
+            <DialogContent className="sm:max-w-[425px] z-[100]">
               <DialogHeader>
                 <DialogTitle>Edit Comment</DialogTitle>
                 <DialogDescription>
@@ -497,7 +497,7 @@ function RidePage() {
             open={deletingComment !== null}
             onOpenChange={(open) => !open && setDeletingComment(null)}
           >
-            <AlertDialogContent className="fixed inset-0 flex items-center justify-center z-[100]">
+            <AlertDialogContent className="sm:max-w-[425px] z-[100]">
               <AlertDialogHeader>
                 <AlertDialogTitle>Are you sure?</AlertDialogTitle>
                 <AlertDialogDescription>
