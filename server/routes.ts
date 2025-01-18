@@ -856,6 +856,88 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Edit comment
+  app.put("/api/rides/:rideId/comments/:commentId", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const commentId = parseInt(req.params.commentId);
+      const { content } = req.body;
+
+      const updateCommentSchema = z.object({ content: z.string().min(1) }); //Simple schema added
+      const result = updateCommentSchema.safeParse({ content });
+      if (!result.success) {
+        return res.status(400).json({
+          error: "Validation error",
+          details: result.error.errors
+        });
+      }
+
+      // Verify comment exists and belongs to user
+      const existingComment = await db.query.rideComments.findFirst({
+        where: eq(rideComments.id, commentId),
+      });
+
+      if (!existingComment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+
+      if (existingComment.userId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to edit this comment" });
+      }
+
+      const [updatedComment] = await db
+        .update(rideComments)
+        .set({
+          content: result.data.content,
+          updatedAt: new Date(),
+          isEdited: true,
+        })
+        .where(eq(rideComments.id, commentId))
+        .returning();
+
+      res.json(updatedComment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({
+        error: "Failed to update comment",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Delete comment
+  app.delete("/api/rides/:rideId/comments/:commentId", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const commentId = parseInt(req.params.commentId);
+
+      // Verify comment exists and belongs to user
+      const existingComment = await db.query.rideComments.findFirst({
+        where: eq(rideComments.id, commentId),
+      });
+
+      if (!existingComment) {
+        return res.status(404).json({ error: "Comment not found" });
+      }
+
+      if (existingComment.userId !== user.id) {
+        return res.status(403).json({ error: "Not authorized to delete this comment" });
+      }
+
+      await db
+        .delete(rideComments)
+        .where(eq(rideComments.id, commentId));
+
+      res.json({ message: "Comment deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({
+        error: "Failed to delete comment",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Get user's owned rides
   app.get("/api/rides/user/owned", async (req, res) => {
     try {
@@ -899,8 +981,7 @@ export function registerRoutes(app: Express): Server {
         .where(eq(rideParticipants.userId, user.id));
 
       // Then get the full ride details for these IDs
-      const participatingRides = await db.query.rides.findMany({
-        where: inArray(rides.id, participatingRideIds.map(r => r.rideId)),
+      const participatingRides = await db.query.rides.findMany({        where: inArray(rides.id, participatingRideIds.map(r => r.rideId)),
         with: {
           owner: true,
           participants: {

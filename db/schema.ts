@@ -173,6 +173,8 @@ export const rideComments = pgTable("ride_comments", {
   userId: integer("user_id").notNull().references(() => users.id),
   content: text("content").notNull(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at"),
+  isEdited: boolean("is_edited").notNull().default(false),
   isPinned: boolean("is_pinned").notNull().default(false),
 });
 
@@ -191,6 +193,10 @@ export const insertCommentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty"),
   rideId: z.number(),
   userId: z.number(),
+});
+
+export const updateCommentSchema = z.object({
+  content: z.string().min(1, "Comment cannot be empty"),
 });
 
 export type RideComment = InferModel<typeof rideComments>;
