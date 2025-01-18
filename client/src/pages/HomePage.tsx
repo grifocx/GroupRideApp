@@ -6,7 +6,7 @@ import RideSearch, { type RideFilters } from "@/components/RideSearch";
 import Footer from "@/components/Footer";
 import { MapComponent } from "@/components/MapComponent";
 import CalendarView from "@/components/CalendarView";
-import { Loader2, Calendar as CalendarIcon, MapPin, Search, List } from "lucide-react";
+import { Loader2, Calendar as CalendarIcon, MapPin, Search, List, Archive } from "lucide-react";
 import { useState, useMemo } from "react";
 import { Button } from "@/components/ui/button";
 import { useLocation } from "wouter";
@@ -233,7 +233,17 @@ export default function HomePage() {
 
             {/* Rides Section */}
             <div id="rides-section" className="scroll-mt-16">
-              <h2 className="text-xl font-bold mb-4">Available Rides</h2>
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-bold">Available Rides</h2>
+                <Button 
+                  variant="outline" 
+                  className="flex items-center gap-2"
+                  onClick={() => setLocation('/archived')}
+                >
+                  <Archive className="h-4 w-4" />
+                  View Archived Rides
+                </Button>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                 {filteredRides.map((ride) => (
                   <RideCard key={ride.id} ride={ride} />

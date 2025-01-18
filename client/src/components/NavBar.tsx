@@ -1,7 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { useUser } from "@/hooks/use-user";
 import { Link } from "wouter";
-import { LogIn, LogOut, User, PlusCircle, Home, Map, Shield, Menu } from "lucide-react";
+import { LogIn, LogOut, User, PlusCircle, Home, Map, Shield, Menu, Archive } from "lucide-react";
 import {
   Sheet,
   SheetContent,
@@ -27,6 +27,12 @@ export function NavBar() {
         <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
           <Map className="h-4 w-4" />
           Rides
+        </a>
+      </Link>
+      <Link href="/archived">
+        <a className="flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors">
+          <Archive className="h-4 w-4" />
+          Archived Rides
         </a>
       </Link>
       {user?.isAdmin && (
@@ -127,6 +133,12 @@ export function NavBar() {
                     <a className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
                       <Map className="h-4 w-4" />
                       Rides
+                    </a>
+                  </Link>
+                  <Link href="/archived" onClick={() => setIsOpen(false)}>
+                    <a className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground transition-colors">
+                      <Archive className="h-4 w-4" />
+                      Archived Rides
                     </a>
                   </Link>
                   {user?.isAdmin && (
