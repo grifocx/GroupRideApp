@@ -52,7 +52,7 @@ const difficultyLabels = {
   'AA': 'Professional'
 } as const;
 
-export default function RidePage() {
+function RidePage() {
   const { id } = useParams();
   const { toast } = useToast();
   const { user } = useUser();
@@ -205,310 +205,314 @@ export default function RidePage() {
   const participantCount = ride.participants.length;
 
   return (
-    <div className="min-h-screen bg-background">
-      <NavBar />
-      <motion.main
-        className="container mx-auto px-4 py-8"
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="grid gap-6 lg:grid-cols-3">
-          <motion.div
-            className="lg:col-span-2 space-y-6"
-            initial={{ x: -20 }}
-            animate={{ x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle className="text-2xl">{ride.title}</CardTitle>
-                <div className="flex items-center gap-2 text-muted-foreground">
-                  <Calendar className="h-4 w-4" />
-                  {format(new Date(ride.dateTime), "EEEE, MMMM d, yyyy 'at' h:mm a")}
-                </div>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-6">
-                  <div className="grid gap-4 md:grid-cols-3">
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-muted-foreground" />
-                      <span>{ride.distance} miles</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <div className={`w-3 h-3 rounded-full ${difficultyColors[ride.difficulty as keyof typeof difficultyColors]}`} />
-                      <span>{difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Bike className="h-4 w-4 text-muted-foreground" />
-                      <span>{ride.rideType}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Mountain className="h-4 w-4 text-muted-foreground" />
-                      <span>{ride.terrain}</span>
-                    </div>
-                    <div className="flex items-center gap-2">
-                      <Activity className="h-4 w-4 text-muted-foreground" />
-                      <span>{ride.pace} mph pace</span>
-                    </div>
-                  </div>
-
-                  <div className="relative h-[400px] bg-muted rounded-lg overflow-hidden">
-                    <div ref={mapRef} className="h-full w-full" />
-                  </div>
-
-                  <div className="flex flex-col gap-4">
-                    <div className="flex items-center gap-2">
-                      <MapPin className="h-4 w-4 text-muted-foreground" />
-                      <span>{ride.address}</span>
-                    </div>
-
-                    {ride.route_url && (
-                      <div className="flex items-center gap-2">
-                        <Link2 className="h-4 w-4 text-primary" />
-                        <a
-                          href={ride.route_url}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="text-primary hover:underline inline-flex items-center gap-2"
-                        >
-                          View Route Details
-                        </a>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-
-            {ride.description && (
-              <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: 0.2 }}
-              >
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Description</CardTitle>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="whitespace-pre-wrap">{ride.description}</p>
-                  </CardContent>
-                </Card>
-              </motion.div>
-            )}
-          </motion.div>
-
-          <motion.div
-            className="space-y-6"
-            initial={{ x: 20 }}
-            animate={{ x: 0 }}
-            transition={{ delay: 0.1 }}
-          >
-            <Card>
-              <CardHeader>
-                <CardTitle>Ride Details</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-sm font-medium">Organized by</div>
-                    <div className="mt-1.5 flex items-center gap-2">
-                      <Avatar className="h-6 w-6">
-                        <AvatarFallback>
-                          {ride.owner.username[0].toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <span>{ride.owner.username}</span>
-                    </div>
-                  </div>
-
-                  <div>
-                    <div className="text-sm font-medium">Participants ({participantCount}/{ride.maxRiders})</div>
-                    <div className="mt-1.5 space-y-2">
-                      {ride.participants.map((participant) => (
-                        <div key={participant.user.username} className="flex items-center gap-2">
-                          <Avatar className="h-6 w-6">
-                            <AvatarFallback>
-                              {participant.user.username[0].toUpperCase()}
-                            </AvatarFallback>
-                          </Avatar>
-                          <span>{participant.user.username}</span>
-                        </div>
-                      ))}
-                    </div>
-                  </div>
-
-                  <Button
-                    className="w-full"
-                    variant={isJoined ? "default" : "outline"}
-                    onClick={handleJoinToggle}
-                    disabled={!isJoined && participantCount >= ride.maxRiders}
-                  >
-                    {isJoined ? "Leave Ride" : "Join Ride"}
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+    <>
+      <div className="min-h-screen bg-background">
+        <NavBar />
+        <motion.main
+          className="container mx-auto px-4 py-8"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.3 }}
+        >
+          <div className="grid gap-6 lg:grid-cols-3">
             <motion.div
               className="lg:col-span-2 space-y-6"
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: 0.3 }}
+              initial={{ x: -20 }}
+              animate={{ x: 0 }}
+              transition={{ delay: 0.1 }}
             >
               <Card>
                 <CardHeader>
-                  <CardTitle>Comments</CardTitle>
+                  <CardTitle className="text-2xl">{ride.title}</CardTitle>
+                  <div className="flex items-center gap-2 text-muted-foreground">
+                    <Calendar className="h-4 w-4" />
+                    {format(new Date(ride.dateTime), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                  </div>
                 </CardHeader>
                 <CardContent>
-                  {user ? (
-                    <form onSubmit={async (e) => {
-                      e.preventDefault();
-                      const form = e.target as HTMLFormElement;
-                      const content = (form.elements.namedItem('comment') as HTMLTextAreaElement).value;
-
-                      try {
-                        const response = await fetch(`/api/rides/${ride.id}/comments`, {
-                          method: 'POST',
-                          headers: {
-                            'Content-Type': 'application/json',
-                          },
-                          body: JSON.stringify({ content }),
-                          credentials: 'include',
-                        });
-
-                        if (!response.ok) throw new Error('Failed to post comment');
-
-                        queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
-                        (form.elements.namedItem('comment') as HTMLTextAreaElement).value = '';
-
-                        toast({
-                          title: "Success",
-                          description: "Comment posted successfully",
-                        });
-                      } catch (error) {
-                        toast({
-                          variant: "destructive",
-                          title: "Error",
-                          description: error instanceof Error ? error.message : "Failed to post comment",
-                        });
-                      }
-                    }} className="space-y-4">
-                      <Textarea
-                        name="comment"
-                        className="min-h-[100px]"
-                        placeholder="Write a comment..."
-                      />
-                      <Button type="submit">Post Comment</Button>
-                    </form>
-                  ) : (
-                    <p className="text-muted-foreground">Please log in to comment</p>
-                  )}
-
-                  <div className="mt-6 space-y-4">
-                    {ride.comments?.map((comment) => (
-                      <div key={comment.id} className="border rounded-lg p-4 space-y-2">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-2">
-                            <Avatar className="h-6 w-6">
-                              <AvatarFallback>
-                                {comment.user.username[0].toUpperCase()}
-                              </AvatarFallback>
-                            </Avatar>
-                            <span className="font-medium">{comment.user.username}</span>
-                            {comment.isEdited && (
-                              <Badge variant="secondary" className="text-xs">Edited</Badge>
-                            )}
-                          </div>
-                          <div className="flex items-center gap-2">
-                            <span className="text-sm text-muted-foreground">
-                              {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
-                            </span>
-                            {comment.user.username === user?.username && (
-                              <div className="flex gap-2">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setEditingComment({ id: comment.id, content: comment.content })}
-                                >
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => setDeletingComment(comment.id)}
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
-                            )}
-                          </div>
-                        </div>
-                        <p>{comment.content}</p>
-                        {comment.isPinned && (
-                          <Badge variant="secondary">Pinned</Badge>
-                        )}
+                  <div className="space-y-6">
+                    <div className="grid gap-4 md:grid-cols-3">
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <span>{ride.distance} miles</span>
                       </div>
-                    ))}
+                      <div className="flex items-center gap-2">
+                        <div className={`w-3 h-3 rounded-full ${difficultyColors[ride.difficulty as keyof typeof difficultyColors]}`} />
+                        <span>{difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Bike className="h-4 w-4 text-muted-foreground" />
+                        <span>{ride.rideType}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Mountain className="h-4 w-4 text-muted-foreground" />
+                        <span>{ride.terrain}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Activity className="h-4 w-4 text-muted-foreground" />
+                        <span>{ride.pace} mph pace</span>
+                      </div>
+                    </div>
+
+                    <div className="relative h-[400px] bg-muted rounded-lg overflow-hidden">
+                      <div ref={mapRef} className="h-full w-full" />
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <div className="flex items-center gap-2">
+                        <MapPin className="h-4 w-4 text-muted-foreground" />
+                        <span>{ride.address}</span>
+                      </div>
+
+                      {ride.route_url && (
+                        <div className="flex items-center gap-2">
+                          <Link2 className="h-4 w-4 text-primary" />
+                          <a
+                            href={ride.route_url}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="text-primary hover:underline inline-flex items-center gap-2"
+                          >
+                            View Route Details
+                          </a>
+                        </div>
+                      )}
+                    </div>
                   </div>
-
-                  <Dialog 
-                    open={editingComment !== null} 
-                    onOpenChange={(open) => !open && setEditingComment(null)}
-                  >
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>Edit Comment</DialogTitle>
-                        <DialogDescription>
-                          Make changes to your comment below.
-                        </DialogDescription>
-                      </DialogHeader>
-                      <form onSubmit={(e) => {
-                        e.preventDefault();
-                        if (!editingComment) return;
-                        const form = e.target as HTMLFormElement;
-                        const textarea = form.elements.namedItem('content') as HTMLTextAreaElement;
-                        handleEditComment(editingComment.id, textarea.value);
-                      }}>
-                        <Textarea
-                          name="content"
-                          defaultValue={editingComment?.content}
-                          className="min-h-[100px] mb-4"
-                        />
-                        <DialogFooter>
-                          <Button type="submit">Save Changes</Button>
-                        </DialogFooter>
-                      </form>
-                    </DialogContent>
-                  </Dialog>
-
-                  <AlertDialog 
-                    open={deletingComment !== null} 
-                    onOpenChange={(open) => !open && setDeletingComment(null)}
-                  >
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. This will permanently delete your comment.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction onClick={() => {
-                          if (deletingComment) {
-                            handleDeleteComment(deletingComment);
-                          }
-                        }}>Delete</AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
                 </CardContent>
               </Card>
+
+              {ride.description && (
+                <motion.div
+                  initial={{ opacity: 0, y: 20 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: 0.2 }}
+                >
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Description</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="whitespace-pre-wrap">{ride.description}</p>
+                    </CardContent>
+                  </Card>
+                </motion.div>
+              )}
             </motion.div>
-          </motion.div>
-        </div>
-      </motion.main>
-    </div>
+
+            <motion.div
+              className="space-y-6"
+              initial={{ x: 20 }}
+              animate={{ x: 0 }}
+              transition={{ delay: 0.1 }}
+            >
+              <Card>
+                <CardHeader>
+                  <CardTitle>Ride Details</CardTitle>
+                </CardHeader>
+                <CardContent>
+                  <div className="space-y-4">
+                    <div>
+                      <div className="text-sm font-medium">Organized by</div>
+                      <div className="mt-1.5 flex items-center gap-2">
+                        <Avatar className="h-6 w-6">
+                          <AvatarFallback>
+                            {ride.owner.username[0].toUpperCase()}
+                          </AvatarFallback>
+                        </Avatar>
+                        <span>{ride.owner.username}</span>
+                      </div>
+                    </div>
+
+                    <div>
+                      <div className="text-sm font-medium">Participants ({participantCount}/{ride.maxRiders})</div>
+                      <div className="mt-1.5 space-y-2">
+                        {ride.participants.map((participant) => (
+                          <div key={participant.user.username} className="flex items-center gap-2">
+                            <Avatar className="h-6 w-6">
+                              <AvatarFallback>
+                                {participant.user.username[0].toUpperCase()}
+                              </AvatarFallback>
+                            </Avatar>
+                            <span>{participant.user.username}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Button
+                      className="w-full"
+                      variant={isJoined ? "default" : "outline"}
+                      onClick={handleJoinToggle}
+                      disabled={!isJoined && participantCount >= ride.maxRiders}
+                    >
+                      {isJoined ? "Leave Ride" : "Join Ride"}
+                    </Button>
+                  </div>
+                </CardContent>
+              </Card>
+              <motion.div
+                className="lg:col-span-2 space-y-6"
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: 0.3 }}
+              >
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Comments</CardTitle>
+                  </CardHeader>
+                  <CardContent>
+                    {user ? (
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const form = e.target as HTMLFormElement;
+                        const content = (form.elements.namedItem('comment') as HTMLTextAreaElement).value;
+
+                        try {
+                          const response = await fetch(`/api/rides/${ride.id}/comments`, {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({ content }),
+                            credentials: 'include',
+                          });
+
+                          if (!response.ok) throw new Error('Failed to post comment');
+
+                          queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
+                          (form.elements.namedItem('comment') as HTMLTextAreaElement).value = '';
+
+                          toast({
+                            title: "Success",
+                            description: "Comment posted successfully",
+                          });
+                        } catch (error) {
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description: error instanceof Error ? error.message : "Failed to post comment",
+                          });
+                        }
+                      }} className="space-y-4">
+                        <Textarea
+                          name="comment"
+                          className="min-h-[100px]"
+                          placeholder="Write a comment..."
+                        />
+                        <Button type="submit">Post Comment</Button>
+                      </form>
+                    ) : (
+                      <p className="text-muted-foreground">Please log in to comment</p>
+                    )}
+
+                    <div className="mt-6 space-y-4">
+                      {ride.comments?.map((comment) => (
+                        <div key={comment.id} className="border rounded-lg p-4 space-y-2">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <Avatar className="h-6 w-6">
+                                <AvatarFallback>
+                                  {comment.user.username[0].toUpperCase()}
+                                </AvatarFallback>
+                              </Avatar>
+                              <span className="font-medium">{comment.user.username}</span>
+                              {comment.isEdited && (
+                                <Badge variant="secondary" className="text-xs">Edited</Badge>
+                              )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span className="text-sm text-muted-foreground">
+                                {format(new Date(comment.createdAt), 'MMM d, yyyy h:mm a')}
+                              </span>
+                              {comment.user.username === user?.username && (
+                                <div className="flex gap-2">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setEditingComment({ id: comment.id, content: comment.content })}
+                                  >
+                                    <Pencil className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => setDeletingComment(comment.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                          <p>{comment.content}</p>
+                          {comment.isPinned && (
+                            <Badge variant="secondary">Pinned</Badge>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </CardContent>
+                </Card>
+              </motion.div>
+            </motion.div>
+          </div>
+        </motion.main>
+      </div>
+
+      <Dialog
+        open={editingComment !== null}
+        onOpenChange={(open) => !open && setEditingComment(null)}
+      >
+        <DialogContent className="z-50">
+          <DialogHeader>
+            <DialogTitle>Edit Comment</DialogTitle>
+            <DialogDescription>
+              Make changes to your comment below.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={(e) => {
+            e.preventDefault();
+            if (!editingComment) return;
+            const form = e.target as HTMLFormElement;
+            const textarea = form.elements.namedItem('content') as HTMLTextAreaElement;
+            handleEditComment(editingComment.id, textarea.value);
+          }}>
+            <Textarea
+              name="content"
+              defaultValue={editingComment?.content}
+              className="min-h-[100px] mb-4"
+            />
+            <DialogFooter>
+              <Button type="submit">Save Changes</Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
+
+      <AlertDialog
+        open={deletingComment !== null}
+        onOpenChange={(open) => !open && setDeletingComment(null)}
+      >
+        <AlertDialogContent className="z-50">
+          <AlertDialogHeader>
+            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+            <AlertDialogDescription>
+              This action cannot be undone. This will permanently delete your comment.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction onClick={() => {
+              if (deletingComment) {
+                handleDeleteComment(deletingComment);
+              }
+            }}>Delete</AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+    </>
   );
 }
+
+export default RidePage;
