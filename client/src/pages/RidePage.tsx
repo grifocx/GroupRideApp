@@ -33,6 +33,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
+import { createPortal } from "react-dom";
 
 const difficultyColors = {
   'E': 'bg-green-500',
@@ -255,7 +256,7 @@ function RidePage() {
                     </div>
 
                     <div className="relative h-[400px] bg-muted rounded-lg overflow-hidden">
-                      <div ref={mapRef} className="h-full w-full" />
+                      <div ref={mapRef} className="h-full w-full" style={{ zIndex: 0 }} />
                     </div>
 
                     <div className="flex flex-col gap-4">
@@ -460,57 +461,62 @@ function RidePage() {
         </motion.main>
       </div>
 
-      <Dialog
-        open={editingComment !== null}
-        onOpenChange={(open) => !open && setEditingComment(null)}
-      >
-        <DialogContent className="z-50">
-          <DialogHeader>
-            <DialogTitle>Edit Comment</DialogTitle>
-            <DialogDescription>
-              Make changes to your comment below.
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={(e) => {
-            e.preventDefault();
-            if (!editingComment) return;
-            const form = e.target as HTMLFormElement;
-            const textarea = form.elements.namedItem('content') as HTMLTextAreaElement;
-            handleEditComment(editingComment.id, textarea.value);
-          }}>
-            <Textarea
-              name="content"
-              defaultValue={editingComment?.content}
-              className="min-h-[100px] mb-4"
-            />
-            <DialogFooter>
-              <Button type="submit">Save Changes</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+      {createPortal(
+        <>
+          <Dialog
+            open={editingComment !== null}
+            onOpenChange={(open) => !open && setEditingComment(null)}
+          >
+            <DialogContent className="fixed inset-0 flex items-center justify-center z-[100]">
+              <DialogHeader>
+                <DialogTitle>Edit Comment</DialogTitle>
+                <DialogDescription>
+                  Make changes to your comment below.
+                </DialogDescription>
+              </DialogHeader>
+              <form onSubmit={(e) => {
+                e.preventDefault();
+                if (!editingComment) return;
+                const form = e.target as HTMLFormElement;
+                const textarea = form.elements.namedItem('content') as HTMLTextAreaElement;
+                handleEditComment(editingComment.id, textarea.value);
+              }}>
+                <Textarea
+                  name="content"
+                  defaultValue={editingComment?.content}
+                  className="min-h-[100px] mb-4"
+                />
+                <DialogFooter>
+                  <Button type="submit">Save Changes</Button>
+                </DialogFooter>
+              </form>
+            </DialogContent>
+          </Dialog>
 
-      <AlertDialog
-        open={deletingComment !== null}
-        onOpenChange={(open) => !open && setDeletingComment(null)}
-      >
-        <AlertDialogContent className="z-50">
-          <AlertDialogHeader>
-            <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-            <AlertDialogDescription>
-              This action cannot be undone. This will permanently delete your comment.
-            </AlertDialogDescription>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel>Cancel</AlertDialogCancel>
-            <AlertDialogAction onClick={() => {
-              if (deletingComment) {
-                handleDeleteComment(deletingComment);
-              }
-            }}>Delete</AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+          <AlertDialog
+            open={deletingComment !== null}
+            onOpenChange={(open) => !open && setDeletingComment(null)}
+          >
+            <AlertDialogContent className="fixed inset-0 flex items-center justify-center z-[100]">
+              <AlertDialogHeader>
+                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This action cannot be undone. This will permanently delete your comment.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={() => {
+                  if (deletingComment) {
+                    handleDeleteComment(deletingComment);
+                  }
+                }}>Delete</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </>,
+        document.body
+      )}
     </>
   );
 }
