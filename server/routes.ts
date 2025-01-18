@@ -590,7 +590,8 @@ export function registerRoutes(app: Express): Server {
           username: users.username,
           isAdmin: users.isAdmin,
         })
-        .from(users);
+        .from(users)
+        .orderBy(users.id);  // Add ordering by ID
 
       const userRides = await db
         .select({
