@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
-import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain, Link2, Pencil, Trash2 } from "lucide-react";
+import { Loader2, MapPin, Calendar, Users, Activity, Bike, Mountain, Link2, Pencil, Trash2, Share2, Mail, MessageSquare } from "lucide-react";
 import { format } from "date-fns";
 import { useEffect, useRef, useState } from "react";
 import L from "leaflet";
@@ -14,26 +14,14 @@ import { useUser } from "@/hooks/use-user";
 import type { Ride } from "@db/schema";
 import "leaflet/dist/leaflet.css";
 import { motion } from "framer-motion";
+import { FaTwitter, FaFacebook } from "react-icons/fa";
 import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "@/components/ui/alert-dialog";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Textarea } from "@/components/ui/textarea";
-import { createPortal } from "react-dom";
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 const difficultyColors = {
   'E': 'bg-green-500',
@@ -189,6 +177,44 @@ function RidePage() {
     }
   };
 
+  const handleShare = async (platform?: string) => {
+    const shareUrl = `${window.location.origin}/rides/${ride?.id}`;
+    const shareText = `Join me for a ${ride?.distance} mile ${ride?.rideType.toLowerCase()} ride: ${ride?.title}`;
+    const encodedText = encodeURIComponent(shareText);
+    const encodedUrl = encodeURIComponent(shareUrl);
+
+    switch (platform) {
+      case 'twitter':
+        window.open(`https://twitter.com/intent/tweet?text=${encodedText}&url=${encodedUrl}`, '_blank');
+        break;
+      case 'facebook':
+        window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodedUrl}`, '_blank');
+        break;
+      case 'email':
+        window.open(`mailto:?subject=${encodedText}&body=${encodedText}%0A%0A${encodedUrl}`, '_blank');
+        break;
+      case 'sms':
+        window.open(`sms:?body=${encodedText} ${encodedUrl}`, '_blank');
+        break;
+      case 'copy':
+        try {
+          await navigator.clipboard.writeText(shareUrl);
+          toast({
+            title: "Success",
+            description: "Link copied to clipboard",
+          });
+        } catch (error) {
+          toast({
+            variant: "destructive",
+            title: "Error",
+            description: "Failed to copy link",
+          });
+        }
+        break;
+    }
+  };
+
+
   if (isLoading || !ride) {
     return (
       <div className="min-h-screen bg-background">
@@ -224,10 +250,44 @@ function RidePage() {
             >
               <Card>
                 <CardHeader>
-                  <CardTitle className="text-2xl">{ride.title}</CardTitle>
-                  <div className="flex items-center gap-2 text-muted-foreground">
-                    <Calendar className="h-4 w-4" />
-                    {format(new Date(ride.dateTime), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <CardTitle className="text-2xl">{ride.title}</CardTitle>
+                      <div className="flex items-center gap-2 text-muted-foreground">
+                        <Calendar className="h-4 w-4" />
+                        {format(new Date(ride.dateTime), "EEEE, MMMM d, yyyy 'at' h:mm a")}
+                      </div>
+                    </div>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger asChild>
+                        <Button variant="outline" size="icon" style={{ zIndex: 10 }}>
+                          <Share2 className="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end" className="w-[200px]">
+                        <DropdownMenuItem onClick={() => handleShare('copy')}>
+                          <Link2 className="mr-2 h-4 w-4" />
+                          Copy Link
+                        </DropdownMenuItem>
+                        <DropdownMenuSeparator />
+                        <DropdownMenuItem onClick={() => handleShare('twitter')}>
+                          <FaTwitter className="mr-2 h-4 w-4" />
+                          Share on Twitter
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('facebook')}>
+                          <FaFacebook className="mr-2 h-4 w-4" />
+                          Share on Facebook
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('email')}>
+                          <Mail className="mr-2 h-4 w-4" />
+                          Share via Email
+                        </DropdownMenuItem>
+                        <DropdownMenuItem onClick={() => handleShare('sms')}>
+                          <MessageSquare className="mr-2 h-4 w-4" />
+                          Share via SMS
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </div>
                 </CardHeader>
                 <CardContent>
