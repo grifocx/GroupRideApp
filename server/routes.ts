@@ -246,7 +246,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching rides...");
       const allRides = await db.query.rides.findMany({
-        where: sql`${rides.date_time} > CURRENT_DATE`,
+        where: sql`${rides.date_time} > CURRENT_TIMESTAMP`,
         with: {
           owner: {
             columns: {
@@ -557,7 +557,7 @@ export function registerRoutes(app: Express): Server {
     try {
       console.log("Fetching archived rides...");
       const archivedRides = await db.query.rides.findMany({
-        where: sql`${rides.date_time} <= CURRENT_DATE`,
+        where: sql`${rides.date_time} <= CURRENT_TIMESTAMP`,
         with: {
           owner: {
             columns: {
