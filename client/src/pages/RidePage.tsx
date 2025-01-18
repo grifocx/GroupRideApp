@@ -44,7 +44,7 @@ export default function RidePage() {
   const { data: ride, isLoading } = useQuery<Ride & {
     owner: { username: string };
     participants: Array<{ user: { username: string } }>;
-    comments: Array<{ 
+    comments: Array<{
       id: number;
       content: string;
       createdAt: string;
@@ -85,7 +85,7 @@ export default function RidePage() {
 
     try {
       const isJoined = ride.participants.some(p => p.user.username === user?.username);
-      const endpoint = `/api/rides/${ride.id}/${isJoined ? 'unjoin' : 'join'}`;
+      const endpoint = `/api/rides/${ride.id}/${isJoined ? 'leave' : 'join'}`;
       const response = await fetch(endpoint, {
         method: "POST",
         credentials: "include",
@@ -273,7 +273,7 @@ export default function RidePage() {
                 </div>
               </CardContent>
             </Card>
-          {/* Comments Section */}
+            {/* Comments Section */}
             <motion.div
               className="lg:col-span-2 space-y-6"
               initial={{ opacity: 0, y: 20 }}
@@ -290,7 +290,7 @@ export default function RidePage() {
                       e.preventDefault();
                       const form = e.target as HTMLFormElement;
                       const content = (form.elements.namedItem('comment') as HTMLTextAreaElement).value;
-                      
+
                       try {
                         const response = await fetch(`/api/rides/${ride.id}/comments`, {
                           method: 'POST',
@@ -302,10 +302,10 @@ export default function RidePage() {
                         });
 
                         if (!response.ok) throw new Error('Failed to post comment');
-                        
+
                         queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
                         (form.elements.namedItem('comment') as HTMLTextAreaElement).value = '';
-                        
+
                         toast({
                           title: "Success",
                           description: "Comment posted successfully",
@@ -358,9 +358,9 @@ export default function RidePage() {
                                 });
 
                                 if (!response.ok) throw new Error('Failed to pin comment');
-                                
+
                                 queryClient.invalidateQueries({ queryKey: [`/api/rides/${id}`] });
-                                
+
                                 toast({
                                   title: "Success",
                                   description: "Comment pinned successfully",
