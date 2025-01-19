@@ -76,44 +76,40 @@ export default function HomePage() {
     if (!rides) return [];
 
     const currentDate = new Date();
+    // Subtract 24 hours from current date for archive threshold
+    const archiveThreshold = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
 
     return rides.filter((ride) => {
-      // Filter out past rides
-      if (new Date(ride.dateTime) < currentDate) {
+      // Only filter out rides that are more than 24 hours old
+      if (new Date(ride.dateTime) < archiveThreshold) {
         return false;
       }
 
-      // Apply text search filter
+      // Rest of the filtering logic remains unchanged
       if (filters.search && !ride.title.toLowerCase().includes(filters.search.toLowerCase())) {
         return false;
       }
 
-      // Apply recurring filter
       if (filters.showRecurring && !ride.is_recurring) {
         return false;
       }
 
-      // Apply ride type filter
       if (filters.rideType !== "all" && ride.rideType !== filters.rideType) {
         return false;
       }
 
-      // Apply distance filter
       if (ride.distance < filters.minDistance || ride.distance > filters.maxDistance) {
         return false;
       }
 
-      // Apply difficulty filter
       if (filters.difficulty !== "all" && ride.difficulty !== filters.difficulty) {
         return false;
       }
 
-      // Apply terrain filter
       if (filters.terrain !== "all" && ride.terrain !== filters.terrain) {
         return false;
       }
 
-      // Apply date range filter
       const rideDate = new Date(ride.dateTime);
       if (filters.startDate && rideDate < filters.startDate) {
         return false;
