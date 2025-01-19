@@ -79,13 +79,19 @@ export default function HomePage() {
     // Subtract 24 hours from current date for archive threshold
     const archiveThreshold = new Date(currentDate.getTime() - 24 * 60 * 60 * 1000);
 
+    console.log('Current date:', currentDate.toISOString());
+    console.log('Archive threshold:', archiveThreshold.toISOString());
+
     return rides.filter((ride) => {
+      const rideDate = new Date(ride.dateTime);
+      console.log(`Ride ${ride.id} date:`, rideDate.toISOString(), 'Past threshold?:', rideDate < archiveThreshold);
+
       // Only filter out rides that are more than 24 hours old
-      if (new Date(ride.dateTime) < archiveThreshold) {
+      if (rideDate < archiveThreshold) {
         return false;
       }
 
-      // Rest of the filtering logic remains unchanged
+      // Rest of the filtering logic
       if (filters.search && !ride.title.toLowerCase().includes(filters.search.toLowerCase())) {
         return false;
       }
@@ -110,7 +116,6 @@ export default function HomePage() {
         return false;
       }
 
-      const rideDate = new Date(ride.dateTime);
       if (filters.startDate && rideDate < filters.startDate) {
         return false;
       }
