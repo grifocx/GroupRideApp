@@ -72,7 +72,7 @@ export default function HomePage() {
     showRecurring: false,
   });
 
-  const filteredRides = useMemo(() => {
+const filteredRides = useMemo(() => {
     if (!rides) return [];
 
     const currentDate = new Date();
@@ -86,8 +86,9 @@ export default function HomePage() {
       const rideDate = new Date(ride.dateTime);
       console.log(`Ride ${ride.id} date:`, rideDate.toISOString(), 'Past threshold?:', rideDate < archiveThreshold);
 
-      // Only filter out rides that are more than 24 hours old
-      if (rideDate < archiveThreshold) {
+      // Only show rides that are marked as active
+      if (ride.status !== 'active') {
+        console.log(`Ride ${ride.id} filtered out: not active`);
         return false;
       }
 

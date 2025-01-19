@@ -21,7 +21,13 @@ export function useRides(status: 'active' | 'archived' = 'active') {
       if (!response.ok) {
         throw new Error(await response.text());
       }
-      return response.json();
+      const data = await response.json();
+
+      // Ensure dates are properly parsed
+      return data.map((ride: RideWithRelations) => ({
+        ...ride,
+        dateTime: new Date(ride.dateTime).toISOString(),
+      }));
     },
     select: (data) => {
       if (!user) return data.map(ride => ({ ...ride, canEdit: false }));
@@ -30,7 +36,7 @@ export function useRides(status: 'active' | 'archived' = 'active') {
         canEdit: user.id === ride.ownerId
       }));
     },
-    enabled: true // This ensures the query runs even if user is not yet loaded
+    enabled: true
   });
 
   return {
