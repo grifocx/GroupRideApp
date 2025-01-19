@@ -279,12 +279,7 @@ export function registerRoutes(app: Express): Server {
       const status = req.query.status as string || 'active';
 
       const allRides = await db.query.rides.findMany({
-        where: and(
-          status === 'active'
-            ? sql`${rides.dateTime} >= NOW()`
-            : sql`${rides.dateTime} < NOW()`,
-          eq(rides.status, status)
-        ),
+        where: eq(rides.status, status),
         with: {
           owner: {
             columns: {
@@ -981,7 +976,8 @@ export function registerRoutes(app: Express): Server {
         .where(eq(rideParticipants.userId, user.id));
 
       // Then get the full ride details for these IDs
-      const participatingRides = await db.query.rides.findMany({        where: inArray(rides.id, participatingRideIds.map(r => r.rideId)),
+      const participatingRides = await db.query.rides.findMany({
+        where: inArray(rides.id, participatingRideIds.map(r => r.rideId)),
         with: {
           owner: true,
           participants: {
@@ -994,14 +990,14 @@ export function registerRoutes(app: Express): Server {
       });
 
       res.json(participatingRides);
-    } catch (error) {
-      console.error("Error fetching participating rides:", error);
-      if (error instanceof Error && error.message === "Not authenticated") {
+    } catch(err) {
+      console.error("Error fetching participating rides:", err);
+      if (err instanceof Error && err.message === "Not authenticated") {
         return res.status(401).json({ error: "Not authenticated" });
       }
       res.status(500).json({
         error: "Failed to fetch participating rides",
-        details: error instanceof Error ? error.message : 'Unknown error'
+        details: err instanceof Error ? err.message : 'Unknown error'
       });
     }
   });
