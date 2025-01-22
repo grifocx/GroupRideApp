@@ -5,15 +5,36 @@ import multer from 'multer';
 import sharp from 'sharp';
 import path from 'path';
 import fs from 'fs';
-
 import { db } from "@db";
-import { rides, rideParticipants, users, rideComments, insertRideSchema, type User, RecurringType } from "@db/schema";
+import { 
+  rides, 
+  rideParticipants, 
+  users, 
+  rideComments, 
+  insertRideSchema, 
+  type User, 
+  RecurringType 
+} from "@db/schema";
 import { and, eq, sql, inArray } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
-import { addDays, addWeeks, addMonths, isBefore, startOfDay } from "date-fns";
-import { addDays as addDays2, isAfter } from "date-fns";
+import { 
+  addDays, 
+  addWeeks, 
+  addMonths, 
+  isBefore, 
+  startOfDay 
+} from "date-fns";
+
+// Constants
+const ARCHIVE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+
+// Types
+enum RideStatus {
+  ACTIVE = 'active',
+  ARCHIVED = 'archived'
+}
 
 // Configure multer for file uploads
 const storage = multer.diskStorage({
@@ -45,7 +66,7 @@ const upload = multer({
   }
 });
 
-// Helper to ensure authenticated user
+// Auth helper
 const ensureAuthenticated = (req: Express.Request): User => {
   if (!req.isAuthenticated()) {
     const error = new Error("Not authenticated") as Error & { status?: number };
@@ -55,21 +76,12 @@ const ensureAuthenticated = (req: Express.Request): User => {
   return req.user as User;
 };
 
-// Add RideStatus enum
-enum RideStatus {
-  ACTIVE = 'active',
-  ARCHIVED = 'archived'
-}
-
-// Add archive check function
+// Utility functions
 async function checkAndArchiveRides() {
   try {
     console.log("Running scheduled ride archival check...");
+    const archiveDate = addDays(new Date(), -1);
 
-    // Get yesterday's date for comparison
-    const archiveDate = addDays2(new Date(), -1);
-
-    // Update all active rides that ended more than 24 hours ago
     const [updatedRides] = await db
       .update(rides)
       .set({ status: RideStatus.ARCHIVED })
@@ -169,7 +181,7 @@ async function createRecurringRides(initialRide: {
 
 export function registerRoutes(app: Express): Server {
   // Add scheduled job setup
-  const ARCHIVE_CHECK_INTERVAL = 24 * 60 * 60 * 1000; // 24 hours in milliseconds
+  
 
   // Run initial check
   checkAndArchiveRides();
