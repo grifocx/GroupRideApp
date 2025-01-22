@@ -100,5 +100,5 @@ export function MapComponent({ rides, onMarkerClick }: MapComponentProps) {
     };
   }, [rides, onMarkerClick]);
 
-  return <div id="map" className="w-full h-[400px] rounded-lg" />;
+  return <div id="map" className="w-full h-[400px] rounded-lg relative" style={{ zIndex: 1 }} />;
 }

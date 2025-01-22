@@ -195,10 +195,10 @@ const filteredRides = useMemo(() => {
             <div id="map-calendar-section" className="scroll-mt-16">
               <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                 {/* Map Section */}
-                <Card>
+                <Card className="relative" style={{ zIndex: 1 }}>
                   <CardContent className="p-4">
                     <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
-                    <div className="h-[400px]">
+                    <div className="h-[400px] relative" style={{ zIndex: 1 }}>
                       <MapComponent
                         rides={filteredRides}
                         onMarkerClick={(ride) => {
