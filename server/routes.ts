@@ -19,6 +19,7 @@ import { and, eq, sql, inArray } from "drizzle-orm";
 import * as z from 'zod';
 import { geocodeAddress } from "./geocoding";
 import { ensureAdmin } from "./middleware";
+import { crypto } from "./auth"; // Import crypto utility
 import { 
   addDays, 
   addWeeks, 
@@ -995,7 +996,7 @@ export function registerRoutes(app: Express): Server {
   // Get rides where user is a participant
   app.get("/api/rides/user/participating", async (req, res) => {
     try {
-      const user = ensureAuthenticated(req);
+            const user = ensureAuthenticated(req);
 
       // First get all ride IDs where the user is a participant
       const participatingRideIds = await db
