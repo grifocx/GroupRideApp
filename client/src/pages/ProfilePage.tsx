@@ -410,10 +410,9 @@ export default function ProfilePage() {
                   </Dialog>
                 </div>
                   </div>
-              </Card>
-            </CardContent>
-          </Card>
-        </motion.div>
+              </CardContent>
+            </Card>
+          </motion.div>
 
         <Dialog>
           <DialogTrigger asChild>
