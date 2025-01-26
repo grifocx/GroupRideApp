@@ -409,13 +409,17 @@ export default function ProfilePage() {
                     </DialogContent>
                   </Dialog>
                 </div>
-                  </div>
               </CardContent>
             </Card>
           </motion.div>
 
-        <Dialog>
-          <DialogTrigger asChild>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+          >
+            <Dialog>
+              <DialogTrigger asChild>
             <Button variant="outline" className="w-full">Edit Profile</Button>
           </DialogTrigger>
           <DialogContent className="max-h-[90vh] overflow-y-auto">
