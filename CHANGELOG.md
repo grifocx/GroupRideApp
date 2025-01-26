@@ -1,9 +1,16 @@
-
 # Changelog
 
 All notable changes to this project that affect deployments will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Password confirmation in change password dialog
+- Improved dialog behavior with auto-close after successful password change
+- App state refresh after password update
+
+### Fixed
+- Implemented proper password change functionality with crypto utilities
+- Fixed dialog state management in profile page
 
 ## [1.0.0] - 2024
 
