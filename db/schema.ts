@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, bigint } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, bigint, unique } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations, type InferModel } from "drizzle-orm";
 import { z } from "zod";
@@ -67,6 +67,11 @@ export const rides = pgTable("rides", {
   recurring_end_date: timestamp("recurring_end_date"),
   series_id: bigint("series_id", { mode: "number" }).references(() => rides.id, { onDelete: 'set null' }),
   status: text("status", { enum: ['active', 'archived'] }).notNull().default('active'),
+  completed: boolean("completed").default(false),
+  actualDistance: real("actual_distance"),
+  actualDuration: integer("actual_duration"),
+  elevationGain: integer("elevation_gain"),
+  averageSpeed: real("average_speed"),
 });
 
 export const rideParticipants = pgTable("ride_participants", {
@@ -126,8 +131,15 @@ export const RecurringType = {
   MONTHLY: 'monthly',
 } as const;
 
-// Update ride schema with status field
-const rideSchema = z.object({
+const activitySchema = z.object({
+  completed: z.boolean().optional(),
+  actualDistance: z.number().optional(),
+  actualDuration: z.number().optional(),
+  elevationGain: z.number().optional(),
+  averageSpeed: z.number().optional(),
+});
+
+const baseRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.coerce.date(),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
@@ -146,7 +158,13 @@ const rideSchema = z.object({
   recurring_end_date: z.coerce.date().optional(),
   ownerId: z.number(),
   status: z.enum(['active', 'archived']).default('active'),
-}).refine((data) => {
+});
+
+// Merge base schema with activity schema first
+const mergedRideSchema = baseRideSchema.merge(activitySchema);
+
+// Then apply refinements
+export const insertRideSchema = mergedRideSchema.refine((data) => {
   if (data.is_recurring) {
     return data.recurring_type &&
            data.recurring_day !== undefined &&
@@ -158,7 +176,6 @@ const rideSchema = z.object({
   message: "When creating a recurring ride, recurring_type, recurring_day, recurring_time, and recurring_end_date are required"
 });
 
-export const insertRideSchema = rideSchema;
 export const selectRideSchema = createSelectSchema(rides);
 
 // Type exports
@@ -201,3 +218,62 @@ export const updateCommentSchema = z.object({
 
 export type RideComment = InferModel<typeof rideComments>;
 export type InsertRideComment = InferModel<typeof rideComments, "insert">;
+
+// Add new tables for activity tracking
+export const userActivityStats = pgTable("user_activity_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  totalDistance: real("total_distance").default(0),
+  totalElevationGain: integer("total_elevation_gain").default(0),
+  totalRideTime: integer("total_ride_time").default(0),
+  totalRides: integer("total_rides").default(0),
+  avgSpeed: real("avg_speed").default(0),
+  favoriteRideType: text("favorite_ride_type"),
+  lastCalculatedAt: timestamp("last_calculated_at").notNull().defaultNow(),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+});
+
+export const userMonthlyStats = pgTable("user_monthly_stats", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  year: integer("year").notNull(),
+  month: integer("month").notNull(),
+  distance: real("distance").default(0),
+  elevationGain: integer("elevation_gain").default(0),
+  rideTime: integer("ride_time").default(0),
+  rideCount: integer("ride_count").default(0),
+  avgSpeed: real("avg_speed").default(0),
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+}, (table) => ({
+  userMonthIndex: unique().on(table.userId, table.year, table.month),
+}));
+
+// Add relations for activity tracking
+export const userActivityStatsRelations = relations(userActivityStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userActivityStats.userId],
+    references: [users.id],
+  }),
+}));
+
+export const userMonthlyStatsRelations = relations(userMonthlyStats, ({ one }) => ({
+  user: one(users, {
+    fields: [userMonthlyStats.userId],
+    references: [users.id],
+  }),
+}));
+
+// Create schemas for the new tables
+export const insertUserActivityStatsSchema = createInsertSchema(userActivityStats);
+export const selectUserActivityStatsSchema = createSelectSchema(userActivityStats);
+
+export const insertUserMonthlyStatsSchema = createInsertSchema(userMonthlyStats);
+export const selectUserMonthlyStatsSchema = createSelectSchema(userMonthlyStats);
+
+// Export types for the new tables
+export type UserActivityStats = typeof userActivityStats.$inferSelect;
+export type InsertUserActivityStats = typeof userActivityStats.$inferInsert;
+
+export type UserMonthlyStats = typeof userMonthlyStats.$inferSelect;
+export type InsertUserMonthlyStats = typeof userMonthlyStats.$inferInsert;

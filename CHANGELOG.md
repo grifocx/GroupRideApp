@@ -3,6 +3,10 @@
 All notable changes to this project that affect deployments will be documented in this file.
 
 ## [Unreleased]
+### Upcoming
+- User activity dashboard with cycling insights
+
+## [1.0.1] - 2025-01-26
 ### Added
 - Password confirmation in change password dialog
 - Improved dialog behavior with auto-close after successful password change
@@ -13,7 +17,6 @@ All notable changes to this project that affect deployments will be documented i
 - Fixed dialog state management in profile page
 
 ## [1.0.0] - 2024
-
 ### Added
 - Initial release with core ride sharing functionality
 - User authentication system with Google OAuth and local auth
