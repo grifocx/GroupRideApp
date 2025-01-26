@@ -409,11 +409,21 @@ export default function ProfilePage() {
                     </DialogContent>
                   </Dialog>
                 </div>
-                  <DialogContent className="max-h-[90vh] overflow-y-auto">
-                    <DialogHeader>
-                      <DialogTitle>Edit Profile</DialogTitle>
-                    </DialogHeader>
-                    <form onSubmit={async (e) => {
+                  </div>
+              </Card>
+            </CardContent>
+          </Card>
+        </motion.div>
+
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button variant="outline" className="w-full">Edit Profile</Button>
+          </DialogTrigger>
+          <DialogContent className="max-h-[90vh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle>Edit Profile</DialogTitle>
+            </DialogHeader>
+            <form onSubmit={async (e) => {
                       e.preventDefault();
                       const formData = new FormData(e.currentTarget);
 
