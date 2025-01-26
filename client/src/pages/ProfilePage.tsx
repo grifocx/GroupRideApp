@@ -524,7 +524,6 @@ export default function ProfilePage() {
                     </form>
                   </DialogContent>
                 </Dialog>
-              </div>
             </CardContent>
           </Card>
         </motion.div>
