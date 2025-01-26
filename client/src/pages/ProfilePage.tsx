@@ -331,10 +331,90 @@ export default function ProfilePage() {
                   </div>
                 </div>
 
-                <Dialog>
-                  <DialogTrigger asChild>
-                    <Button variant="outline" className="w-full">Edit Profile</Button>
-                  </DialogTrigger>
+                <div className="flex gap-2">
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">Edit Profile</Button>
+                    </DialogTrigger>
+                  </Dialog>
+
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" className="w-full">Change Password</Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Change Password</DialogTitle>
+                      </DialogHeader>
+                      <form onSubmit={async (e) => {
+                        e.preventDefault();
+                        const formData = new FormData(e.currentTarget);
+                        
+                        const closeDialog = () => {
+                          const closeButton = document.querySelector('[aria-label="Close"]');
+                          if (closeButton instanceof HTMLButtonElement) {
+                            closeButton.click();
+                          }
+                        };
+
+                        try {
+                          const response = await fetch('/api/user/change-password', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                            },
+                            body: JSON.stringify({
+                              currentPassword: formData.get('currentPassword'),
+                              newPassword: formData.get('newPassword'),
+                            }),
+                            credentials: 'include'
+                          });
+
+                          if (!response.ok) {
+                            throw new Error(await response.text());
+                          }
+
+                          toast({
+                            title: "Success",
+                            description: "Password updated successfully"
+                          });
+
+                          closeDialog();
+                        } catch (error) {
+                          console.error('Password change error:', error);
+                          toast({
+                            variant: "destructive",
+                            title: "Error",
+                            description: error instanceof Error ? error.message : "Failed to change password"
+                          });
+                        }
+                      }} className="space-y-4">
+                        <div className="space-y-2">
+                          <label>Current Password</label>
+                          <Input
+                            name="currentPassword"
+                            type="password"
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label>New Password</label>
+                          <Input
+                            name="newPassword"
+                            type="password"
+                            required
+                          />
+                        </div>
+                        <div className="flex justify-end gap-2">
+                          <DialogTrigger asChild>
+                            <Button type="button" variant="outline">Cancel</Button>
+                          </DialogTrigger>
+                          <Button type="submit">Change Password</Button>
+                        </div>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
+                </div>
                   <DialogContent className="max-h-[90vh] overflow-y-auto">
                     <DialogHeader>
                       <DialogTitle>Edit Profile</DialogTitle>
