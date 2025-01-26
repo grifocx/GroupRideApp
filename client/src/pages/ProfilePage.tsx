@@ -166,6 +166,10 @@ function EditRideDialog({ ride, onSave }: { ride: Ride, onSave: (data: EditRideF
 const changePasswordSchema = z.object({
   currentPassword: z.string().min(1, "Current password is required"),
   newPassword: z.string().min(8, "New password must be at least 8 characters"),
+  confirmPassword: z.string().min(1, "Please confirm your password"),
+}).refine((data) => data.newPassword === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
@@ -460,17 +464,7 @@ export default function ProfilePage() {
                       <DialogHeader>
                         <DialogTitle>Change Password</DialogTitle>
                       </DialogHeader>
-                      <form onSubmit={async (e) => {
-                        e.preventDefault();
-                        const formData = new FormData(e.currentTarget);
-
-                        const closeDialog = () => {
-                          const closeButton = document.querySelector('[aria-label="Close"]');
-                          if (closeButton instanceof HTMLButtonElement) {
-                            closeButton.click();
-                          }
-                        };
-
+                      <form className="space-y-4" onSubmit={form.handleSubmit(async (data) => {
                         try {
                           const response = await fetch('/api/user/change-password', {
                             method: 'POST',
@@ -478,8 +472,8 @@ export default function ProfilePage() {
                               'Content-Type': 'application/json',
                             },
                             body: JSON.stringify({
-                              currentPassword: formData.get('currentPassword'),
-                              newPassword: formData.get('newPassword'),
+                              currentPassword: data.currentPassword,
+                              newPassword: data.newPassword,
                             }),
                             credentials: 'include'
                           });
@@ -493,7 +487,11 @@ export default function ProfilePage() {
                             description: "Password updated successfully"
                           });
 
-                          closeDialog();
+                          form.reset();
+                          const closeButton = document.querySelector('[aria-label="Close"]');
+                          if (closeButton instanceof HTMLButtonElement) {
+                            closeButton.click();
+                          }
                         } catch (error) {
                           console.error('Password change error:', error);
                           toast({
@@ -502,22 +500,42 @@ export default function ProfilePage() {
                             description: error instanceof Error ? error.message : "Failed to change password"
                           });
                         }
-                      }} className="space-y-4">
+                      })}>
                         <div className="space-y-2">
                           <label>Current Password</label>
                           <Input
-                            name="currentPassword"
                             type="password"
-                            required
+                            {...form.register("currentPassword")}
                           />
+                          {form.formState.errors.currentPassword && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.currentPassword.message}
+                            </p>
+                          )}
                         </div>
                         <div className="space-y-2">
                           <label>New Password</label>
                           <Input
-                            name="newPassword"
                             type="password"
-                            required
+                            {...form.register("newPassword")}
                           />
+                          {form.formState.errors.newPassword && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.newPassword.message}
+                            </p>
+                          )}
+                        </div>
+                        <div className="space-y-2">
+                          <label>Confirm New Password</label>
+                          <Input
+                            type="password"
+                            {...form.register("confirmPassword")}
+                          />
+                          {form.formState.errors.confirmPassword && (
+                            <p className="text-sm text-destructive">
+                              {form.formState.errors.confirmPassword.message}
+                            </p>
+                          )}
                         </div>
                         <div className="flex justify-end gap-2">
                           <DialogTrigger asChild>
