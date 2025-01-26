@@ -730,6 +730,22 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Profile routes
+  app.post("/api/user/change-password", async (req, res) => {
+    try {
+      const user = ensureAuthenticated(req);
+      const { currentPassword, newPassword } = req.body;
+
+      await crypto.changePassword(user.id, currentPassword, newPassword);
+      res.json({ message: "Password updated successfully" });
+    } catch (error) {
+      console.error("Error changing password:", error);
+      res.status(500).json({
+        error: "Failed to change password",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   app.put("/api/user/profile", async (req, res) => {
     try {
       const user = ensureAuthenticated(req);

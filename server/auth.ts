@@ -27,6 +27,29 @@ const crypto = {
     )) as Buffer;
     return timingSafeEqual(hashedPasswordBuf, suppliedPasswordBuf);
   },
+
+  async changePassword(userId: number, currentPassword: string, newPassword: string) {
+    const [user] = await db
+      .select()
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1);
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    const isMatch = await this.compare(currentPassword, user.password);
+    if (!isMatch) {
+      throw new Error("Current password is incorrect");
+    }
+
+    const hashedPassword = await this.hash(newPassword);
+    await db
+      .update(users)
+      .set({ password: hashedPassword })
+      .where(eq(users.id, userId));
+  },
 };
 
 // extend express user object with our schema
