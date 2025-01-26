@@ -343,7 +343,7 @@ export default function ProfilePage() {
                       <form onSubmit={async (e) => {
                         e.preventDefault();
                         const formData = new FormData(e.currentTarget);
-                        
+
                         const closeDialog = () => {
                           const closeButton = document.querySelector('[aria-label="Close"]');
                           if (closeButton instanceof HTMLButtonElement) {
@@ -411,22 +411,16 @@ export default function ProfilePage() {
                 </div>
               </CardContent>
             </Card>
-          </motion.div>
 
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
-          >
             <Dialog>
               <DialogTrigger asChild>
-            <Button variant="outline" className="w-full">Edit Profile</Button>
-          </DialogTrigger>
-          <DialogContent className="max-h-[90vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>Edit Profile</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={async (e) => {
+                <Button variant="outline" className="w-full">Edit Profile</Button>
+              </DialogTrigger>
+              <DialogContent className="max-h-[90vh] overflow-y-auto">
+                <DialogHeader>
+                  <DialogTitle>Edit Profile</DialogTitle>
+                </DialogHeader>
+                <form onSubmit={async (e) => {
                       e.preventDefault();
                       const formData = new FormData(e.currentTarget);
 
@@ -484,147 +478,145 @@ export default function ProfilePage() {
                         });
                       }
                     }} className="space-y-4">
-                      <div className="space-y-2">
-                        <label>Display Name</label>
-                        <Input name="display_name" defaultValue={user?.display_name || ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label>Email</label>
-                        <Input name="email" type="email" defaultValue={user?.email || ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label>Zip Code</label>
-                        <Input name="zip_code" defaultValue={user?.zip_code || ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label>Club</label>
-                        <Input name="club" defaultValue={user?.club || ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label>Home Bike Shop</label>
-                        <Input name="home_bike_shop" defaultValue={user?.home_bike_shop || ''} />
-                      </div>
-                      <div className="space-y-2">
-                        <label>Gender</label>
-                        <select name="gender" className="w-full p-2 border rounded" defaultValue={user?.gender || ''}>
-                          <option value="">Prefer not to say</option>
-                          <option value="M">Male</option>
-                          <option value="F">Female</option>
-                          <option value="NB">Non-Binary</option>
-                          <option value="O">Other</option>
-                        </select>
-                      </div>
-                      <div className="space-y-2">
-                        <label>Birthdate</label>
-                        <Input
-                          type="date"
-                          name="birthdate"
-                          defaultValue={user?.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : ''}
-                        />
-                      </div>
-                      <div className="flex justify-end gap-2">
-                        <DialogTrigger asChild>
-                          <Button type="button" variant="outline">Cancel</Button>
-                        </DialogTrigger>
-                        <Button type="submit">Save Changes</Button>
-                      </div>
-                    </form>
-                  </DialogContent>
-                </Dialog>
-            </CardContent>
-          </Card>
-        </motion.div>
+                  <div className="space-y-2">
+                    <label>Display Name</label>
+                    <Input name="display_name" defaultValue={user?.display_name || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <label>Email</label>
+                    <Input name="email" type="email" defaultValue={user?.email || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <label>Zip Code</label>
+                    <Input name="zip_code" defaultValue={user?.zip_code || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <label>Club</label>
+                    <Input name="club" defaultValue={user?.club || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <label>Home Bike Shop</label>
+                    <Input name="home_bike_shop" defaultValue={user?.home_bike_shop || ''} />
+                  </div>
+                  <div className="space-y-2">
+                    <label>Gender</label>
+                    <select name="gender" className="w-full p-2 border rounded" defaultValue={user?.gender || ''}>
+                      <option value="">Prefer not to say</option>
+                      <option value="M">Male</option>
+                      <option value="F">Female</option>
+                      <option value="NB">Non-Binary</option>
+                      <option value="O">Other</option>
+                    </select>
+                  </div>
+                  <div className="space-y-2">
+                    <label>Birthdate</label>
+                    <Input
+                      type="date"
+                      name="birthdate"
+                      defaultValue={user?.birthdate ? new Date(user.birthdate).toISOString().split('T')[0] : ''}
+                    />
+                  </div>
+                  <div className="flex justify-end gap-2">
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="outline">Cancel</Button>
+                    </DialogTrigger>
+                    <Button type="submit">Save Changes</Button>
+                  </div>
+                </form>
+              </DialogContent>
+            </Dialog>
+          </motion.div>
 
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          className="mt-8 space-y-8"
-        >
-          {/* Your Rides Section */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Your Created Rides</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rides?.filter(ride => ride.ownerId === user?.id).map((ride) => (
-                <Card key={ride.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{ride.title}</CardTitle>
-                      <div className="flex gap-2">
-                        <EditRideDialog ride={ride} onSave={handleUpdate(ride)} />
-                        <Button
-                          variant="outline"
-                          size="icon"
-                          onClick={() => {
-                            if (confirm('Are you sure you want to delete this ride?')) {
-                              deleteRide(ride.id);
-                            }
-                          }}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            className="mt-8 space-y-8"
+          >
+            {/* Your Rides Section */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Your Created Rides</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rides?.filter(ride => ride.ownerId === user?.id).map((ride) => (
+                  <Card key={ride.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{ride.title}</CardTitle>
+                        <div className="flex gap-2">
+                          <EditRideDialog ride={ride} onSave={handleUpdate(ride)} />
+                          <Button
+                            variant="outline"
+                            size="icon"
+                            onClick={() => {
+                              if (confirm('Are you sure you want to delete this ride?')) {
+                                deleteRide(ride.id);
+                              }
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
                       </div>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(ride.dateTime), "PPP")}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div>Distance: {ride.distance} miles</div>
-                      <div>Difficulty: {ride.difficulty}</div>
-                      <div>Location: {ride.address}</div>
-                      <div>Type: {ride.rideType}</div>
-                      <div>Terrain: {ride.terrain}</div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {rides?.filter(ride => ride.ownerId === user?.id).length === 0 && (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  You haven't created any rides yet
-                </div>
-              )}
-            </div>
-          </div>
-
-          {/* Joined Rides Section */}
-          <div>
-            <h2 className="text-2xl font-bold mb-4">Rides You've Joined</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {rides?.filter(ride => ride.ownerId !== user?.id).map((ride) => (
-                <Card key={ride.id}>
-                  <CardHeader>
-                    <div className="flex justify-between items-start">
-                      <CardTitle className="text-lg">{ride.title}</CardTitle>
-                    </div>
-                    <div className="text-sm text-muted-foreground">
-                      {format(new Date(ride.dateTime), "PPP")}
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="space-y-2">
-                      <div>Distance: {ride.distance} miles</div>
-                      <div>Difficulty: {ride.difficulty}</div>
-                      <div>Location: {ride.address}</div>
-                      <div>Type: {ride.rideType}</div>
-                      <div>Terrain: {ride.terrain}</div>
                       <div className="text-sm text-muted-foreground">
-                        Created by: {ride.owner.username}
+                        {format(new Date(ride.dateTime), "PPP")}
                       </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-              {rides?.filter(ride => ride.ownerId !== user?.id).length === 0 && (
-                <div className="col-span-full text-center py-8 text-muted-foreground">
-                  You haven't joined any rides yet
-                </div>
-              )}
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>Distance: {ride.distance} miles</div>
+                        <div>Difficulty: {ride.difficulty}</div>
+                        <div>Location: {ride.address}</div>
+                        <div>Type: {ride.rideType}</div>
+                        <div>Terrain: {ride.terrain}</div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {rides?.filter(ride => ride.ownerId === user?.id).length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    You haven't created any rides yet
+                  </div>
+                )}
+              </div>
             </div>
-          </div>
-        </motion.div>
-      </main>
-    </div>
+
+            {/* Joined Rides Section */}
+            <div>
+              <h2 className="text-2xl font-bold mb-4">Rides You've Joined</h2>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {rides?.filter(ride => ride.ownerId !== user?.id).map((ride) => (
+                  <Card key={ride.id}>
+                    <CardHeader>
+                      <div className="flex justify-between items-start">
+                        <CardTitle className="text-lg">{ride.title}</CardTitle>
+                      </div>
+                      <div className="text-sm text-muted-foreground">
+                        {format(new Date(ride.dateTime), "PPP")}
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="space-y-2">
+                        <div>Distance: {ride.distance} miles</div>
+                        <div>Difficulty: {ride.difficulty}</div>
+                        <div>Location: {ride.address}</div>
+                        <div>Type: {ride.rideType}</div>
+                        <div>Terrain: {ride.terrain}</div>
+                        <div className="text-sm text-muted-foreground">
+                          Created by: {ride.owner.username}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+                {rides?.filter(ride => ride.ownerId !== user?.id).length === 0 && (
+                  <div className="col-span-full text-center py-8 text-muted-foreground">
+                    You haven't joined any rides yet
+                  </div>
+                )}
+              </div>
+            </div>
+          </motion.div>
+        </main>
+      </div>
   );
 }
