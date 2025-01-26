@@ -17,6 +17,7 @@ import type { Ride } from "@db/schema";
 import { ProfileProgress } from "@/components/ProfileProgress";
 import { RideStats } from "@/components/RideStats";
 import { motion } from "framer-motion";
+import { useState } from "react";
 
 const editRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -179,6 +180,7 @@ export default function ProfilePage() {
   const { rides, isLoading, deleteRide, updateRide } = useUserRides();
   const { toast } = useToast();
   const queryClient = useQueryClient();
+  const [isChangePasswordOpen, setIsChangePasswordOpen] = useState(false);
 
   const uploadAvatarMutation = useMutation({
     mutationFn: async (file: File) => {
@@ -456,7 +458,7 @@ export default function ProfilePage() {
                     </DialogContent>
                   </Dialog>
 
-                  <Dialog>
+                  <Dialog open={isChangePasswordOpen} onOpenChange={setIsChangePasswordOpen}>
                     <DialogTrigger asChild>
                       <Button variant="outline" className="w-full">Change Password</Button>
                     </DialogTrigger>
@@ -482,16 +484,15 @@ export default function ProfilePage() {
                             throw new Error(await response.text());
                           }
 
+                          await queryClient.invalidateQueries({ queryKey: ['/api/user'] });
+
                           toast({
                             title: "Success",
                             description: "Password updated successfully"
                           });
 
                           form.reset();
-                          const closeButton = document.querySelector('[aria-label="Close"]');
-                          if (closeButton instanceof HTMLButtonElement) {
-                            closeButton.click();
-                          }
+                          setIsChangePasswordOpen(false);
                         } catch (error) {
                           console.error('Password change error:', error);
                           toast({
@@ -538,9 +539,9 @@ export default function ProfilePage() {
                           )}
                         </div>
                         <div className="flex justify-end gap-2">
-                          <DialogTrigger asChild>
-                            <Button type="button" variant="outline">Cancel</Button>
-                          </DialogTrigger>
+                          <Button type="button" variant="outline" onClick={() => setIsChangePasswordOpen(false)}>
+                            Cancel
+                          </Button>
                           <Button type="submit">Change Password</Button>
                         </div>
                       </form>
