@@ -336,15 +336,9 @@ export default function ProfilePage() {
                     <DialogTrigger asChild>
                       <Button variant="outline" className="w-full">Edit Profile</Button>
                     </DialogTrigger>
-                  </Dialog>
-
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <Button variant="outline" className="w-full">Change Password</Button>
-                    </DialogTrigger>
-                    <DialogContent>
+                    <DialogContent className="max-h-[90vh] overflow-y-auto">
                       <DialogHeader>
-                        <DialogTitle>Change Password</DialogTitle>
+                        <DialogTitle>Edit Profile</DialogTitle>
                       </DialogHeader>
                       <form onSubmit={async (e) => {
                         e.preventDefault();
