@@ -16,6 +16,21 @@ All notable changes to this project that affect deployments will be documented i
 ### Upcoming
 - User activity dashboard with cycling insights
 
+## [1.0.2] - 2025-02-06
+### Added
+- Enhanced Admin Dashboard functionality:
+  - Fixed email display in user management table
+  - Implemented accurate ride count calculation for each user
+  - Added comprehensive CSV export with all user profile fields
+  - Added display name column to user table
+- Improved UX with smoother transitions and responsive design
+- Enhanced form validation and error handling
+
+### Fixed
+- Admin dashboard now correctly displays user email addresses
+- Fixed ride count calculation in admin view
+- Improved data consistency in user management interface
+
 ## [1.0.1] - 2025-01-26
 ### Added
 - Password confirmation in change password dialog
