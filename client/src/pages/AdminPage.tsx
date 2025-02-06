@@ -207,7 +207,6 @@ export default function AdminPage() {
     }
   });
 
-  // Export users to CSV with all fields
   const handleExportUsers = () => {
     if (!users) return;
 
@@ -228,24 +227,22 @@ export default function AdminPage() {
     ];
 
     const csvData = users.map(user => {
-      // Convert each field to string and handle null/undefined values
       const fields = [
         user.id.toString(),
         user.username,
-        user.email || '', // Actual email field
+        user.email || 'Not provided', 
         user.isAdmin ? 'Yes' : 'No',
         user.emailVerified ? 'Yes' : 'No',
-        user.display_name || '',
-        user.zip_code || '',
-        user.club || '',
-        user.home_bike_shop || '',
-        user.gender || '',
-        user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : '',
+        user.display_name || 'Not set',
+        user.zip_code || 'Not set',
+        user.club || 'Not set',
+        user.home_bike_shop || 'Not set',
+        user.gender || 'Not set',
+        user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : 'Not set',
         user.rideCount?.toString() || '0',
         user.avatarUrl || ''
       ];
 
-      // Escape fields that might contain commas
       return fields.map(field => {
         if (field.includes(',') || field.includes('"') || field.includes('\n')) {
           return `"${field.replace(/"/g, '""')}"`;
