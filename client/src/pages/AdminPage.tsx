@@ -230,7 +230,7 @@ export default function AdminPage() {
       const fields = [
         user.id.toString(),
         user.username,
-        user.email || 'Not provided', 
+        user.email || 'Not provided',
         user.isAdmin ? 'Yes' : 'No',
         user.emailVerified ? 'Yes' : 'No',
         user.display_name || 'Not set',
