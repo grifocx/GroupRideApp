@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { NavBar } from "@/components/NavBar";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -5,7 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/hooks/use-toast";
-import { Loader2, Trash2, UserX, Settings, Pencil } from "lucide-react";
+import { Loader2, Trash2, UserX, Settings, Pencil, Download } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { useForm } from "react-hook-form";
@@ -15,8 +16,12 @@ import { z } from "zod";
 type User = {
   id: number;
   username: string;
+  email: string;
   isAdmin: boolean;
-  rides: any[];
+  rides: {
+    id: number;
+    title: string;
+  }[];
 };
 
 type Ride = {
@@ -197,8 +202,45 @@ export default function AdminPage() {
     }
   });
 
+  // Export users to CSV
+  const handleExportUsers = () => {
+    if (!users) return;
+
+    const headers = ['ID', 'Username', 'Email', 'Admin', 'Rides Created'];
+    const csvData = users.map(user => [
+      user.id,
+      user.username,
+      user.email,
+      user.isAdmin ? 'Yes' : 'No',
+      user.rides?.length || 0
+    ]);
+
+    const csvContent = [
+      headers.join(','),
+      ...csvData.map(row => row.join(','))
+    ].join('\n');
+
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const url = URL.createObjectURL(blob);
+    link.setAttribute('href', url);
+    link.setAttribute('download', `users_export_${format(new Date(), 'yyyy-MM-dd')}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
   const { data: rides, isLoading: ridesLoading } = useQuery<Ride[]>({
     queryKey: ['/api/admin/rides'],
+    queryFn: async () => {
+        const response = await fetch('/api/admin/rides', {
+          credentials: 'include'
+        });
+        if (!response.ok) {
+          throw new Error('Failed to fetch rides');
+        }
+        return response.json();
+      }
   });
 
   const updateRideMutation = useMutation({
@@ -310,8 +352,16 @@ export default function AdminPage() {
 
       <main className="container mx-auto px-4 py-8">
         <Card>
-          <CardHeader>
+          <CardHeader className="flex flex-row items-center justify-between">
             <CardTitle>Admin Dashboard</CardTitle>
+            <Button 
+              onClick={handleExportUsers}
+              className="flex items-center gap-2"
+              variant="outline"
+            >
+              <Download className="h-4 w-4" />
+              Export Users
+            </Button>
           </CardHeader>
           <CardContent>
             <Tabs defaultValue="users">
@@ -327,6 +377,7 @@ export default function AdminPage() {
                       <tr>
                         <th className="px-4 py-3 text-left text-sm font-medium">ID</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Username</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Admin</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Rides Created</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
@@ -337,8 +388,9 @@ export default function AdminPage() {
                         <tr key={user.id}>
                           <td className="px-4 py-3">{user.id}</td>
                           <td className="px-4 py-3">{user.username}</td>
+                          <td className="px-4 py-3">{user.email || 'Not provided'}</td>
                           <td className="px-4 py-3">{user.isAdmin ? 'Yes' : 'No'}</td>
-                          <td className="px-4 py-3">{user.rides.length}</td>
+                          <td className="px-4 py-3">{user.rides?.length || 0}</td>
                           <td className="px-4 py-3">
                             <Button
                               variant="ghost"
