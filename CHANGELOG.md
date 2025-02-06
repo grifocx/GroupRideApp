@@ -3,6 +3,16 @@
 All notable changes to this project that affect deployments will be documented in this file.
 
 ## [Unreleased]
+### Added
+- Enhanced UI styling with smooth animations and transitions
+- Improved mobile-first design approach
+- New color scheme with nature-inspired palette:
+  - Primary green (#22C55E) for CTAs and highlights
+  - Subtle background patterns
+  - Enhanced card shadows and hover effects
+- Added new animation keyframes for smoother transitions
+- Improved responsive design for mobile users
+
 ### Upcoming
 - User activity dashboard with cycling insights
 
