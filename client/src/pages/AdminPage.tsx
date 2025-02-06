@@ -232,17 +232,17 @@ export default function AdminPage() {
       const fields = [
         user.id.toString(),
         user.username,
-        user.email ?? '', // Using nullish coalescing to handle null values
+        user.email || '', // Actual email field
         user.isAdmin ? 'Yes' : 'No',
         user.emailVerified ? 'Yes' : 'No',
-        user.display_name ?? '',
-        user.zip_code ?? '',
-        user.club ?? '',
-        user.home_bike_shop ?? '',
-        user.gender ?? '',
+        user.display_name || '',
+        user.zip_code || '',
+        user.club || '',
+        user.home_bike_shop || '',
+        user.gender || '',
         user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : '',
-        user.rideCount?.toString() ?? '0',
-        user.avatarUrl ?? ''
+        user.rideCount?.toString() || '0',
+        user.avatarUrl || ''
       ];
 
       // Escape fields that might contain commas
