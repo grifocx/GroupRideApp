@@ -16,12 +16,17 @@ import { z } from "zod";
 type User = {
   id: number;
   username: string;
-  email: string;
+  email: string | null;
   isAdmin: boolean;
-  rides: {
-    id: number;
-    title: string;
-  }[];
+  avatarUrl: string | null;
+  emailVerified: boolean;
+  display_name: string | null;
+  zip_code: string | null;
+  club: string | null;
+  home_bike_shop: string | null;
+  gender: string | null;
+  birthdate: string | null;
+  rideCount: number;
 };
 
 type Ride = {
@@ -202,17 +207,40 @@ export default function AdminPage() {
     }
   });
 
-  // Export users to CSV
+  // Export users to CSV with all fields
   const handleExportUsers = () => {
     if (!users) return;
 
-    const headers = ['ID', 'Username', 'Email', 'Admin', 'Rides Created'];
+    const headers = [
+      'ID',
+      'Username',
+      'Email',
+      'Admin',
+      'Email Verified',
+      'Display Name',
+      'ZIP Code',
+      'Club',
+      'Home Bike Shop',
+      'Gender',
+      'Birthdate',
+      'Rides Created',
+      'Avatar URL'
+    ];
+
     const csvData = users.map(user => [
       user.id,
       user.username,
-      user.email,
+      user.email || '',
       user.isAdmin ? 'Yes' : 'No',
-      user.rides?.length || 0
+      user.emailVerified ? 'Yes' : 'No',
+      user.display_name || '',
+      user.zip_code || '',
+      user.club || '',
+      user.home_bike_shop || '',
+      user.gender || '',
+      user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : '',
+      user.rideCount || 0,
+      user.avatarUrl || ''
     ]);
 
     const csvContent = [
@@ -379,6 +407,7 @@ export default function AdminPage() {
                         <th className="px-4 py-3 text-left text-sm font-medium">Username</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Email</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Admin</th>
+                        <th className="px-4 py-3 text-left text-sm font-medium">Display Name</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Rides Created</th>
                         <th className="px-4 py-3 text-left text-sm font-medium">Actions</th>
                       </tr>
@@ -390,7 +419,8 @@ export default function AdminPage() {
                           <td className="px-4 py-3">{user.username}</td>
                           <td className="px-4 py-3">{user.email || 'Not provided'}</td>
                           <td className="px-4 py-3">{user.isAdmin ? 'Yes' : 'No'}</td>
-                          <td className="px-4 py-3">{user.rides?.length || 0}</td>
+                          <td className="px-4 py-3">{user.display_name || 'Not set'}</td>
+                          <td className="px-4 py-3">{user.rideCount || 0}</td>
                           <td className="px-4 py-3">
                             <Button
                               variant="ghost"
