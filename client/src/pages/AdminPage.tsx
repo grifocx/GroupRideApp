@@ -227,21 +227,32 @@ export default function AdminPage() {
       'Avatar URL'
     ];
 
-    const csvData = users.map(user => [
-      user.id,
-      user.username,
-      user.email || '',
-      user.isAdmin ? 'Yes' : 'No',
-      user.emailVerified ? 'Yes' : 'No',
-      user.display_name || '',
-      user.zip_code || '',
-      user.club || '',
-      user.home_bike_shop || '',
-      user.gender || '',
-      user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : '',
-      user.rideCount || 0,
-      user.avatarUrl || ''
-    ]);
+    const csvData = users.map(user => {
+      // Convert each field to string and handle null/undefined values
+      const fields = [
+        user.id.toString(),
+        user.username,
+        user.email ?? '', // Using nullish coalescing to handle null values
+        user.isAdmin ? 'Yes' : 'No',
+        user.emailVerified ? 'Yes' : 'No',
+        user.display_name ?? '',
+        user.zip_code ?? '',
+        user.club ?? '',
+        user.home_bike_shop ?? '',
+        user.gender ?? '',
+        user.birthdate ? format(new Date(user.birthdate), 'yyyy-MM-dd') : '',
+        user.rideCount?.toString() ?? '0',
+        user.avatarUrl ?? ''
+      ];
+
+      // Escape fields that might contain commas
+      return fields.map(field => {
+        if (field.includes(',') || field.includes('"') || field.includes('\n')) {
+          return `"${field.replace(/"/g, '""')}"`;
+        }
+        return field;
+      });
+    });
 
     const csvContent = [
       headers.join(','),
