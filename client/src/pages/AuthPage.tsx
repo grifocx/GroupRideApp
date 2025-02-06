@@ -117,40 +117,43 @@ export default function AuthPage() {
                 )}
               </motion.div>
 
-              {!isLogin && (
-                <motion.div
-                  initial={{ x: -20, opacity: 0 }}
-                  animate={{ x: 0, opacity: 1 }}
-                  transition={{ delay: 0.25 }}
-                  className="space-y-2"
-                >
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
-                    <Input
-                      type="email"
-                      placeholder="Email"
-                      {...form.register("email", {
-                        required: !isLogin,
-                        pattern: {
-                          value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                          message: "Invalid email address",
-                        },
-                      })}
-                      disabled={isLoading}
-                      className="pl-10"
-                    />
-                  </div>
-                  {form.formState.errors.email && (
-                    <motion.p
-                      initial={{ opacity: 0 }}
-                      animate={{ opacity: 1 }}
-                      className="text-sm text-destructive"
-                    >
-                      {form.formState.errors.email.message}
-                    </motion.p>
-                  )}
-                </motion.div>
-              )}
+              <AnimatePresence>
+                {!isLogin && (
+                  <motion.div
+                    initial={{ x: -20, opacity: 0 }}
+                    animate={{ x: 0, opacity: 1 }}
+                    exit={{ x: -20, opacity: 0 }}
+                    transition={{ delay: 0.25 }}
+                    className="space-y-2"
+                  >
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-2.5 h-5 w-5 text-muted-foreground" />
+                      <Input
+                        type="email"
+                        placeholder="Email"
+                        {...form.register("email", {
+                          required: !isLogin,
+                          pattern: {
+                            value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                            message: "Invalid email address",
+                          },
+                        })}
+                        disabled={isLoading}
+                        className="pl-10"
+                      />
+                    </div>
+                    {form.formState.errors.email && (
+                      <motion.p
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        className="text-sm text-destructive"
+                      >
+                        {form.formState.errors.email.message}
+                      </motion.p>
+                    )}
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
               <motion.div
                 initial={{ x: -20, opacity: 0 }}
