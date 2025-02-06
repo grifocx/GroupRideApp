@@ -597,21 +597,35 @@ export function registerRoutes(app: Express): Server {
           id: users.id,
           username: users.username,
           isAdmin: users.isAdmin,
+          email: users.email,
+          emailVerified: users.emailVerified,
+          display_name: users.display_name,
+          zip_code: users.zip_code,
+          club: users.club,
+          home_bike_shop: users.home_bike_shop,
+          gender: users.gender,
+          birthdate: users.birthdate,
+          avatarUrl: users.avatarUrl,
         })
         .from(users)
-        .orderBy(users.id);  // Add ordering by ID
+        .orderBy(users.id);
 
-      const userRides = await db
+      // Get ride counts in a separate query
+      const rideCounts = await db
         .select({
           ownerId: rides.ownerId,
-          count: sql<number>`count(*)::int`
+          count: sql<number>`count(*)::int`,
         })
         .from(rides)
         .groupBy(rides.ownerId);
 
+      const userRideMap = new Map(
+        rideCounts.map(({ ownerId, count }) => [ownerId, count])
+      );
+
       const usersWithRideCount = allUsers.map(user => ({
         ...user,
-        rides: userRides.find(r => r.ownerId === user.id)?.count || 0
+        rideCount: userRideMap.get(user.id) || 0
       }));
 
       res.json(usersWithRideCount);
