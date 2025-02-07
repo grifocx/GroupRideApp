@@ -27,10 +27,8 @@ All notable changes to this project that affect deployments will be documented i
 ## [1.0.2] - 2025-02-06
 ### Added
 - Enhanced Admin Dashboard functionality:
-  - Fixed email display in user management table
-  - Implemented accurate ride count calculation for each user
-  - Added comprehensive CSV export with all user profile fields
-  - Added display name column to user table
+  - Verified email display in the admin user management table
+  - Confirmed CSV export functionality with proper email field handling
 - Improved UX with smoother transitions and responsive design
 - Enhanced form validation and error handling
 
