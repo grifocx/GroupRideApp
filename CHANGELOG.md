@@ -13,8 +13,16 @@ All notable changes to this project that affect deployments will be documented i
 - Added new animation keyframes for smoother transitions
 - Improved responsive design for mobile users
 
+### Planned
+- User activity dashboard with cycling insights
+- Integration with Cursor AI for code generation
+- New "About Us" page
+
 ### Upcoming
 - User activity dashboard with cycling insights
+- start using cursor ai to generate code
+- add a new page for the about us
+
 
 ## [1.0.2] - 2025-02-06
 ### Added
@@ -43,6 +51,7 @@ All notable changes to this project that affect deployments will be documented i
 
 ## [1.0.0] - 2024
 ### Added
+- Initial design by Eric Griffin
 - Initial release with core ride sharing functionality
 - User authentication system with Google OAuth and local auth
 - Ride management system with CRUD operations
