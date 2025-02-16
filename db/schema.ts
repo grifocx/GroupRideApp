@@ -6,6 +6,15 @@ import { z } from "zod";
 
 export const current_user_id = sql`current_user_id()`;
 
+// Define types first to avoid circular dependencies
+export type User = InferModel<typeof users>;
+export type InsertUser = InferModel<typeof users, "insert">;
+export type Ride = InferModel<typeof rides>;
+export type InsertRide = InferModel<typeof rides, "insert">;
+export type RideComment = InferModel<typeof rideComments>;
+export type InsertRideComment = InferModel<typeof rideComments, "insert">;
+
+// User table and schema definitions remain unchanged
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").unique().notNull(),
@@ -25,28 +34,39 @@ export const users = pgTable("users", {
   birthdate: timestamp("birthdate"),
 });
 
-// Create user schemas first
-const userSchema = z.object({
-  username: z.string().min(1, "Username is required"),
-  password: z.string().min(6, "Password must be at least 6 characters"),
-  email: z.string().email().optional(),
-  display_name: z.string().optional(),
-  zip_code: z.string().optional(),
-  club: z.string().optional(),
-  home_bike_shop: z.string().optional(),
-  gender: z.string().optional(),
-  birthdate: z.date().optional(),
-});
-
-export const insertUserSchema = userSchema;
-export const selectUserSchema = createSelectSchema(users);
-
-// Add RideStatus enum
+// Constants for validation
 export const RideStatus = {
   ACTIVE: 'active',
   ARCHIVED: 'archived',
 } as const;
 
+export const DifficultyLevel = {
+  BEGINNER: 'E',
+  NOVICE: 'D',
+  INTERMEDIATE: 'C',
+  ADVANCED: 'B',
+  EXPERT: 'A',
+  EXTREME: 'AA'
+} as const;
+
+export const RideType = {
+  MTB: 'MTB',
+  ROAD: 'ROAD',
+  GRAVEL: 'GRAVEL',
+} as const;
+
+export const TerrainType = {
+  FLAT: 'FLAT',
+  HILLY: 'HILLY',
+  MOUNTAIN: 'MOUNTAIN',
+} as const;
+
+export const RecurringType = {
+  WEEKLY: 'weekly',
+  MONTHLY: 'monthly',
+} as const;
+
+// Define rides table with explicit return type for the configuration
 export const rides = pgTable("rides", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
@@ -75,18 +95,15 @@ export const rides = pgTable("rides", {
   actualDuration: integer("actual_duration"),
   elevationGain: integer("elevation_gain"),
   averageSpeed: real("average_speed"),
-}, (table) => {
-  return {
-    ownerIdx: index("idx_rides_owner_status").on(table.ownerId, table.status),
-    dateTimeIdx: index("idx_rides_date_time").on(table.dateTime),
-    // Add check constraints
-    positiveDistance: check("check_positive_distance", sql`distance > 0`),
-    positiveMaxRiders: check("check_positive_max_riders", sql`max_riders > 0`),
-    validPace: check("check_valid_pace", sql`pace > 0`),
-    validElevation: check("check_valid_elevation", sql`elevation_gain >= 0`),
-    validActualDistance: check("check_valid_actual_distance", sql`actual_distance > 0`),
-  };
-});
+}, (table) => ({
+  ownerIdx: index("idx_rides_owner_status").on(table.ownerId, table.status),
+  dateTimeIdx: index("idx_rides_date_time").on(table.dateTime),
+  positiveDistance: check("check_positive_distance", sql`distance > 0`),
+  positiveMaxRiders: check("check_positive_max_riders", sql`max_riders > 0`),
+  validPace: check("check_valid_pace", sql`pace > 0`),
+  validElevation: check("check_valid_elevation", sql`elevation_gain >= 0`),
+  validActualDistance: check("check_valid_actual_distance", sql`actual_distance > 0`),
+}));
 
 export const rideParticipants = pgTable("ride_participants", {
   id: serial("id").primaryKey(),
@@ -122,32 +139,21 @@ export const rideParticipantsRelations = relations(rideParticipants, ({ one }) =
   }),
 }));
 
-// Constants for validation
-export const DifficultyLevel = {
-  BEGINNER: 'E',
-  NOVICE: 'D',
-  INTERMEDIATE: 'C',
-  ADVANCED: 'B',
-  EXPERT: 'A',
-  EXTREME: 'AA'
-} as const;
 
-export const RideType = {
-  MTB: 'MTB',
-  ROAD: 'ROAD',
-  GRAVEL: 'GRAVEL',
-} as const;
+const userSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email().optional(),
+  display_name: z.string().optional(),
+  zip_code: z.string().optional(),
+  club: z.string().optional(),
+  home_bike_shop: z.string().optional(),
+  gender: z.string().optional(),
+  birthdate: z.date().optional(),
+});
 
-export const TerrainType = {
-  FLAT: 'FLAT',
-  HILLY: 'HILLY',
-  MOUNTAIN: 'MOUNTAIN',
-} as const;
-
-export const RecurringType = {
-  WEEKLY: 'weekly',
-  MONTHLY: 'monthly',
-} as const;
+export const insertUserSchema = userSchema;
+export const selectUserSchema = createSelectSchema(users);
 
 const activitySchema = z.object({
   completed: z.boolean().optional(),
@@ -196,12 +202,6 @@ export const insertRideSchema = mergedRideSchema.refine((data) => {
 
 export const selectRideSchema = createSelectSchema(rides);
 
-// Type exports
-export type User = InferModel<typeof users>;
-export type InsertUser = InferModel<typeof users, "insert">;
-export type Ride = InferModel<typeof rides>;
-export type InsertRide = InferModel<typeof rides, "insert">;
-
 export const rideComments = pgTable("ride_comments", {
   id: serial("id").primaryKey(),
   rideId: integer("ride_id").notNull().references(() => rides.id, { onDelete: 'cascade' }),
@@ -234,8 +234,6 @@ export const updateCommentSchema = z.object({
   content: z.string().min(1, "Comment cannot be empty"),
 });
 
-export type RideComment = InferModel<typeof rideComments>;
-export type InsertRideComment = InferModel<typeof rideComments, "insert">;
 
 // Add new tables for activity tracking
 export const userActivityStats = pgTable("user_activity_stats", {
