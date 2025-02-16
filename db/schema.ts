@@ -301,3 +301,74 @@ export type InsertUserActivityStats = typeof userActivityStats.$inferInsert;
 
 export type UserMonthlyStats = typeof userMonthlyStats.$inferSelect;
 export type InsertUserMonthlyStats = typeof userMonthlyStats.$inferInsert;
+
+// Rider preferences for matchmaking
+export const riderPreferences = pgTable("rider_preferences", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  preferredRideTypes: text("preferred_ride_types").array().notNull(),
+  preferredTerrains: text("preferred_terrains").array().notNull(),
+  preferredDifficulties: text("preferred_difficulties").array().notNull(),
+  minPace: real("min_pace"),
+  maxPace: real("max_pace"),
+  preferredDistance: integer("preferred_distance"),
+  availableDays: text("available_days").array(),
+  matchRadius: integer("match_radius").default(50), // in miles
+  createdAt: timestamp("created_at").notNull().defaultNow(),
+  updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => ({
+  userIdx: index("idx_rider_preferences_user").on(table.userId),
+}));
+
+// Rider buddies matches
+export const riderMatches = pgTable("rider_matches", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  matchedUserId: integer("matched_user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  matchScore: real("match_score").notNull(),
+  lastCalculatedAt: timestamp("last_calculated_at").notNull().defaultNow(),
+  isHidden: boolean("is_hidden").default(false),
+}, (table) => ({
+  uniqueMatch: unique().on(table.userId, table.matchedUserId),
+  scoreIdx: index("idx_rider_matches_score").on(table.matchScore),
+}));
+
+// Add relations
+export const riderPreferencesRelations = relations(riderPreferences, ({ one }) => ({
+  user: one(users, {
+    fields: [riderPreferences.userId],
+    references: [users.id],
+  }),
+}));
+
+export const riderMatchesRelations = relations(riderMatches, ({ one }) => ({
+  user: one(users, {
+    fields: [riderMatches.userId],
+    references: [users.id],
+  }),
+  matchedUser: one(users, {
+    fields: [riderMatches.matchedUserId],
+    references: [users.id],
+  }),
+}));
+
+// Add Zod schemas for validation
+export const riderPreferencesSchema = z.object({
+  preferredRideTypes: z.array(z.enum(['MTB', 'ROAD', 'GRAVEL'])),
+  preferredTerrains: z.array(z.enum(['FLAT', 'HILLY', 'MOUNTAIN'])),
+  preferredDifficulties: z.array(z.enum(['E', 'D', 'C', 'B', 'A', 'AA'])),
+  minPace: z.number().min(1).optional(),
+  maxPace: z.number().optional(),
+  preferredDistance: z.number().min(1).optional(),
+  availableDays: z.array(z.string()).optional(),
+  matchRadius: z.number().min(1).max(200).default(50),
+});
+
+export const insertRiderPreferencesSchema = riderPreferencesSchema;
+export const selectRiderPreferencesSchema = createSelectSchema(riderPreferences);
+
+// Export types
+export type RiderPreferences = typeof riderPreferences.$inferSelect;
+export type InsertRiderPreferences = typeof riderPreferences.$inferInsert;
+export type RiderMatch = typeof riderMatches.$inferSelect;
+export type InsertRiderMatch = typeof riderMatches.$inferInsert;

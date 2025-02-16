@@ -18,6 +18,7 @@ import { ProfileProgress } from "@/components/ProfileProgress";
 import { RideStats } from "@/components/RideStats";
 import { motion } from "framer-motion";
 import { useState } from "react";
+import type { RiderPreferences } from "@db/schema";
 
 const editRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
@@ -174,6 +175,195 @@ const changePasswordSchema = z.object({
 });
 
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
+
+const riderPreferencesSchema = z.object({
+  preferredRideTypes: z.array(z.enum(['MTB', 'ROAD', 'GRAVEL'])),
+  preferredTerrains: z.array(z.enum(['FLAT', 'HILLY', 'MOUNTAIN'])),
+  preferredDifficulties: z.array(z.enum(['E', 'D', 'C', 'B', 'A', 'AA'])),
+  minPace: z.number().min(1).optional(),
+  maxPace: z.number().optional(),
+  preferredDistance: z.number().min(1).optional(),
+  availableDays: z.array(z.string()).optional(),
+  matchRadius: z.number().min(1).max(200).default(50),
+});
+
+function RideBuddyPreferencesDialog() {
+  const form = useForm<z.infer<typeof riderPreferencesSchema>>({
+    resolver: zodResolver(riderPreferencesSchema),
+    defaultValues: {
+      preferredRideTypes: [],
+      preferredTerrains: [],
+      preferredDifficulties: [],
+      matchRadius: 50,
+    },
+  });
+
+  const { toast } = useToast();
+  const queryClient = useQueryClient();
+
+  const onSubmit = async (data: z.infer<typeof riderPreferencesSchema>) => {
+    try {
+      const response = await fetch('/api/user/ride-preferences', {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data),
+        credentials: 'include'
+      });
+
+      if (!response.ok) {
+        throw new Error(await response.text());
+      }
+
+      await queryClient.invalidateQueries({ queryKey: ['ride-preferences'] });
+      toast({
+        title: "Success",
+        description: "Ride preferences updated successfully"
+      });
+    } catch (error) {
+      console.error('Preferences update error:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update preferences"
+      });
+    }
+  };
+
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="outline">Update Ride Preferences</Button>
+      </DialogTrigger>
+      <DialogContent className="max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Ride Buddy Preferences</DialogTitle>
+        </DialogHeader>
+        <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+          <div className="space-y-2">
+            <label>Preferred Ride Types</label>
+            <div className="flex gap-2 flex-wrap">
+              {['MTB', 'ROAD', 'GRAVEL'].map((type) => (
+                <label key={type} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={type}
+                    {...form.register("preferredRideTypes")}
+                  />
+                  <span>{type}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Preferred Terrains</label>
+            <div className="flex gap-2 flex-wrap">
+              {['FLAT', 'HILLY', 'MOUNTAIN'].map((terrain) => (
+                <label key={terrain} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={terrain}
+                    {...form.register("preferredTerrains")}
+                  />
+                  <span>{terrain}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Difficulty Levels</label>
+            <div className="flex gap-2 flex-wrap">
+              {[
+                { value: 'E', label: 'Easy' },
+                { value: 'D', label: 'Moderate' },
+                { value: 'C', label: 'Hard' },
+                { value: 'B', label: 'Challenging' },
+                { value: 'A', label: 'Very Hard' },
+                { value: 'AA', label: 'Extreme' },
+              ].map(({ value, label }) => (
+                <label key={value} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={value}
+                    {...form.register("preferredDifficulties")}
+                  />
+                  <span>{label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Pace Range (mph)</label>
+            <div className="flex gap-4">
+              <div>
+                <label className="text-sm">Minimum</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  {...form.register("minPace", { valueAsNumber: true })}
+                />
+              </div>
+              <div>
+                <label className="text-sm">Maximum</label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  {...form.register("maxPace", { valueAsNumber: true })}
+                />
+              </div>
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label>Preferred Distance (miles)</label>
+            <Input
+              type="number"
+              {...form.register("preferredDistance", { valueAsNumber: true })}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label>Match Radius (miles)</label>
+            <Input
+              type="number"
+              {...form.register("matchRadius", { valueAsNumber: true })}
+            />
+            <p className="text-sm text-muted-foreground">
+              Maximum distance to search for ride buddies
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <label>Available Days</label>
+            <div className="flex gap-2 flex-wrap">
+              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
+                <label key={day} className="flex items-center space-x-2">
+                  <input
+                    type="checkbox"
+                    value={day}
+                    {...form.register("availableDays")}
+                  />
+                  <span>{day}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2">
+            <DialogTrigger asChild>
+              <Button type="button" variant="outline">Cancel</Button>
+            </DialogTrigger>
+            <Button type="submit">Save Preferences</Button>
+          </div>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
 
 export default function ProfilePage() {
   const { user, logout } = useUser();
@@ -559,7 +749,6 @@ export default function ProfilePage() {
           transition={{ duration: 0.5, delay: 0.2 }}
           className="mt-8 space-y-8"
         >
-          {/* Your Rides Section */}
           <div>
             <h2 className="text-2xl font-bold mb-4">Your Created Rides</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -606,7 +795,6 @@ export default function ProfilePage() {
             </div>
           </div>
 
-          {/* Joined Rides Section */}
           <div>
             <h2 className="text-2xl font-bold mb-4">Rides You've Joined</h2>
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -641,6 +829,26 @@ export default function ProfilePage() {
               )}
             </div>
           </div>
+        </motion.div>
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5, delay: 0.3 }}
+          className="mt-8"
+        >
+          <Card>
+            <CardHeader>
+              <CardTitle>Ride Buddy Preferences</CardTitle>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <p className="text-muted-foreground">
+                  Set your riding preferences to find compatible riding buddies in your area.
+                </p>
+                <RideBuddyPreferencesDialog />
+              </div>
+            </CardContent>
+          </Card>
         </motion.div>
       </main>
     </div>
