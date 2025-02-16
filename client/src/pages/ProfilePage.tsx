@@ -15,17 +15,18 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
 import { ProfileProgress } from "@/components/ProfileProgress";
-import { RideStats } from "@/components/RideStats";
+import { RideStats } from "@/components/RideStats"; //This import was already present in the original
 import { motion } from "framer-motion";
 import { useState } from "react";
 import type { RiderPreferences } from "@db/schema";
 
+// EditRideForm schema update to handle date properly
 const editRideSchema = z.object({
   title: z.string().min(1, "Title is required"),
   dateTime: z.string(),
   distance: z.coerce.number().min(1, "Distance must be at least 1 mile"),
   difficulty: z.enum(['E', 'D', 'C', 'B', 'A', 'AA']),
-  maxRiders: z.number().min(1, "Must allow at least 1 rider"),
+  maxRiders: z.coerce.number().min(1, "Must allow at least 1 rider"),
   address: z.string().min(1, "Address is required"),
   rideType: z.enum(['MTB', 'ROAD', 'GRAVEL']),
   pace: z.coerce.number().min(1, "Pace must be at least 1 mph"),
@@ -432,8 +433,23 @@ export default function ProfilePage() {
     );
   }
 
-  const handleUpdate = (ride: Ride) => (data: EditRideForm) => {
-    updateRide({ id: ride.id, data });
+  const handleUpdate = (ride: Ride) => async (data: EditRideForm) => {
+    try {
+      await updateRide({
+        id: ride.id,
+        data: {
+          ...data,
+          dateTime: new Date(data.dateTime),
+        },
+      });
+    } catch (error) {
+      console.error('Failed to update ride:', error);
+      toast({
+        variant: "destructive",
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to update ride"
+      });
+    }
   };
 
   return (
@@ -461,9 +477,9 @@ export default function ProfilePage() {
                   transition={{ type: "spring", stiffness: 300 }}
                 >
                   <Avatar className="h-24 w-24">
-                    <AvatarImage src={user?.avatarUrl} alt={user?.username} />
+                    <AvatarImage src={user?.avatarUrl} alt={user?.username ?? "User"} />
                     <AvatarFallback>
-                      {user?.username?.slice(0, 2).toUpperCase()}
+                      {(user?.username ?? "U").slice(0, 2).toUpperCase()}
                     </AvatarFallback>
                   </Avatar>
                   <label
@@ -481,7 +497,7 @@ export default function ProfilePage() {
                   />
                 </motion.div>
                 <div className="space-y-4 flex-grow">
-                  <h2 className="text-2xl font-bold">{user?.display_name || user?.username}</h2>
+                  <h2 className="text-2xl font-bold">{user?.display_name ?? user?.username ?? "User"}</h2>
                   <ProfileProgress user={user} />
                 </div>
               </div>
@@ -497,37 +513,37 @@ export default function ProfilePage() {
                 <div className="grid gap-4">
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Username</h3>
-                    <p className="mt-1">{user?.username}</p>
+                    <p className="mt-1">{user?.username ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Display Name</h3>
-                    <p className="mt-1">{user?.display_name || "Not set"}</p>
+                    <p className="mt-1">{user?.display_name ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Email</h3>
-                    <p className="mt-1">{user?.email || "Not set"}</p>
+                    <p className="mt-1">{user?.email ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Zip Code</h3>
-                    <p className="mt-1">{user?.zip_code || "Not set"}</p>
+                    <p className="mt-1">{user?.zip_code ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Club</h3>
-                    <p className="mt-1">{user?.club || "Not set"}</p>
+                    <p className="mt-1">{user?.club ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Home Bike Shop</h3>
-                    <p className="mt-1">{user?.home_bike_shop || "Not set"}</p>
+                    <p className="mt-1">{user?.home_bike_shop ?? "Not set"}</p>
                   </div>
 
                   <div>
                     <h3 className="text-sm font-medium text-muted-foreground">Gender</h3>
-                    <p className="mt-1">{user?.gender || "Not set"}</p>
+                    <p className="mt-1">{user?.gender ?? "Not set"}</p>
                   </div>
 
                   <div>
@@ -849,8 +865,7 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>
-      </main>
+        </motion.div>      </main>
     </div>
   );
 }
