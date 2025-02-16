@@ -1,7 +1,10 @@
-import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, bigint, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, real, varchar, bigint, unique, index, check } from "drizzle-orm/pg-core";
+import { sql } from "drizzle-orm";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations, type InferModel } from "drizzle-orm";
 import { z } from "zod";
+
+export const current_user_id = sql`current_user_id()`;
 
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
@@ -72,12 +75,27 @@ export const rides = pgTable("rides", {
   actualDuration: integer("actual_duration"),
   elevationGain: integer("elevation_gain"),
   averageSpeed: real("average_speed"),
+}, (table) => {
+  return {
+    ownerIdx: index("idx_rides_owner_status").on(table.ownerId, table.status),
+    dateTimeIdx: index("idx_rides_date_time").on(table.dateTime),
+    // Add check constraints
+    positiveDistance: check("check_positive_distance", sql`distance > 0`),
+    positiveMaxRiders: check("check_positive_max_riders", sql`max_riders > 0`),
+    validPace: check("check_valid_pace", sql`pace > 0`),
+    validElevation: check("check_valid_elevation", sql`elevation_gain >= 0`),
+    validActualDistance: check("check_valid_actual_distance", sql`actual_distance > 0`),
+  };
 });
 
 export const rideParticipants = pgTable("ride_participants", {
   id: serial("id").primaryKey(),
   rideId: integer("ride_id").notNull().references(() => rides.id),
   userId: integer("user_id").notNull().references(() => users.id),
+}, (table) => {
+  return {
+    compositeIdx: index("idx_ride_participants_composite").on(table.rideId, table.userId),
+  };
 });
 
 export const rideRelations = relations(rides, ({ one, many }) => ({
@@ -232,6 +250,14 @@ export const userActivityStats = pgTable("user_activity_stats", {
   lastCalculatedAt: timestamp("last_calculated_at").notNull().defaultNow(),
   createdAt: timestamp("created_at").notNull().defaultNow(),
   updatedAt: timestamp("updated_at").notNull().defaultNow(),
+}, (table) => {
+  return {
+    userIdx: index("idx_user_activity_stats_user").on(table.userId),
+    positiveDistance: check("check_positive_total_distance", sql`total_distance >= 0`),
+    positiveElevation: check("check_positive_elevation", sql`total_elevation_gain >= 0`),
+    positiveRideTime: check("check_positive_ride_time", sql`total_ride_time >= 0`),
+    positiveRides: check("check_positive_total_rides", sql`total_rides >= 0`),
+  };
 });
 
 export const userMonthlyStats = pgTable("user_monthly_stats", {
