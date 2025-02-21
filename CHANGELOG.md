@@ -12,28 +12,35 @@ All notable changes to this project that affect deployments will be documented i
   - Enhanced card shadows and hover effects
 - Added new animation keyframes for smoother transitions
 - Improved responsive design for mobile users
-- Implemented Row Level Security (RLS) for enhanced data privacy:
-  - Added user-specific access controls for rides and comments
-  - Implemented proper data isolation between users
-  - Added database constraints and optimization:
-    - Indexes for frequently accessed columns
-    - Check constraints for numerical values
-    - Proper foreign key relationships
-- Improved TypeScript schema definitions:
-  - Fixed circular dependencies in database schema
-  - Enhanced type safety for database operations
-  - Added explicit return types for table configurations
 
 ### Planned
 - User activity dashboard with cycling insights
 - Integration with Cursor AI for code generation
 - New "About Us" page
 
-### Upcoming
-- User activity dashboard with cycling insights
-- start using cursor ai to generate code
-- add a new page for the about us
+## [1.0.3] - 2025-02-16
+### Added
+- Implemented Ride Buddy AI matchmaking system:
+  - Added rider preferences management with customizable settings for:
+    - Preferred ride types (MTB, Road, Gravel)
+    - Terrain preferences (Flat, Hilly, Mountain)
+    - Difficulty level matching
+    - Pace range preferences
+    - Distance preferences
+    - Available days scheduling
+    - Geographic matching radius
+  - Enhanced database schema with rider preferences and matches tables
+  - Added Row Level Security (RLS) for rider preferences and matches
+  - Implemented automatic preference update tracking
+  - Added match score calculation system
+  - Created user interface for preference management in profile page
 
+### Database Changes
+- Added rider_preferences table for storing user riding preferences
+- Added rider_matches table for tracking compatibility between users
+- Implemented RLS policies for data privacy
+- Added database functions for timestamp management
+- Created indexes for optimized matching queries
 
 ## [1.0.2] - 2025-02-06
 ### Added

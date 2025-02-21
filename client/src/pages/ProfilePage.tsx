@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Loader2, Pencil, Trash2, Upload } from "lucide-react";
 import { format } from "date-fns";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { useForm } from "react-hook-form";
+import { useForm, UseFormRegister } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
@@ -15,10 +15,12 @@ import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import type { Ride } from "@db/schema";
 import { ProfileProgress } from "@/components/ProfileProgress";
-import { RideStats } from "@/components/RideStats"; //This import was already present in the original
+import { RideStats } from "@/components/RideStats";
 import { motion } from "framer-motion";
-import { useState } from "react";
+import { useState, memo } from "react";
 import type { RiderPreferences } from "@db/schema";
+import { useRidePreferences } from "@/hooks/use-ride-preferences"; // Assumed import
+
 
 // EditRideForm schema update to handle date properly
 const editRideSchema = z.object({
@@ -178,46 +180,79 @@ const changePasswordSchema = z.object({
 type ChangePasswordForm = z.infer<typeof changePasswordSchema>;
 
 const riderPreferencesSchema = z.object({
-  preferredRideTypes: z.array(z.enum(['MTB', 'ROAD', 'GRAVEL'])),
-  preferredTerrains: z.array(z.enum(['FLAT', 'HILLY', 'MOUNTAIN'])),
-  preferredDifficulties: z.array(z.enum(['E', 'D', 'C', 'B', 'A', 'AA'])),
-  minPace: z.number().min(1).optional(),
+  preferredRideTypes: z.array(z.enum(['MTB', 'ROAD', 'GRAVEL']))
+    .min(1, "Select at least one ride type"),
+  preferredTerrains: z.array(z.enum(['FLAT', 'HILLY', 'MOUNTAIN']))
+    .min(1, "Select at least one terrain type"),
+  preferredDifficulties: z.array(z.enum(['E', 'D', 'C', 'B', 'A', 'AA']))
+    .min(1, "Select at least one difficulty level"),
+  minPace: z.number().min(1, "Minimum pace must be at least 1 mph").optional(),
   maxPace: z.number().optional(),
-  preferredDistance: z.number().min(1).optional(),
+  preferredDistance: z.number().min(1, "Distance must be at least 1 mile").optional(),
   availableDays: z.array(z.string()).optional(),
-  matchRadius: z.number().min(1).max(200).default(50),
+  matchRadius: z.number().min(1, "Radius must be at least 1 mile").max(200, "Maximum radius is 200 miles").default(50),
+}).refine((data) => {
+  if (data.minPace && data.maxPace) {
+    return data.maxPace > data.minPace;
+  }
+  return true;
+}, {
+  message: "Maximum pace must be greater than minimum pace",
+  path: ["maxPace"],
 });
 
+// Memoized checkbox group component for better performance
+const CheckboxGroup = memo(({
+  options,
+  name,
+  register,
+  label
+}: {
+  options: Array<{ value: string; label: string; }>;
+  name: string;
+  register: UseFormRegister<any>;
+  label: string;
+}) => (
+  <div className="space-y-2">
+    <label>{label}</label>
+    <div className="flex gap-2 flex-wrap">
+      {options.map(({ value, label }) => (
+        <label key={value} className="flex items-center space-x-2">
+          <input
+            type="checkbox"
+            value={value}
+            {...register(name)}
+          />
+          <span>{label}</span>
+        </label>
+      ))}
+    </div>
+  </div>
+));
+
+CheckboxGroup.displayName = 'CheckboxGroup';
+
 function RideBuddyPreferencesDialog() {
+  const { preferences, updatePreferences, isUpdating } = useRidePreferences();
   const form = useForm<z.infer<typeof riderPreferencesSchema>>({
     resolver: zodResolver(riderPreferencesSchema),
     defaultValues: {
-      preferredRideTypes: [],
-      preferredTerrains: [],
-      preferredDifficulties: [],
-      matchRadius: 50,
+      preferredRideTypes: preferences?.preferredRideTypes || [],
+      preferredTerrains: preferences?.preferredTerrains || [],
+      preferredDifficulties: preferences?.preferredDifficulties || [],
+      minPace: preferences?.minPace,
+      maxPace: preferences?.maxPace,
+      preferredDistance: preferences?.preferredDistance,
+      availableDays: preferences?.availableDays || [],
+      matchRadius: preferences?.matchRadius || 50,
     },
   });
 
   const { toast } = useToast();
-  const queryClient = useQueryClient();
 
   const onSubmit = async (data: z.infer<typeof riderPreferencesSchema>) => {
     try {
-      const response = await fetch('/api/user/ride-preferences', {
-        method: 'PUT',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(data),
-        credentials: 'include'
-      });
-
-      if (!response.ok) {
-        throw new Error(await response.text());
-      }
-
-      await queryClient.invalidateQueries({ queryKey: ['ride-preferences'] });
+      await updatePreferences(data);
       toast({
         title: "Success",
         description: "Ride preferences updated successfully"
@@ -232,6 +267,27 @@ function RideBuddyPreferencesDialog() {
     }
   };
 
+  const rideTypeOptions = [
+    { value: 'MTB', label: 'Mountain Bike' },
+    { value: 'ROAD', label: 'Road' },
+    { value: 'GRAVEL', label: 'Gravel' },
+  ];
+
+  const terrainOptions = [
+    { value: 'FLAT', label: 'Flat' },
+    { value: 'HILLY', label: 'Hilly' },
+    { value: 'MOUNTAIN', label: 'Mountain' },
+  ];
+
+  const difficultyOptions = [
+    { value: 'E', label: 'Easy' },
+    { value: 'D', label: 'Moderate' },
+    { value: 'C', label: 'Hard' },
+    { value: 'B', label: 'Challenging' },
+    { value: 'A', label: 'Very Hard' },
+    { value: 'AA', label: 'Extreme' },
+  ];
+
   return (
     <Dialog>
       <DialogTrigger asChild>
@@ -242,60 +298,41 @@ function RideBuddyPreferencesDialog() {
           <DialogTitle>Ride Buddy Preferences</DialogTitle>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-          <div className="space-y-2">
-            <label>Preferred Ride Types</label>
-            <div className="flex gap-2 flex-wrap">
-              {['MTB', 'ROAD', 'GRAVEL'].map((type) => (
-                <label key={type} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={type}
-                    {...form.register("preferredRideTypes")}
-                  />
-                  <span>{type}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <CheckboxGroup
+            options={rideTypeOptions}
+            name="preferredRideTypes"
+            register={form.register}
+            label="Preferred Ride Types"
+          />
+          {form.formState.errors.preferredRideTypes && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.preferredRideTypes.message}
+            </p>
+          )}
 
-          <div className="space-y-2">
-            <label>Preferred Terrains</label>
-            <div className="flex gap-2 flex-wrap">
-              {['FLAT', 'HILLY', 'MOUNTAIN'].map((terrain) => (
-                <label key={terrain} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={terrain}
-                    {...form.register("preferredTerrains")}
-                  />
-                  <span>{terrain}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <CheckboxGroup
+            options={terrainOptions}
+            name="preferredTerrains"
+            register={form.register}
+            label="Preferred Terrains"
+          />
+          {form.formState.errors.preferredTerrains && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.preferredTerrains.message}
+            </p>
+          )}
 
-          <div className="space-y-2">
-            <label>Difficulty Levels</label>
-            <div className="flex gap-2 flex-wrap">
-              {[
-                { value: 'E', label: 'Easy' },
-                { value: 'D', label: 'Moderate' },
-                { value: 'C', label: 'Hard' },
-                { value: 'B', label: 'Challenging' },
-                { value: 'A', label: 'Very Hard' },
-                { value: 'AA', label: 'Extreme' },
-              ].map(({ value, label }) => (
-                <label key={value} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={value}
-                    {...form.register("preferredDifficulties")}
-                  />
-                  <span>{label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <CheckboxGroup
+            options={difficultyOptions}
+            name="preferredDifficulties"
+            register={form.register}
+            label="Difficulty Levels"
+          />
+          {form.formState.errors.preferredDifficulties && (
+            <p className="text-sm text-destructive">
+              {form.formState.errors.preferredDifficulties.message}
+            </p>
+          )}
 
           <div className="space-y-2">
             <label>Pace Range (mph)</label>
@@ -307,6 +344,11 @@ function RideBuddyPreferencesDialog() {
                   step="0.1"
                   {...form.register("minPace", { valueAsNumber: true })}
                 />
+                {form.formState.errors.minPace && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.minPace.message}
+                  </p>
+                )}
               </div>
               <div>
                 <label className="text-sm">Maximum</label>
@@ -315,6 +357,11 @@ function RideBuddyPreferencesDialog() {
                   step="0.1"
                   {...form.register("maxPace", { valueAsNumber: true })}
                 />
+                {form.formState.errors.maxPace && (
+                  <p className="text-sm text-destructive">
+                    {form.formState.errors.maxPace.message}
+                  </p>
+                )}
               </div>
             </div>
           </div>
@@ -325,6 +372,11 @@ function RideBuddyPreferencesDialog() {
               type="number"
               {...form.register("preferredDistance", { valueAsNumber: true })}
             />
+            {form.formState.errors.preferredDistance && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.preferredDistance.message}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">
@@ -336,29 +388,31 @@ function RideBuddyPreferencesDialog() {
             <p className="text-sm text-muted-foreground">
               Maximum distance to search for ride buddies
             </p>
+            {form.formState.errors.matchRadius && (
+              <p className="text-sm text-destructive">
+                {form.formState.errors.matchRadius.message}
+              </p>
+            )}
           </div>
 
-          <div className="space-y-2">
-            <label>Available Days</label>
-            <div className="flex gap-2 flex-wrap">
-              {['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map((day) => (
-                <label key={day} className="flex items-center space-x-2">
-                  <input
-                    type="checkbox"
-                    value={day}
-                    {...form.register("availableDays")}
-                  />
-                  <span>{day}</span>
-                </label>
-              ))}
-            </div>
-          </div>
+          <CheckboxGroup
+            options={['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'].map(day => ({ value: day, label: day }))}
+            name="availableDays"
+            register={form.register}
+            label="Available Days"
+          />
 
           <div className="flex justify-end gap-2">
             <DialogTrigger asChild>
               <Button type="button" variant="outline">Cancel</Button>
             </DialogTrigger>
-            <Button type="submit">Save Preferences</Button>
+            <Button type="submit" disabled={isUpdating}>
+              {isUpdating ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                'Save Preferences'
+              )}
+            </Button>
           </div>
         </form>
       </DialogContent>
@@ -758,7 +812,6 @@ export default function ProfilePage() {
             </CardContent>
           </Card>
         </motion.div>
-
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -817,23 +870,58 @@ export default function ProfilePage() {
               {rides?.filter(ride => ride.ownerId !== user?.id).map((ride) => (
                 <Card key={ride.id}>
                   <CardHeader>
-                    <div className="flex justify-between items-start">
+                    <div className="flex justifybetween items-start">
                       <CardTitle className="text-lg">{ride.title}</CardTitle>
+                      <div className="flex gap-2">
+                        <EditRideDialog ride={ride} onSave={handleUpdate(ride)} />
+                        <Button
+                          variant="outline"
+                          size="icon"
+                          onClick={() => {
+                            if (confirm('Are you sure you want to delete this ride?')) {
+                              deleteRide(ride.id);
+                            }
+                          }}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
                     </div>
                     <div className="text-sm text-muted-foreground">
-                      {format(new Date(ride.dateTime), "PPP")}
+                      <p>
+                        {format(new Date(ride.dateTime), 'PPP')} at{' '}
+                        {format(new Date(ride.dateTime), 'p')}
+                      </p>
+                      <p>{ride.address}</p>
                     </div>
                   </CardHeader>
                   <CardContent>
                     <div className="space-y-2">
-                      <div>Distance: {ride.distance} miles</div>
-                      <div>Difficulty: {ride.difficulty}</div>
-                      <div>Location: {ride.address}</div>
-                      <div>Type: {ride.rideType}</div>
-                      <div>Terrain: {ride.terrain}</div>
-                      <div className="text-sm text-muted-foreground">
-                        Created by: {ride.owner.username}
+                      <div className="flex justify-between text-sm">
+                        <span>Distance: {ride.distance} miles</span>
+                        <span>Pace: {ride.pace} mph</span>
                       </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Difficulty: {ride.difficulty}</span>
+                        <span>Terrain: {ride.terrain}</span>
+                      </div>
+                      <div className="flex justify-between text-sm">
+                        <span>Type: {ride.rideType}</span>
+                        <span>Spots: {ride.maxRiders}</span>
+                      </div>
+                      {ride.description && (
+                        <p className="text-sm mt-2">{ride.description}</p>
+                      )}
+                      {ride.route_url && (
+                        <a
+                          href={ride.route_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-sm text-primary hover:underline"
+                        >
+                          View Route
+                        </a>
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -865,7 +953,8 @@ export default function ProfilePage() {
               </div>
             </CardContent>
           </Card>
-        </motion.div>      </main>
+        </motion.div>
+      </main>
     </div>
   );
 }
