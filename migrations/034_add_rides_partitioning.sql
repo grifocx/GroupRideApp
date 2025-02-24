@@ -1,14 +1,17 @@
 BEGIN;
 
--- First, create a parent table for rides that will be partitioned
+-- Create a new sequence for the partitioned table
+CREATE SEQUENCE IF NOT EXISTS rides_partitioned_id_seq;
+
+-- Create the partitioned table with proper constraints
 CREATE TABLE rides_partitioned (
-  id SERIAL,
+  id INTEGER DEFAULT nextval('rides_partitioned_id_seq') NOT NULL,
   title TEXT NOT NULL,
   date_time TIMESTAMP NOT NULL,
   distance INTEGER NOT NULL,
   difficulty VARCHAR(2) NOT NULL,
   max_riders INTEGER NOT NULL,
-  owner_id INTEGER NOT NULL REFERENCES users(id),
+  owner_id INTEGER NOT NULL,
   address TEXT NOT NULL,
   latitude TEXT NOT NULL,
   longitude TEXT NOT NULL,
@@ -22,14 +25,19 @@ CREATE TABLE rides_partitioned (
   recurring_day INTEGER CHECK (recurring_day >= 0 AND recurring_day <= 31 OR recurring_day IS NULL),
   recurring_time TEXT,
   recurring_end_date TIMESTAMP,
-  series_id BIGINT REFERENCES rides(id),
+  series_id BIGINT,
   status TEXT NOT NULL DEFAULT 'active',
   completed BOOLEAN DEFAULT FALSE,
   actual_distance REAL,
   actual_duration INTEGER,
   elevation_gain INTEGER,
   average_speed REAL,
-  CONSTRAINT rides_partitioned_pkey PRIMARY KEY (id, date_time)
+  -- Include date_time in primary key for partitioning
+  CONSTRAINT rides_partitioned_pkey PRIMARY KEY (id, date_time),
+  -- Maintain foreign key to users
+  CONSTRAINT rides_partitioned_owner_id_fkey FOREIGN KEY (owner_id) REFERENCES users(id),
+  -- Maintain foreign key for series
+  CONSTRAINT rides_partitioned_series_id_fkey FOREIGN KEY (series_id) REFERENCES rides(id)
 ) PARTITION BY RANGE (date_time);
 
 -- Create partitions for different time periods
@@ -101,5 +109,13 @@ CREATE TRIGGER create_rides_partition_trigger
     BEFORE INSERT ON rides_partitioned
     FOR EACH ROW
     EXECUTE FUNCTION create_rides_partition();
+
+-- Save the current sequence value
+CREATE TEMPORARY TABLE temp_sequence_value AS
+SELECT last_value FROM rides_id_seq;
+
+-- Create a temporary table to store ride references
+CREATE TEMPORARY TABLE temp_ride_refs AS
+SELECT id FROM rides;
 
 COMMIT;
