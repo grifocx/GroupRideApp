@@ -144,7 +144,7 @@ const filteredRides = useMemo(() => {
     <Layout>
       <ScrollIndicator />
       {/* Welcome Banner with Navigation */}
-      <section className="bg-primary text-primary-foreground py-6 sticky top-0 z-40">
+      <section className="bg-background border-b py-6 sticky top-0 z-40">
         <div className="container mx-auto px-4">
           <div className="text-center mb-6">
             <motion.div
@@ -153,7 +153,7 @@ const filteredRides = useMemo(() => {
               transition={{ duration: 0.5 }}
             >
               <h1 className="text-3xl font-bold mb-2">Welcome to GroupRideApp</h1>
-              <p className="text-lg max-w-2xl mx-auto">
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
                 Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
               </p>
             </motion.div>
