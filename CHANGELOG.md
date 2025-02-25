@@ -12,6 +12,10 @@ All notable changes to this project that affect deployments will be documented i
   - Enhanced card shadows and hover effects
 - Added new animation keyframes for smoother transitions
 - Improved responsive design for mobile users
+- Refined homepage design:
+  - Changed welcome banner to white background for better readability
+  - Added subtle border for visual separation
+  - Enhanced text contrast with muted foreground colors
 
 ### Planned
 - User activity dashboard with cycling insights
