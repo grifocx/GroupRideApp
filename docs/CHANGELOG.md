@@ -2,6 +2,20 @@
 
 All notable changes to GroupRideApp will be documented in this file.
 
+## [1.0.4] - 2025-03-25
+### Added
+- Centralized all documentation in `/docs` directory
+- Added version display in application footer
+- Improved documentation organization with dedicated files for:
+  - API documentation (API.md)
+  - Database schema documentation (DATABASE.md)
+  - Development guidelines (DEVELOPMENT.md)
+  - Documentation index (INDEX.md)
+
+### Changed
+- Removed documentation files from root directory
+- Enhanced code organization and project structure
+
 ## [Unreleased]
 ### Added
 - Enhanced UI styling with smooth animations and transitions
