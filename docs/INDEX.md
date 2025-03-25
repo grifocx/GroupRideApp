@@ -25,6 +25,9 @@ Detailed history of project changes, including new features, bug fixes, and data
 ### [ROADMAP.md](ROADMAP.md)
 Comprehensive development roadmap with detailed feature plans, priorities, timelines, and implementation strategies.
 
+### [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md)
+Detailed implementation plan for the Mobile Responsiveness Optimization feature (version 1.1.0), including phase breakdown, technical approaches, and success metrics.
+
 ## Quick Links
 
 - **For New Developers**: Start with [README.md](README.md) and [DEVELOPMENT.md](DEVELOPMENT.md)
@@ -33,6 +36,7 @@ Comprehensive development roadmap with detailed feature plans, priorities, timel
 - **For Contributors**: See [CONTRIBUTING.md](CONTRIBUTING.md)
 - **For Version History**: See [CHANGELOG.md](CHANGELOG.md)
 - **For Future Plans**: See [ROADMAP.md](ROADMAP.md)
+- **For Mobile Development**: See [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md)
 
 ## Using This Documentation
 

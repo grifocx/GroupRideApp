@@ -3,6 +3,7 @@
 This document outlines the planned features, enhancements, and development priorities for GroupRideApp. It serves as a strategic guide for all stakeholders to understand where the project is headed and what to expect in upcoming releases.
 
 ## Current Version: 1.0.4 (March 25, 2025)
+## Next Planned Release: 1.1.0 - Mobile Responsiveness Optimization (In Development)
 
 ## Short-term Priorities (Q1 2025)
 
@@ -49,19 +50,21 @@ This document outlines the planned features, enhancements, and development prior
 - **Priority**: High
 - **Estimated Timeline**: 2-3 weeks
 
-### 4. Mobile Responsiveness Optimization
-- **Description**: Further enhance the mobile experience across all application features.
+### 4. Mobile Responsiveness Optimization (In Development - v1.1.0)
+- **Description**: Comprehensive enhancement of the mobile experience across all application features.
 - **Components**:
   - Touch-friendly UI adjustments
   - Optimized map controls for small screens
-  - Improved form factor for mobile forms
+  - Improved form layouts for mobile devices
   - Better handling of complex tables on small screens
+  - Enhanced performance for mobile networks
 - **Technical Considerations**:
-  - Use responsive design patterns consistently
-  - Test across various device sizes
-  - Optimize image loading for mobile networks
-- **Priority**: Medium
-- **Estimated Timeline**: 2 weeks
+  - Implementing mobile-first design principles consistently
+  - Testing across various device sizes and orientations
+  - Optimizing assets and network requests for mobile
+  - Using appropriate touch interaction patterns
+- **Priority**: High (Currently in active development)
+- **Estimated Timeline**: 5 weeks (Detailed plan in [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md))
 
 ## Mid-term Goals (Q2-Q3 2025)
 

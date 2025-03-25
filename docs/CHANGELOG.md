@@ -2,6 +2,17 @@
 
 All notable changes to GroupRideApp will be documented in this file.
 
+## [Unreleased - 1.1.0]
+### Mobile Responsiveness Optimization
+- _In development_ - Comprehensive mobile experience enhancement
+- Touch-friendly UI improvements across all components
+- Map controls optimization for small screens
+- Form layout improvements for mobile devices
+- Table visualization enhancements for narrow screens
+- Performance optimization for mobile networks
+
+See [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md) for detailed implementation plan.
+
 ## [1.0.4] - 2025-03-25
 ### Added
 - Centralized all documentation in `/docs` directory
@@ -16,49 +27,18 @@ All notable changes to GroupRideApp will be documented in this file.
 - Removed documentation files from root directory
 - Enhanced code organization and project structure
 
-## [Unreleased]
+## [Unreleased UI Enhancements]
 ### Added
 - Enhanced UI styling with smooth animations and transitions
-- Improved mobile-first design approach
 - New color scheme with nature-inspired palette:
   - Primary green (#22C55E) for CTAs and highlights
   - Subtle background patterns
   - Enhanced card shadows and hover effects
 - Added new animation keyframes for smoother transitions
-- Improved responsive design for mobile users
 - Refined homepage design:
   - Changed welcome banner to white background for better readability
   - Added subtle border for visual separation
   - Enhanced text contrast with muted foreground colors
-
-### Planned Features
-#### Q1 2025
-- User activity dashboard with cycling insights
-  - Personal ride statistics
-  - Achievement tracking
-  - Progress visualization
-- Integration with Cursor AI for code generation
-  - Automated code quality checks
-  - Smart code suggestions
-  - Performance optimization recommendations
-- New "About Us" page
-  - Team information
-  - Mission statement
-  - Community highlights
-
-#### Q2-Q3 2025
-- Strava and Garmin Connect integration
-- Advanced route planning system
-- Weather service integration
-- Enhanced analytics dashboard
-- Expanded social features
-
-#### Q4 2025
-- Mobile app development
-- AI-powered route recommendations
-- Virtual ride planning
-- International localization
-- Club management system
 
 ## [1.0.3] - 2025-02-24
 ### Added
