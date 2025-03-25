@@ -2,16 +2,21 @@
 
 All notable changes to GroupRideApp will be documented in this file.
 
-## [Unreleased - 1.1.0]
+## [1.1.0] - 2025-03-25
 ### Mobile Responsiveness Optimization
-- _In development_ - Comprehensive mobile experience enhancement
-- Touch-friendly UI improvements across all components
-- Map controls optimization for small screens
-- Form layout improvements for mobile devices
-- Table visualization enhancements for narrow screens
-- Performance optimization for mobile networks
+- Completed comprehensive mobile experience enhancement
+- Enhanced responsive design across all major components:
+  - Improved RideCard with better spacing and touch-friendly elements
+  - Optimized MapComponent with responsive sizing and touch controls
+  - Redesigned RideSearch with compact mobile-friendly layout
+  - Enhanced HomePage with responsive design patterns
+  - Added breakpoint-based layouts with tailwind's sm/md/lg modifiers
+- Implemented mobile-first design principles throughout the application
+- Added responsive information hierarchy for small screens
+- Enhanced interactive elements with proper touch targets
+- Improved navigation components with mobile-friendly controls
 
-See [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md) for detailed implementation plan.
+See [MOBILE_OPTIMIZATION_PLAN.md](MOBILE_OPTIMIZATION_PLAN.md) for full implementation details.
 
 ## [1.0.4] - 2025-03-25
 ### Added
