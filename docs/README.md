@@ -67,19 +67,22 @@ GOOGLE_CLIENT_SECRET=...
 
 ## Development Status 📊
 
-Current Version: 1.0.3 (February 24, 2025)
+Current Version: 1.0.4 (March 25, 2025)
 
 ### Recent Updates
+- Centralized all documentation in a dedicated `/docs` directory
+- Created detailed development roadmap with priorities and timelines
+- Added version display in application footer
 - Implemented Ride Buddy AI matchmaking system
 - Enhanced UI with improved animations and transitions
-- Added comprehensive form validation
 - Optimized component performance
-- Improved error handling and data caching
 
 ### Known Issues
 - None reported
 
 ## Future Roadmap 🗺️
+
+For detailed information on our development plans, priorities, and timelines, please refer to our comprehensive [ROADMAP.md](ROADMAP.md) document.
 
 ### Short-term (Q1 2025)
 - [ ] User activity dashboard with cycling insights

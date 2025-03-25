@@ -22,6 +22,9 @@ Information for contributors about the development process, code style guideline
 ### [CHANGELOG.md](CHANGELOG.md)
 Detailed history of project changes, including new features, bug fixes, and database migrations.
 
+### [ROADMAP.md](ROADMAP.md)
+Comprehensive development roadmap with detailed feature plans, priorities, timelines, and implementation strategies.
+
 ## Quick Links
 
 - **For New Developers**: Start with [README.md](README.md) and [DEVELOPMENT.md](DEVELOPMENT.md)
@@ -29,6 +32,7 @@ Detailed history of project changes, including new features, bug fixes, and data
 - **For Database Management**: See [DATABASE.md](DATABASE.md)
 - **For Contributors**: See [CONTRIBUTING.md](CONTRIBUTING.md)
 - **For Version History**: See [CHANGELOG.md](CHANGELOG.md)
+- **For Future Plans**: See [ROADMAP.md](ROADMAP.md)
 
 ## Using This Documentation
 
