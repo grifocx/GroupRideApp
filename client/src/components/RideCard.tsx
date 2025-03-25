@@ -156,23 +156,24 @@ export default function RideCard({ ride }: RideCardProps) {
 
   return (
     <Card className={cn(
-      "overflow-hidden transition-all hover:shadow-lg",
+      "overflow-hidden transition-all hover:shadow-lg active:scale-[0.98]",
       isJoined && "ring-2 ring-primary/50"
     )}>
-      <CardHeader className="pb-2">
+      <CardHeader className="pb-2 sm:pb-3">
         <div className="flex justify-between items-start">
           <div
             className="cursor-pointer hover:text-primary transition-colors"
             onClick={() => setLocation(`/rides/${ride.id}`)}
           >
-            <div className="flex items-center gap-2">
-              <CardTitle className="text-xl font-bold">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle className="text-lg sm:text-xl font-bold line-clamp-2">
                 {ride.title}
               </CardTitle>
               {ride.canEdit === true && (
                 <Button
                   variant="ghost"
                   size="icon"
+                  className="h-7 w-7 sm:h-8 sm:w-8 touch-manipulation"
                   onClick={(e) => {
                     e.stopPropagation();
                     setLocation(`/rides/${ride.id}/edit`);
@@ -183,13 +184,13 @@ export default function RideCard({ ride }: RideCardProps) {
                 </Button>
               )}
             </div>
-            <div className="text-sm text-muted-foreground">
+            <div className="text-sm text-muted-foreground mt-1">
               {format(new Date(ride.dateTime), "E, MMM d • h:mm a")}
             </div>
             {ride.is_recurring && (
-              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground">
-                <Repeat className="h-4 w-4" />
-                <span>
+              <div className="flex items-center gap-2 mt-1 text-sm text-muted-foreground flex-wrap">
+                <Repeat className="h-4 w-4 flex-shrink-0" />
+                <span className="line-clamp-1">
                   Recurring {ride.recurring_type} ride
                   {ride.recurring_end_date && ` until ${format(new Date(ride.recurring_end_date), "MMM d, yyyy")}`}
                 </span>
@@ -198,7 +199,12 @@ export default function RideCard({ ride }: RideCardProps) {
           </div>
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="ml-2" style={{zIndex: 10}}> {/* Added zIndex here */}
+              <Button 
+                variant="ghost" 
+                size="icon" 
+                className="ml-2 h-8 w-8 touch-manipulation" 
+                style={{zIndex: 10}}
+              >
                 <Share2 className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
@@ -228,7 +234,13 @@ export default function RideCard({ ride }: RideCardProps) {
           </DropdownMenu>
         </div>
       </CardHeader>
-      <div className="relative h-32 bg-muted">
+      
+      {/* Map area with slightly more height on larger screens */}
+      <div 
+        className="relative bg-muted cursor-pointer"
+        style={{ height: "calc(20vh - 16px)", maxHeight: "200px", minHeight: "120px" }}
+        onClick={() => setLocation(`/rides/${ride.id}`)}
+      >
         <div ref={mapRef} className="h-full w-full" style={{ zIndex: 0 }} />
         {(!ride.latitude || !ride.longitude) && (
           <div className="absolute inset-0 flex items-center justify-center bg-muted">
@@ -236,11 +248,13 @@ export default function RideCard({ ride }: RideCardProps) {
           </div>
         )}
       </div>
-      <CardContent className="pt-4">
-        <div className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2">
-              <span>{ride.distance} miles</span>
+      
+      <CardContent className="pt-3 sm:pt-4">
+        <div className="space-y-3 sm:space-y-4">
+          {/* Ride details - more responsive layout */}
+          <div className="flex flex-wrap items-center justify-between gap-y-2">
+            <div className="flex items-center gap-2 min-w-[50%]">
+              <span className="whitespace-nowrap">{ride.distance} miles</span>
               <span>•</span>
               <div className="flex items-center gap-2">
                 <div
@@ -250,8 +264,14 @@ export default function RideCard({ ride }: RideCardProps) {
                 <span>{difficultyLabels[ride.difficulty as keyof typeof difficultyLabels]}</span>
               </div>
             </div>
+            
+            {/* Additional ride type info on mobile */}
+            <div className="text-xs text-muted-foreground sm:hidden whitespace-nowrap">
+              {ride.rideType} • {ride.pace} mph pace
+            </div>
           </div>
 
+          {/* Owner and participant count */}
           <div className="flex justify-between items-center">
             <div className="flex items-center gap-2">
               <Avatar className="h-6 w-6">
@@ -259,7 +279,7 @@ export default function RideCard({ ride }: RideCardProps) {
                   {ride.owner.username[0].toUpperCase()}
                 </AvatarFallback>
               </Avatar>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-muted-foreground line-clamp-1 max-w-[90px] sm:max-w-[120px]">
                 {ride.owner.username}
               </span>
             </div>
@@ -268,8 +288,9 @@ export default function RideCard({ ride }: RideCardProps) {
             </div>
           </div>
 
+          {/* Join button with larger touch target */}
           <Button
-            className="w-full"
+            className="w-full h-10 sm:h-9 touch-manipulation"
             variant={isJoined ? "default" : "outline"}
             onClick={handleJoinToggle}
             disabled={!isJoined && participantCount >= ride.maxRiders}

@@ -56,25 +56,29 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
   };
 
   return (
-    <div className="bg-card p-4 rounded-lg shadow-sm space-y-4">
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Search</label>
-          <Input
-            placeholder="Search rides..."
-            value={filters.search}
-            onChange={(e) => handleFilterChange({ search: e.target.value })}
-          />
-        </div>
+    <div className="bg-card p-3 sm:p-4 rounded-lg shadow-sm space-y-3 sm:space-y-4">
+      {/* Search Input - Always Full Width */}
+      <div className="space-y-1 sm:space-y-2">
+        <label className="text-xs sm:text-sm font-medium">Search</label>
+        <Input
+          placeholder="Search rides..."
+          value={filters.search}
+          onChange={(e) => handleFilterChange({ search: e.target.value })}
+          className="h-8 sm:h-10 text-sm"
+        />
+      </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Ride Type</label>
+      {/* Select Filters - Responsive Grid */}
+      <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 sm:gap-4">
+        {/* Ride Type */}
+        <div className="space-y-1 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Ride Type</label>
           <Select
             value={filters.rideType}
             onValueChange={(value) => handleFilterChange({ rideType: value })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select type" />
+            <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
+              <SelectValue placeholder="Type" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Types</SelectItem>
@@ -87,14 +91,15 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Terrain</label>
+        {/* Terrain */}
+        <div className="space-y-1 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Terrain</label>
           <Select
             value={filters.terrain}
             onValueChange={(value) => handleFilterChange({ terrain: value })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select terrain" />
+            <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
+              <SelectValue placeholder="Terrain" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Terrain</SelectItem>
@@ -107,14 +112,15 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
           </Select>
         </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Difficulty</label>
+        {/* Difficulty */}
+        <div className="space-y-1 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Difficulty</label>
           <Select
             value={filters.difficulty}
             onValueChange={(value) => handleFilterChange({ difficulty: value })}
           >
-            <SelectTrigger>
-              <SelectValue placeholder="Select difficulty" />
+            <SelectTrigger className="h-8 sm:h-10 text-xs sm:text-sm">
+              <SelectValue placeholder="Difficulty" />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="all">All Levels</SelectItem>
@@ -126,47 +132,50 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
             </SelectContent>
           </Select>
         </div>
-      </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Distance Range (miles)</label>
-          <div className="flex items-center gap-4">
+        {/* Distance Range */}
+        <div className="space-y-1 sm:space-y-2 col-span-2 sm:col-span-1">
+          <label className="text-xs sm:text-sm font-medium">Distance (miles)</label>
+          <div className="flex items-center gap-1 sm:gap-2">
             <Input
               type="number"
               min={0}
               value={filters.minDistance}
               onChange={(e) => handleFilterChange({ minDistance: Number(e.target.value) })}
-              className="w-24"
+              className="w-16 sm:w-20 h-8 sm:h-10 text-xs sm:text-sm"
             />
-            <span>to</span>
+            <span className="text-xs">to</span>
             <Input
               type="number"
               min={0}
               value={filters.maxDistance}
               onChange={(e) => handleFilterChange({ maxDistance: Number(e.target.value) })}
-              className="w-24"
+              className="w-16 sm:w-20 h-8 sm:h-10 text-xs sm:text-sm"
             />
           </div>
         </div>
+      </div>
 
-        <div className="space-y-2">
-          <label className="text-sm font-medium">Date Range</label>
-          <div className="flex gap-4">
+      {/* Date Range and Recurring Filter */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4">
+        <div className="space-y-1 sm:space-y-2">
+          <label className="text-xs sm:text-sm font-medium">Date Range</label>
+          <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
             <Popover>
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  size="sm"
                   className={cn(
-                    "justify-start text-left font-normal w-full",
+                    "justify-start text-left font-normal w-full h-8 sm:h-10 text-xs sm:text-sm",
                     !filters.startDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filters.startDate ? format(filters.startDate, "PPP") : "Start date"}
+                  <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  {filters.startDate ? format(filters.startDate, "MMM d") : "Start date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={filters.startDate ?? undefined}
@@ -180,16 +189,17 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
               <PopoverTrigger asChild>
                 <Button
                   variant="outline"
+                  size="sm"
                   className={cn(
-                    "justify-start text-left font-normal w-full",
+                    "justify-start text-left font-normal w-full h-8 sm:h-10 text-xs sm:text-sm",
                     !filters.endDate && "text-muted-foreground"
                   )}
                 >
-                  <CalendarIcon className="mr-2 h-4 w-4" />
-                  {filters.endDate ? format(filters.endDate, "PPP") : "End date"}
+                  <CalendarIcon className="mr-1 sm:mr-2 h-3 w-3 sm:h-4 sm:w-4" />
+                  {filters.endDate ? format(filters.endDate, "MMM d") : "End date"}
                 </Button>
               </PopoverTrigger>
-              <PopoverContent className="w-auto p-0">
+              <PopoverContent className="w-auto p-0" align="start">
                 <Calendar
                   mode="single"
                   selected={filters.endDate ?? undefined}
@@ -200,19 +210,21 @@ export default function RideSearch({ onFilterChange }: RideSearchProps) {
             </Popover>
           </div>
         </div>
-      </div>
 
-      {/* Add recurring ride filter */}
-      <div className="flex items-center gap-2">
-        <Switch
-          id="recurring-filter"
-          checked={filters.showRecurring}
-          onCheckedChange={(checked) => handleFilterChange({ showRecurring: checked })}
-        />
-        <label htmlFor="recurring-filter" className="text-sm font-medium cursor-pointer flex items-center gap-2">
-          <Repeat className="h-4 w-4" />
-          Show only recurring rides
-        </label>
+        {/* Add recurring ride filter */}
+        <div className="flex items-center">
+          <div className="flex items-center gap-2 bg-background/60 p-2 rounded-md h-8 sm:h-10">
+            <Switch
+              id="recurring-filter"
+              checked={filters.showRecurring}
+              onCheckedChange={(checked) => handleFilterChange({ showRecurring: checked })}
+            />
+            <label htmlFor="recurring-filter" className="text-xs sm:text-sm font-medium cursor-pointer flex items-center gap-1 sm:gap-2">
+              <Repeat className="h-3 w-3 sm:h-4 sm:w-4" />
+              <span className="line-clamp-1">Show only recurring rides</span>
+            </label>
+          </div>
+        </div>
       </div>
     </div>
   );

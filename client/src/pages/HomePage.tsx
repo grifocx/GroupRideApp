@@ -29,7 +29,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 const ScrollButton = ({ targetId, children }: { targetId: string, children: React.ReactNode }) => {
   const handleClick = () => {
     const element = document.getElementById(targetId);
-    const offset = 80; // Account for fixed header
+    const offset = 100; // Account for fixed header with some additional margin for mobile
     if (element) {
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - offset;
@@ -48,8 +48,12 @@ const ScrollButton = ({ targetId, children }: { targetId: string, children: Reac
     >
       <Button
         variant="outline"
+        size="sm"
         onClick={handleClick}
-        className="flex items-center gap-2 bg-primary/10 text-primary-foreground hover:bg-primary hover:text-primary-foreground border-primary-foreground/20"
+        className="flex items-center gap-1 sm:gap-2 h-8 sm:h-9 px-2 sm:px-3 
+                  bg-primary/10 text-primary-foreground hover:bg-primary 
+                  hover:text-primary-foreground border-primary-foreground/20
+                  active:scale-95 transition-transform"
       >
         {children}
       </Button>
@@ -144,17 +148,17 @@ const filteredRides = useMemo(() => {
     <Layout>
       <ScrollIndicator />
       {/* Welcome Banner with Navigation */}
-      <section className="bg-background border-b py-6 sticky top-0 z-40">
-        <div className="container mx-auto px-4">
-          <div className="text-center mb-6">
+      <section className="bg-background border-b py-4 sm:py-6 sticky top-0 z-40">
+        <div className="container mx-auto px-3 sm:px-4">
+          <div className="text-center mb-4 sm:mb-6">
             <motion.div
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
             >
-              <h1 className="text-3xl font-bold mb-2">Welcome to GroupRideApp</h1>
-              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-                Connect with fellow cyclists, create & join group rides, and explore new road & trails together.
+              <h1 className="text-2xl sm:text-3xl font-bold mb-2">Welcome to GroupRideApp</h1>
+              <p className="text-sm sm:text-lg text-muted-foreground max-w-2xl mx-auto px-2">
+                Connect with fellow cyclists, create & join group rides, and explore new roads & trails together.
               </p>
             </motion.div>
           </div>
@@ -164,46 +168,55 @@ const filteredRides = useMemo(() => {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5, delay: 0.2 }}
-            className="flex justify-center gap-4"
+            className="flex flex-wrap justify-center gap-2 sm:gap-4"
           >
             <ScrollButton targetId="search-section">
-              <Search className="h-4 w-4" /> Find Rides
+              <Search className="h-4 w-4" /> <span className="sm:inline">Find Rides</span>
             </ScrollButton>
             <ScrollButton targetId="map-calendar-section">
-              <MapPin className="h-4 w-4" /> View Map
+              <MapPin className="h-4 w-4" /> <span className="sm:inline">View Map</span>
             </ScrollButton>
             <ScrollButton targetId="rides-section">
-              <List className="h-4 w-4" /> Browse Rides
+              <List className="h-4 w-4" /> <span className="sm:inline">Browse Rides</span>
             </ScrollButton>
           </motion.div>
         </div>
       </section>
 
-      <main className="container mx-auto px-4 py-6">
+      <main className="container mx-auto px-3 sm:px-4 py-4 sm:py-6">
         {/* Search Section */}
-        <div id="search-section" className="mb-6 scroll-mt-16">
+        <div id="search-section" className="mb-4 sm:mb-6 scroll-mt-20">
           <RideSearch onFilterChange={setFilters} />
         </div>
 
         {isLoading ? (
-          <div className="flex items-center justify-center min-h-[400px]">
+          <div className="flex items-center justify-center min-h-[300px]">
             <Loader2 className="h-8 w-8 animate-spin" />
           </div>
         ) : (
-          <div className="space-y-8">
+          <div className="space-y-6 sm:space-y-8">
             {/* Map and Calendar Section */}
-            <div id="map-calendar-section" className="scroll-mt-16">
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+            <div id="map-calendar-section" className="scroll-mt-20">
+              <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6">
                 {/* Map Section */}
                 <Card className="relative" style={{ zIndex: 1 }}>
-                  <CardContent className="p-4">
-                    <h2 className="text-lg font-semibold mb-4">Ride Locations</h2>
-                    <div className="h-[400px] relative" style={{ zIndex: 1 }}>
+                  <CardContent className="p-3 sm:p-4">
+                    <h2 className="text-base sm:text-lg font-semibold mb-2 sm:mb-4">Ride Locations</h2>
+                    <div 
+                      className="relative" 
+                      style={{ 
+                        height: "calc(30vh - 16px)", 
+                        minHeight: "250px", 
+                        maxHeight: "400px", 
+                        zIndex: 1 
+                      }}
+                    >
                       <MapComponent
                         rides={filteredRides}
                         onMarkerClick={(ride) => {
                           console.log('Clicked ride:', ride);
                         }}
+                        height="100%"
                       />
                     </div>
                   </CardContent>
@@ -211,47 +224,51 @@ const filteredRides = useMemo(() => {
 
                 {/* Calendar Section */}
                 <Card>
-                  <CardContent className="p-4">
-                    <div className="flex justify-between items-center mb-4">
-                      <h2 className="text-lg font-semibold">This Month's Rides</h2>
+                  <CardContent className="p-3 sm:p-4">
+                    <div className="flex flex-wrap justify-between items-center mb-3 sm:mb-4 gap-2">
+                      <h2 className="text-base sm:text-lg font-semibold">This Month's Rides</h2>
                       <Button
                         variant="outline"
-                        className="flex items-center gap-2"
+                        size="sm"
+                        className="flex items-center gap-1 sm:gap-2 h-8 text-xs sm:text-sm"
                         onClick={() => setLocation("/calendar")}
                       >
-                        <CalendarIcon className="h-4 w-4" />
-                        Full Calendar
+                        <CalendarIcon className="h-3 w-3 sm:h-4 sm:w-4" />
+                        <span>Full Calendar</span>
                       </Button>
                     </div>
-                    <CalendarView
-                      rides={filteredRides}
-                      compact={true}
-                      ridesByDate={ridesByDate}
-                    />
+                    <div className="overflow-auto" style={{ maxHeight: "calc(30vh - 32px)" }}>
+                      <CalendarView
+                        rides={filteredRides}
+                        compact={true}
+                        ridesByDate={ridesByDate}
+                      />
+                    </div>
                   </CardContent>
                 </Card>
               </div>
             </div>
 
             {/* Rides Section */}
-            <div id="rides-section" className="scroll-mt-16">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-bold">Available Rides</h2>
+            <div id="rides-section" className="scroll-mt-20">
+              <div className="flex flex-wrap justify-between items-center mb-3 sm:mb-4 gap-2">
+                <h2 className="text-lg sm:text-xl font-bold">Available Rides</h2>
                 <Button 
-                  variant="outline" 
-                  className="flex items-center gap-2"
+                  variant="outline"
+                  size="sm"
+                  className="flex items-center gap-1 sm:gap-2 h-8 text-xs sm:text-sm"
                   onClick={() => setLocation('/archived')}
                 >
-                  <Archive className="h-4 w-4" />
-                  View Archived Rides
+                  <Archive className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span>View Archived Rides</span>
                 </Button>
               </div>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                 {filteredRides.map((ride) => (
                   <RideCard key={ride.id} ride={ride} />
                 ))}
                 {filteredRides.length === 0 && (
-                  <div className="col-span-full text-center text-muted-foreground py-8">
+                  <div className="col-span-full text-center text-muted-foreground py-6 sm:py-8">
                     No rides found matching your criteria
                   </div>
                 )}
