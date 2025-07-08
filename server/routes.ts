@@ -1045,6 +1045,40 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Test geocoding endpoint (for debugging)
+  app.get("/api/test-geocoding", async (req, res) => {
+    try {
+      const address = req.query.address as string;
+      if (!address) {
+        return res.status(400).json({ error: "Address parameter is required" });
+      }
+
+      console.log(`Testing geocoding for: ${address}`);
+      const result = await geocodeAddress(address);
+      
+      if (result) {
+        res.json({ 
+          success: true, 
+          address: address,
+          coordinates: result,
+          message: "Geocoding successful"
+        });
+      } else {
+        res.json({ 
+          success: false, 
+          address: address,
+          message: "Geocoding failed"
+        });
+      }
+    } catch (error) {
+      console.error("Geocoding test error:", error);
+      res.status(500).json({
+        error: "Geocoding test failed",
+        details: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Create and return HTTP server
   const httpServer = createServer(app);
   return httpServer;
